@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: common.mak,v 1.2 2004/03/14 18:52:59 dkuschel Exp $
+#  $Id: common.mak,v 1.3 2005/01/10 21:46:48 dkuschel Exp $
 
 
 # Include configuration
@@ -41,6 +41,9 @@ default:  all
 
 # Listing of phony targets.
 .PHONY: clean env
+
+# Save the current make target
+MTARGET = $(firstword $(MAKECMDGOALS) all)
 
 # Define shell commands
 # First: Determine if we are running under DOS/Windows or Unix
@@ -72,14 +75,18 @@ SHCMDPATH =
 # Generate macro for Unix style paths
 adjpath = $(subst \,/,$(1))
 # Get current path
+ifeq '$(strip $(CURRENTDIR))' ''
 CURRENTDIR = $(shell pwd)
+endif
 else
 # Set path to tools
 SHCMDPATH = $(RELROOT)make/tools/
 # Generate macro for DOS style paths
 adjpath = $(subst /,\,$(1))
 # Get current path
+ifeq '$(strip $(CURRENTDIR))' ''
 CURRENTDIR = $(subst \,/,$(shell cd))
+endif
 endif
 
 # Define commands. DOS users will use the commands in the tools/ directory.
@@ -167,15 +174,6 @@ EXT_OBJ := .o
 endif
 ifeq '$(strip $(EXT_LIB))' ''
 EXT_LIB := .a
-endif
-
-# ---------------------------------------------------------------------------
-
-# define something for the nano layer
-ifeq '$(strip $(NANO))' '1'
-export NANO
-CDEFINES += POSNANO
-ADEFINES += POSNANO
 endif
 
 # ---------------------------------------------------------------------------
