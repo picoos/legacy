@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.5 2005/02/07 22:10:59 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.6 2005/02/15 19:23:12 dkuschel Exp $
  */
 
 
@@ -184,6 +184,14 @@ static void CALLBACK a_timerCallback(UINT uTimerID, UINT uMsg,
 /*---------------------------------------------------------------------------
  *  SOME HELPER FUNCTIONS
  *-------------------------------------------------------------------------*/
+
+
+void p_pos_assert(const char* text, const char *file, int line)
+{
+  fprintf(stderr, "\n\n-- ASSERTION FAILED:\n\n\"%s\"\n\nfile %s, line %i\n\n",
+                  text, file, line);
+  for(;;) { SemaWait(globalSyncSem_g); }
+}
 
 
 static void do_assert(const char* file, int line)

@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.4 2005/02/07 22:01:23 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.5 2005/02/15 19:31:24 dkuschel Exp $
  */
 
 
@@ -382,6 +382,10 @@ extern void p_pos_globalUnlock(int flags);
  *-------------------------------------------------------------------------*/
 
 #ifndef _X86ARCH_C
+
+/* we support assertions */
+#define HAVE_PLATFORM_ASSERT
+extern void p_pos_assert(const char* text, const char *file, int line);
 
 /* This function allows any MS Windows thread to call a pico]OS hardware
  * interrupt handler function. Thus, it maps a usual MS Windows thread
