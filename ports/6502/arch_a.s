@@ -1,5 +1,5 @@
 ;*
-;*  Copyright (c) 2004, Dennis Kuschel.
+;*  Copyright (c) 2004-2005, Dennis Kuschel.
 ;*  All rights reserved. 
 ;*
 ;*  Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id: arch_a.s,v 1.2 2004/03/07 14:58:52 dkuschel Exp $
+; CVS-ID $Id: arch_a.s,v 1.3 2004/03/21 18:32:57 dkuschel Exp $
 ;
 
 
@@ -104,14 +104,15 @@ KEY_BUF         := $0277
 SCREEN_OUT      := $E716
 CURSOR_COLUMN   := $D3
 C64IRQVECT      := $0314
+_orgC64irqvect  := $004B    ;temp.mem for basic pointers (2 bytes)
 
 
 ; local variables
 
 .segment  "BSS"
 
-_orgC64irqvect:
-    .res    2
+;_orgC64irqvect
+;    .res    2
 _saved_sp:
     .res    2
 _tmrdiv:
