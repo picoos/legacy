@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.3 2004/03/07 15:08:52 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.4 2004/03/14 18:54:12 dkuschel Exp $
  */
 
 
@@ -51,23 +51,24 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup arch Configuration: Architecture / CPU Specific Settings
+ * @ingroup configp
  * @{
  */
 
 /** Machine variable type.
  * This define is set to the variable type that best 
  * matches the target architecture. For example, define this
- * to <i>char</i> if the architecture has 8 bit, or to
- * <i>int</i> / <i>long</i> for a 32 bit architecture.
+ * to @e char if the architecture has 8 bit, or to
+ * @e int / @e long for a 32 bit architecture.
  * Note that the variable must fit into a single
  * memory cell of the target architecture.
  * (For a 32 bit architecture you can define MVAR_t to
- * <i>char</i>, <i>short</i> or <i>int</i> / <i>long</i>, whereas
- * at a 8 bit architecure you can only define it to <i>char</i>).
+ * @e char, @e short or @e int / @e long, whereas
+ * at a 8 bit architecure you can only define it to @e char).
  * This define is responsible for the maximum count of tasks
  * the operating system can manage. For example:
- * <i>char</i> = 8 bit, 8 * 8 = 64 tasks;
- * <i>long</i> = 32 bit, 32 * 32 = 1024 tasks.
+ * @e char = 8 bit, 8 * 8 = 64 tasks;
+ * @e long = 32 bit, 32 * 32 = 1024 tasks.
  */
 #define MVAR_t                int
 
@@ -76,7 +77,7 @@
  * bits can be stored in the machine variable type ::MVAR_t.
  * Some compilers support the sizeof(MVAR_t)-macro at this
  * position, but some others don't. For example, set
- * this define to 8 (bits) if ::MVAR_t is defined to <i>char</i>.
+ * this define to 8 (bits) if ::MVAR_t is defined to @e char.
  */
 #define MVAR_BITS              32  /* = (sizeof(MVAR_t) * 8) */
 
@@ -84,8 +85,8 @@
  * This define must be set to an integer type that has the
  * same bit width like a memory pointer (e.g. void*) on
  * the target architecture. On a 32bit architecture you
- * would usually define this to <i>long</i>, for a 8 bit
- * architecture <i>short</i> would be sufficient.
+ * would usually define this to @e long, for a 8 bit
+ * architecture @e short would be sufficient.
  */
 #define MPTR_t                int
 
@@ -187,6 +188,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup lock Configuration: Disable / Enable Interrupts
+ * @ingroup configp
  * The operating system must be able to disable the interrupts on the
  * processor for a short time to get exclusive access to internal data
  * structures. There are three possible ways to solve this:<br>
@@ -262,6 +264,7 @@ void p_asm_intsOn(unsigned int savedflags);
  *-------------------------------------------------------------------------*/
 
 /** @defgroup findbit Configuration: Generic Findbit
+ * @ingroup configp
  * The pico]OS is shipped with a generic file that implements variouse
  * methods for finding the first and least significant bit set.
  * This section contains switches for configuring the file fbit_gen.c.
@@ -310,6 +313,7 @@ void p_asm_intsOn(unsigned int savedflags);
  *-------------------------------------------------------------------------*/
 
 /** @defgroup portnlcfg Configuration: Nano Layer Port
+ * @ingroup configp
  * This section is used to configure port dependent
  * settings for the nano layer. (file port.h)
  * @{
@@ -327,6 +331,20 @@ void p_asm_intsOn(unsigned int savedflags);
  * a stack size of zero, this value is taken as the default stack size.
  */
 #define NOSCFG_DEFAULT_STACKSIZE 16384
+
+/** Enable generic console output handshake.
+ * Please see description of function ::c_nos_putcharReady for details.
+ */
+#define NOSCFG_CONOUT_HANDSHAKE      0
+
+/** Set the size of the console output FIFO.
+ * If ::NOSCFG_CONOUT_HANDSHAKE is enabled, a FIFO buffer can be used
+ * to speed up console output and to reduce CPU usage. This option is
+ * useful when console output is done through a serial line that does
+ * not have a hardware FIFO. To enable the FIFO, set this define to
+ * the FIFO size in bytes. A zero will disable the FIFO buffer.
+ */
+#define NOSCFG_CONOUT_FIFOSIZE       20
 
 /** @} */
 
