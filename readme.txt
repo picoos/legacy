@@ -1,5 +1,5 @@
 
-pico]OS readme.txt                                                 2004-02-24
+pico]OS readme.txt                                                 2005-01-15
 
 
 
@@ -15,23 +15,50 @@ directory doc/) for further information.
 
 
 
+                            GETTING STARTED
+
+There are two methods to work with pico]OS. The first is to build the pico]OS
+library and link  it to your project that you may  develope with some kind of
+integrated  compiler/debugger IDE.  The second method is  to use the makefile
+system that is provided with pico]OS to build all you need - the pico]OS RTOS
+library, application libararies and your main program.
+
+Independend of  the way you go, you will need a working GNU make on your host
+machine.   For  MS  Windows  platforms,   you   can  download   GNU  make  at
+http://mingw.sourceforge.net/download.shtml
 
 
-                    HOW TO BUILD THE PICO]OS LIBRARY
 
+                        BUILD THE EXAMPLE PROGRAMS
+
+When you  have a working GNU  make installed, you are  now ready to build the
+example  programs  that are  shipped  with  pico]OS.  Assuming your host is a
+MS Windows  machine and you have  MS Visual Studio 6 or the MinGW GCC package
+installed,  you  can compile  the  RTOS for  MS Windows.  Simply  change into
+the examples  directory  and enter  "make PORT=x86w32".  If you have  trouble
+building  the  examples,  please read  the  readme file  in the  appropriated
+port  directory  (eg. ports/x86w32/readme.txt).  You will find the  generated
+executables in the directory out/x86w32/deb/.
+
+
+
+                      HOW TO BUILD THE PICO]OS LIBRARY
 
 To build  the pico]OS  realtime operating  system,  you need to  execute  the
 makefile in the root directory. The makefiles were tested with GNU Make 3.80.
 
+NOTE:  If your compiler is not yet supported by pico]OS, you will need to
+       adapt the port makefile (port.mak) in the port subdirectory.
+
   The makefile takes two parameters:
-    PORT  = name of the port to translate (= the subdirectory name)
+    PORT  = name of the port to build (= the subdirectory name)
     BUILD = version to build, possible values are DEBUG and RELEASE
 
   Example:
-    make PORT=x86dos BUILD=DEBUG
+    make PORT=avr BUILD=DEBUG
 
-    Builds the x86 DOS port and includes debug informations.
-    The generated library can be found in the directory lib/x86dos/deb/
+    Builds the Atmel AVR port and includes debug informations.
+    The generated library can be found in the directory lib/avr/deb/
 
   Make targets:
     The makefile knows the targets 'all', 'clean' and 'docu', and
@@ -45,7 +72,7 @@ makefile in the root directory. The makefiles were tested with GNU Make 3.80.
     command line. Example:
 
      #--- start of file ---
-     PORT  = x86dos
+     PORT  = avr
      BUILD = DEBUG
      #---- end of file ----
 
