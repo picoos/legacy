@@ -1,5 +1,6 @@
-/** @file makefile *//** @defgroup make Make Environment
-@{
+/** @file makefile *//**
+@defgroup make Make Environment
+@ingroup intro
 
 
                      <h3> Introduction </h3>
@@ -217,4 +218,4 @@ first generate assembly files from C source files before generating the
 final object file from the intermediate assembly file.
 
 
-@} */
+*/

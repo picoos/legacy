@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.7 2004/03/14 18:57:27 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.8 2004/03/15 21:09:22 dkuschel Exp $
  *
  */
 
@@ -142,6 +142,52 @@
  * web:  http://picoos.sourceforge.net <br>
  *
  * (C) 2004 Dennis Kuschel
+ */
+
+/** @defgroup intro     Introduction */
+/** @defgroup configp   Configuration: Pico Layer */
+/** @defgroup confign   Configuration: Nano Layer */
+/** @defgroup userapip  User API: Pico Layer */
+/** @defgroup userapin  User API: Nano Layer */
+
+/** @defgroup layer The Layer Scheme
+ * @ingroup intro
+ * @{
+ *
+ * pico]OS is currently split into two layers:
+ *
+ *   - The pico layer contains the RTOS core. It covers:
+ *      - Tasks
+ *      - Semaphores
+ *      - Mutexes
+ *      - Flag Events
+ *      - Message Boxes
+ *      - Software Interrupts
+ *      - Timers
+ *      - Lists
+ *      - Atomic Variables
+ *
+ *   - The nano layer contains features that are based on the pico layer:
+ *      - Bottom Halfs
+ *      - Multitasking able console I/O
+ *      - Multitasking able dynamic memory management
+ *      - Standardized API for easier task creation
+ *      - CPU usage measurement
+ *      - etc. (more will follow)
+ *
+ * Below is a diagram showing the layer scheme. Note that the nano layer
+ * is disabled by default to lower the memory usage for small devices.
+ * There are two ways to enable the nano layer: First, if you run your
+ * makefile, you can add the parameter @c NANO=1 to the make command line.
+ * Second, you can set this parameter in your application makefile. <br>
+ * If the parameter @c NANO is set to 1, the makesystem will automatically
+ * compile and link the nano layer source files. Also the global define
+ * @c POSCFG_ENABLE_NANO is set, so you can test from within your sources
+ * if the nano layer is enabled or not. <br><br>
+ *
+ * <p><img src="../pic/layer.png" align="middle" border=0></p><br><br><br>
+ *
+ * @}
  */
 
 #ifndef _PICOOS_H
@@ -540,6 +586,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup errcodes Error Codes
+ * @ingroup userapip
  * Most pico]OS functions return a signed integer value describing the
  * execution status of the function. Generally, a negative value denotes
  * an error, zero means success (no error), and a positive value may
@@ -547,7 +594,7 @@
  * To check if an operation was successful, you need only to test if the
  * returned value is positiv ( status >= 0 ).  For example, if you would
  * like to test if a function failed because the system ran out of memory,
- * you may test the status against the (negativ) value -ENOMEM.
+ * you may test the status against the (negativ) value @c -E_NOMEM.
  * @{
  */
 
@@ -611,7 +658,7 @@ typedef unsigned MVAR_t   UVAR_t;
 #endif
 /** Signed integer.
  * The bit size can be changed by the user
- * by defining <b>MINT_t</b> to something other than <i>int</i>
+ * by defining @b MINT_t to something other than @e int
  * in the pico]OS configuration file.
  * This integer type is used by the operating system e.g.
  * for semaphore counters and timer.
@@ -620,7 +667,7 @@ typedef signed MINT_t     INT_t;
 
 /** Unsigned integer.
  * The bit size can be changed by the user
- * by defining <b>MINT_t</b> to something other than <i>int</i>
+ * by defining @b MINT_t to something other than @e int
  * in the pico]OS configuration file.
  * This integer type is used by the operating system e.g.
  * for semaphore counters and timer.
@@ -636,15 +683,15 @@ typedef unsigned MINT_t   UINT_t;
  * is equal to the width of a void-pointer.
  * This variable type is needed by the operating system for
  * lossless typecasting of void pointers to integers.
- * <b>MPTR_t</b> is a define that is set in the pico]OS configuration
- * file. When <b>MPTR_t</b> is not set, it defaults to <i>long</i>.
+ * @b MPTR_t is a define that is set in the pico]OS configuration
+ * file. When @b MPTR_t is not set, it defaults to @e long.
  */
 typedef unsigned MPTR_t   MEMPTR_t;
 
 #if (DOX!=0) || (POSCFG_FEATURE_LARGEJIFFIES == 0)
 /** Signed type of JIF_t. */
 typedef VAR_t             SJIF_t;
-/** Timer counter type. Can be <b>UVAR_t</b> or <b>UINT_t</b>. */
+/** Timer counter type. Can be @b UVAR_t or @b UINT_t. */
 typedef UVAR_t            JIF_t;
 #else
 typedef INT_t             SJIF_t;
@@ -706,13 +753,15 @@ typedef struct POSLISTHEAD POSLISTHEAD_t;
  * Task environment structure.
  * Most members of this structure are private, and are hidden from the user.
  * The user can add its own members to the structure. For this purpose the
- * user must define the macro <b>POS_USERTASKDATA</b> in the pico]OS
+ * user must define the macro @b POS_USERTASKDATA in the pico]OS
  * configuration file. Here is an example of this macro:<br>
- * 
- * #define POS_USERTASKDATA \ <br>
- * &nbsp; &nbsp; void  *stackptr; \ <br>
- * &nbsp; &nbsp; unsigned short  stack[FIXED_STACK_SIZE]; \ <br>
- * &nbsp; &nbsp; int   errno;<br>
+ *
+ * @code
+ * #define POS_USERTASKDATA \
+ *   void            *stackptr; \
+ *   unsigned short  stack[FIXED_STACK_SIZE]; \
+ *   int             errno;
+ * @endcode
  *
  * Note that the stackptr variable is required by most of the architecture
  * ports. The stack array is an example of how to include the stack frame
@@ -828,6 +877,7 @@ VAR_t*  _errno_p(void);
  *-------------------------------------------------------------------------*/
 
 /** @defgroup port pico]OS Porting Information
+ * @ingroup intro
  * <h3>General Information</h3>
  * <h4>Choose the best type of stack management</h4>
  * The operating system can be easily ported to other architectures,
@@ -887,7 +937,7 @@ VAR_t*  _errno_p(void);
  * must continue scanning the leftmost bit (wrap around), so all bits
  * of the field are scanned.<br>
  * It is possible to implement the findbit mechanism as look up table.
- * For this purpose you can define the macro <b>FINDBIT</b>. Please see the
+ * For this purpose you can define the macro @b FINDBIT. Please see the
  * header file picoos.h (search for the word ::POSCFG_FBIT_USE_LUTABLE)
  * and the source file fbit_gen.c for details.<br>
  *
@@ -1215,13 +1265,19 @@ void        c_pos_intExit(void);             /* picoos.c */
  *
  * A timer ISR could look like this:<br>
  *
+ * @code
  * PUSH ALL; // push all registers to stack<br>
- * if (posInInterrupt_g == 0) saveStackptrToCurrentTaskEnv();<br>
- * c_pos_intEnter();<br>
- * c_pos_timerInterrupt();<br>
- * c_pos_intExit();<br>
+ *
+ * if (posInInterrupt_g == 0)
+ *   saveStackptrToCurrentTaskEnv();
+ *
+ * c_pos_intEnter();
+ * c_pos_timerInterrupt();
+ * c_pos_intExit();
+ *
  * PULL ALL; // pull all registers from stack<br>
- * RETI; // return from interrupt<br>
+ * RETI;     // return from interrupt<br>
+ * @endcode
  *
  * @note    Any other ISR looks like this, only the function
  *          ::c_pos_timerInterrupt is replaced by an user function.<br>
@@ -1243,7 +1299,8 @@ void        c_pos_timerInterrupt(void);      /* picoos.c */
  *  PROTOTYPES OF EXPORTED FUNCTIONS  (USER API)
  *-------------------------------------------------------------------------*/
 
-/** @defgroup task User API: Task Control Functions
+/** @defgroup task Task Control Functions
+ * @ingroup userapip
  * @{
  */
 
@@ -1529,7 +1586,8 @@ POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
 /*-------------------------------------------------------------------------*/
 
 #if (DOX!=0) || (SYS_FEATURE_EVENTS != 0)
-/** @defgroup sema User API: Semaphore Functions
+/** @defgroup sema Semaphore Functions
+ * @ingroup userapip
  * Semaphores are basically used for task synchronization.
  * Task synchronization means that only a defined number of tasks can
  * execute a piece of code. Usually, a semaphore is initialized with
@@ -1644,7 +1702,8 @@ VAR_t       posSemaWait(POSSEMA_t sema, UINT_t timeoutticks);
 /*-------------------------------------------------------------------------*/
 
 #if (DOX!=0) || (POSCFG_FEATURE_MUTEXES != 0)
-/** @defgroup mutex User API: Mutex Functions
+/** @defgroup mutex Mutex Functions
+ * @ingroup userapip
  * Mutexes are used for task synchronization. A source code
  * area that is protected by a mutex can only be executed by
  * one task at the time. The mechanism is comparable with
@@ -1731,7 +1790,8 @@ VAR_t       posMutexUnlock(POSMUTEX_t mutex);
 /*-------------------------------------------------------------------------*/
 
 #if (DOX!=0) || (POSCFG_FEATURE_MSGBOXES != 0)
-/** @defgroup msg User API: Message Box Functions
+/** @defgroup msg Message Box Functions
+ * @ingroup userapip
  * Message boxes are a mechanism that is used for inter-process or,
  * in the case of pico]OS, inter-task communication. All tasks
  * can post messages to each other, and the receiving task will
@@ -1866,7 +1926,8 @@ void*       posMessageWait(UINT_t timeoutticks);
 /*-------------------------------------------------------------------------*/
 
 #if (DOX!=0) || (POSCFG_FEATURE_FLAGS != 0)
-/** @defgroup flag User API: Flag Functions
+/** @defgroup flag Flag Functions
+ * @ingroup userapip
  * Flags are one-bit semaphores. They can be used to simulate events.
  * A thread can simultaneousely wait for multiple flags to be set,
  * so it is possible to post multiple events to this thread.
@@ -1962,7 +2023,8 @@ VAR_t       posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
 
 /*-------------------------------------------------------------------------*/
 
-/** @defgroup timer User API: Timer Functions
+/** @defgroup timer Timer Functions
+ * @ingroup userapip
  * A timer object is a counting variable that is counted down by the
  * system timer interrupt tick rate. If the variable reaches zero,
  * a semaphore, that is bound to the timer, will be signaled.
@@ -2109,7 +2171,8 @@ VAR_t       posTimerFired(POSTIMER_t tmr);
 /*-------------------------------------------------------------------------*/
 
 #if (DOX!=0) || (POSCFG_FEATURE_SOFTINTS != 0)
-/** @defgroup sint User API: Software Interrupt Functions
+/** @defgroup sint Software Interrupt Functions
+ * @ingroup userapip
  * pico]OS has a built in mechanism to simulate software interrupts.
  * For example, software interrupts can be used to connect hardware
  * interrupts, that are outside the scope of pico]OS, to the realtime
@@ -2194,7 +2257,8 @@ VAR_t       posSoftIntDelHandler(UVAR_t intno);
 /*-------------------------------------------------------------------------*/
 
 #if (DOX!=0) || (POSCFG_FEATURE_ATOMICVAR != 0)
-/** @defgroup atomic User API: Atomic Variables
+/** @defgroup atomic Atomic Variables
+ * @ingroup userapip
  * Atomic variables are variables that can be accessed in an atomic manner,
  * that means a read-modify-write instruction is done in virtually one
  * single cycle. For example, the atomic access to a variable is necessary
@@ -2263,7 +2327,8 @@ INT_t       posAtomicSub(POSATOMIC_t *var, INT_t value);
 /*-------------------------------------------------------------------------*/
 
 #if (DOX!=0) || (POSCFG_FEATURE_LISTS != 0)
-/** @defgroup lists User API: Lists
+/** @defgroup lists Lists
+ * @ingroup userapip
  * Lists are multifunctional, often they are used for buffer queues or
  * other elements that need to be listed. pico]OS provides a set of
  * functions for managing nonblocking and blocking lists. <br>
@@ -2405,7 +2470,7 @@ void        posListTerm(POSLISTHEAD_t *listhead);
  * @param   type    type of the data structure where ::POSLIST_t is
  *                  an element from.
  * @param   member  the member name of the list element ::POSLIST_t
- *                  in the structure <i>type</i>.
+ *                  in the structure @e type.
  * @returns a pointer to the data structure where the list element
  *          is a member from.
  */
@@ -2496,7 +2561,7 @@ void        posListTerm(POSLISTHEAD_t *listhead);
  * @param   type        type of your data structure where ::POSLIST_t is
  *                      an element from.
  * @param   listmember  the member name of the list element ::POSLIST_t
- *                      in your data structure <i>type</i>.
+ *                      in your data structure @e type.
  * @note    When using this macro you must pay attention about task
  *          synchronization. You may need to protect all list operations by
  *          a semaphore to ensure list integrity while executing this loop.

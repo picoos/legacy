@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.3 2004/03/07 15:08:52 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.4 2004/03/14 18:54:11 dkuschel Exp $
  */
 
 
@@ -50,7 +50,8 @@
  *  ARCHITECTURE / CPU SPECIFIC SETTINGS
  *-------------------------------------------------------------------------*/
 
-/** @defgroup arch Configuration: Architecture / CPU Specific Settings
+/** @defgroup arch Architecture / CPU Specific Settings
+ * @ingroup configp
  * @{
  */
 
@@ -186,7 +187,8 @@
  *  LOCKING (DISABLE INTERRUPTS IN CRITICAL SECTIONS) 
  *-------------------------------------------------------------------------*/
 
-/** @defgroup lock Configuration: Disable / Enable Interrupts
+/** @defgroup lock Disable / Enable Interrupts
+ * @ingroup configp
  * The operating system must be able to disable the interrupts on the
  * processor for a short time to get exclusive access to internal data
  * structures. There are three possible ways to solve this:<br>
@@ -275,7 +277,8 @@
  *  FINDBIT - DEFINITIONS FOR GENERIC FILE fbit_gen.c
  *-------------------------------------------------------------------------*/
 
-/** @defgroup findbit Configuration: Generic Findbit
+/** @defgroup findbit Generic Findbit
+ * @ingroup configp
  * The pico]OS is shipped with a generic file that implements variouse
  * methods for finding the first and least significant bit set.
  * This section contains switches for configuring the file fbit_gen.c.
@@ -323,7 +326,8 @@
  *  PORT DEPENDENT NANO LAYER CONFIGURATION
  *-------------------------------------------------------------------------*/
 
-/** @defgroup portnlcfg Configuration: Nano Layer Port
+/** @defgroup portnlcfg Nano Layer Port
+ * @ingroup configp
  * This section is used to configure port dependent
  * settings for the nano layer. (file port.h)
  * @{
