@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: compile.mak,v 1.1.1.1 2004/02/16 20:11:21 smocz Exp $
+#  $Id: compile.mak,v 1.2 2004/03/14 18:52:59 dkuschel Exp $
 
 
 # Compile files
@@ -55,8 +55,8 @@ DIR_SRC3 = $(strip $(word 3,$(SRCDIRS)))
 DIR_SRC4 = $(strip $(word 4,$(SRCDIRS)))
 
 # Place include/define options here
-CINCLUDES += $(DIR_INC) $(DIR_CONFIG) $(DIR_PORT)
-AINCLUDES += $(DIR_INC) $(DIR_CONFIG) $(DIR_PORT)
+CINCLUDES += $(DIR_INC) $(DIR_CONFIG) $(DIR_PORT) $(DIR_USRINC)
+AINCLUDES += $(DIR_INC) $(DIR_CONFIG) $(DIR_PORT) $(DIR_USRINC)
 CINCS = $(call adjpath,$(addprefix $(OPT_CC_INC),$(CINCLUDES)))
 CDEFS = $(addprefix $(OPT_CC_DEF),$(CDEFINES))
 AINCS = $(call adjpath,$(addprefix $(OPT_AS_INC),$(AINCLUDES)))
