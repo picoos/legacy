@@ -15,7 +15,8 @@ pico]OS root directory, and every platform port comes with a makefile
 that teaches the platform dependent environment to the make system. @n
 
 The makefiles were tested with GNU make 3.80 @n
-
+For MS Windows platforms, you can download a Windows version of make
+from http://mingw.sourceforge.net/download.shtml @n
 
 
 @n                 <h3> Compiling pico]OS </h3>
@@ -32,7 +33,7 @@ specifies the destination port. For example, a valid make call would look
 like this (at the DOS prompt): @n
 
 @code
-C:\picoos-0.7.0> gmake all PORT=6502
+C:\picoos-0.9.1> gmake all PORT=6502
 @endcode
 
 This will build pico]OS for the 6502 processor family. After the successful
@@ -91,17 +92,22 @@ need to perform the following steps: @n
 25  SRC_OBJ =
 26  SRC_LIB =
 27
-28  # Set the directory that contains the configuration header files
-29  DIR_CONFIG =
-30
-31  # ---------------------------------------------------------------------------
+28  # Set the directory that contains the configuration header files.
+29  # If this variable is not set, the default configuration files will be
+30  # taken from the port/default directory.
+31  DIR_CONFIG = $(CURRENTDIR)
 32
-33  # Build an executable
-34  include $(MAKE_OUT)
+33  # Set the output directory for the generated binaries
+34  DIR_OUTPUT = $(CURRENTDIR)/bin
+35
+36  # ---------------------------------------------------------------------------
+37
+38  # Build an executable
+39  include $(MAKE_OUT)
 
 @endcode
 
-The lines 15, 16, 21, 24 and 34 are mandatory. The @c PORT variable may also
+The lines 15, 16, 21, 24 and 39 are mandatory. The @c PORT variable may also
 be set at the command line when make is invoked, even like the @c BUILD mode.
 @c RELROOT sets the relative way to the pico]OS root directory.
 In line 12 you can enable the nano layer of pico]OS that is available with
@@ -115,16 +121,19 @@ library. @c SRC_TXT specifies a list of sourcecode files (in textual form).
 libraries that shall be linked to the executable. If your application uses
 an other configuration than the default, you can place your own configuration
 files @c poscfg.h and @c noscfg.h into your project directory. You must then
-set @c DIR_CONFIG (line 29) to the place where the configuration files are
+set @c DIR_CONFIG (line 31) to the place where the configuration files are
 located. Note that this path is absolute to the pico]OS root, so if your
-project directory is <tt>picoos-0.7.0/myproject</tt>, you would set
-<tt>DIR_CONFIG = myproject</tt>. Finally, the line 34 includes the makefile
-that starts the build process. @n
+project directory is <tt>picoos-0.9.1/myproject</tt>, you would set
+<tt>DIR_CONFIG = myproject</tt>. To make things easier, the pre-defined
+variable @c CURRENTDIR points always to the current directory.
+In line 34 you may specify your own output directory for the generated
+binaries. If you do not set this variable, the binaries will be saved in
+the directory <tt>picoos-0.9.1/out/portname/rel_or_deb/</tt>.
+Finally, the line 39 includes the makefile that starts the
+build process. @n
 To build your application, simply invoke make with the target @c all to
-generate the executable. The executable is then stored in the directory
-<tt>picoos-0.7.0/out</tt>.
-The makefile supports also the target @c clean that cleans your
-last build again. @n
+generate the executable. The makefile supports also the target @c clean
+that cleans your last build again. @n
 
 
 
