@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.6 2004/05/08 19:52:38 smocz Exp $
+ * CVS-ID $Id: port.h,v 1.7 2004/05/09 21:22:17 smocz Exp $
  */
 
 
@@ -370,41 +370,6 @@ extern uint8_t isrStackMem_g[];
     )
 
 /**
- * Save the stack pointer (SP) in posCurrentTask_g->stackptr
- */
-#define STORE_STACK_POINTER(void) \
-    __asm__ __volatile__ ( \
-        "in     %A0, __SP_L__"      "\n\t" \
-        "in     %B0, __SP_H__"      "\n\t" \
-        : "=&r" (posCurrentTask_g->stackptr) \
-        :  \
-        : "memory" \
-    )
-
-/**
- * Put the stack pointer to the end of the dedicated memory arry.
- * Note: The stack will grow down.
- */
-#define SP_TO_DEDICATED_STACK(void) \
-    __asm__ __volatile__ ( \
-        "out    __SP_L__, %A0"      "\n\t" \
-        "out    __SP_H__, %B0"      "\n\t" \
-        : \
-        : "r" (isrStackMem_g + ISR_STACK_SIZE -1 ) \
-    )
-
-/**
- * Restore the stack pointer (SP) = posCurrentTask_g->stackptr
- */
-#define RESTORE_STACK_POINTER(void) \
-    __asm__ __volatile__ ( \
-        "out    __SP_L__, %A0"      "\n\t" \
-        "out    __SP_H__, %B0"      "\n\t" \
-        : \
-        : "r" (posCurrentTask_g->stackptr) \
-    )
-
-/**
  * This macro is used to define an interrupt service routine for using
  * API functions from picoos.
  * The macro generate the apropriated frame for that and delegates
@@ -431,15 +396,13 @@ void signame (void) __attribute__ ((signal, naked));        \
 void signame (void) {                   \
     SAVE_CONTEXT();                     \
     if (posInInterrupt_g == 0) {        \
-       STORE_STACK_POINTER();           \
-       SP_TO_DEDICATED_STACK();         \
+       posCurrentTask_g->stackptr = (void*)SP; \
+       SP = (uint16_t)(isrStackMem_g + ISR_STACK_SIZE -1); \
     }                                   \
     c_pos_intEnter();                   \
     handler();                          \
     c_pos_intExit();                    \
-    if (posInInterrupt_g == 0) {        \
-        RESTORE_STACK_POINTER();        \
-    }                                   \
+    SP = (uint16_t)posCurrentTask_g->stackptr; \
     RESTORE_CONTEXT();                  \
     __asm__ __volatile__("reti");       \
 }                                       \
