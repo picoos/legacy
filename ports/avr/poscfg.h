@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.1.1.1 2004/02/16 20:11:30 smocz Exp $
+ * CVS-ID $Id: poscfg.h,v 1.2 2004/02/21 14:34:35 dkuschel Exp $
  */
 
 
@@ -81,7 +81,7 @@
  * should be set as small as possible to decrease memory usage.
  * Note that the OS has a built in idle task that also needs a task structure.
  */
-#define POSCFG_MAX_TASKS        4
+#define POSCFG_MAX_TASKS        6
 
 /** Maximum count of events.
  * This define sets the maximum count of event data structures which can be
