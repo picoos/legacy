@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.13 2004/06/16 05:47:51 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.14 2005/01/03 16:38:54 dkuschel Exp $
  *
  */
 
@@ -80,6 +80,7 @@
  *    Minimum configuration (4 tasks): 4.6kb code, 4.7kb data
  *  - PowerPC: IBM PPC440  (GNU C and MetaWare compiler supported)
  *  - AVR (GNU C compiler supported)
+ *  - ARM (SAMSUNG S3C2510A CPU / ARM940T core)
  *
  *
  * <br><br>
