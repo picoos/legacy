@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.8 2005/01/03 16:27:48 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.9 2005/01/10 21:54:08 dkuschel Exp $
  */
 
 
@@ -108,6 +108,9 @@ typedef union EVENT {
     TBITS_t      pend;
 #if POSCFG_FEATURE_MUTEXES != 0
     POSTASK_t    task;
+#endif
+#ifdef POS_DEBUGHELP
+    struct PICOEVENT deb;
 #endif
   } e;
 } *EVENT_t;
@@ -316,6 +319,21 @@ static void      pos_listRemove(POSLIST_t *listelem);
  * MACROS
  *-------------------------------------------------------------------------*/
 
+#ifndef POS_IRQ_DISABLE_ALL
+#define POS_IRQ_DISABLE_ALL  POS_SCHED_LOCK
+#define POS_IRQ_ENABLE_ALL   POS_SCHED_UNLOCK
+#else
+#define HAVE_IRQ_DISABLE_ALL
+#endif
+
+#ifdef POS_DEBUGHELP
+#define tasktimerticks(task)  (task)->deb.timeout
+#define cleartimerticks(task) (task)->deb.timeout = 0
+#else
+#define tasktimerticks(task)  (task)->ticks
+#define cleartimerticks(task) do { } while(0)
+#endif
+
 #if (POSCFG_FEATURE_YIELD != 0) && \
     (POSCFG_ROUNDROBIN != 0) && (SYS_TASKTABSIZE_Y != 1)
 #if (MVAR_BITS == 8)
@@ -392,17 +410,23 @@ static UVAR_t posZeroMask_g[7] = {0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80};
 
 
 #if SYS_FEATURE_EVENTS != 0
-#if (POSCFG_FASTCODE == 0) && (SYS_EVENTS_USED != 0)
+#if ((POSCFG_FASTCODE==0) || defined(POS_DEBUGHELP)) && (SYS_EVENTS_USED!=0)
 
 static void pos_eventAddTask(EVENT_t ev, POSTASK_t task);
 static void pos_eventAddTask(EVENT_t ev, POSTASK_t task)
 {
+#ifdef POS_DEBUGHELP
+  task->deb.event = &ev->e.deb;
+#endif
   pos_setTableBit(&ev->e.pend, task);
 }
 
 static void pos_eventRemoveTask(EVENT_t ev, POSTASK_t task);
 static void pos_eventRemoveTask(EVENT_t ev, POSTASK_t task)
 {
+#ifdef POS_DEBUGHELP
+  task->deb.event = NULL;
+#endif
   pos_delTableBit(&ev->e.pend, task);
 }
 
@@ -486,6 +510,14 @@ static void pos_removeFromTimerList(TIMER_t *timer)
  * PRIVATE FUNCTIONS
  *-------------------------------------------------------------------------*/
 
+#ifdef POS_DEBUGHELP
+void posdeb_setEventName(void *event, const char *name)
+{
+  EVENT_t ev = (EVENT_t) event;
+  if (ev != NULL) ev->e.deb.name = name;
+}
+#endif
+
 #if POSCFG_FEATURE_LISTS != 0
 #if POSCFG_FEATURE_LISTJOIN != 0
 static void pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
@@ -517,6 +549,9 @@ static void pos_idletask(void *arg)
   for(;;)
   {
     POS_SCHED_LOCK;
+#ifdef POS_DEBUGHELP
+    posCurrentTask_g->deb.state = task_suspended;
+#endif
     pos_schedule();
     POS_SCHED_UNLOCK;
     HOOK_IDLETASK
@@ -534,20 +569,38 @@ static void pos_idletask(void *arg)
 static void pos_execSoftIntQueue(void)
 {
   register UVAR_t intno;
-
+#ifdef POS_DEBUGHELP
+  enum PTASKSTATE sst = posCurrentTask_g->deb.state;
+#endif
+#ifdef HAVE_IRQ_DISABLE_ALL
+  POS_LOCKFLAGS;
+  POS_IRQ_DISABLE_ALL;
+#endif
   ++posInInterrupt_g;
   do
   {
     intno = softintqueue_g[sintIdxOut_g].intno;
     if (softIntHandlers_g[intno] != NULL)
     {
+#ifdef HAVE_IRQ_DISABLE_ALL
+      POS_IRQ_ENABLE_ALL;
+#endif
       (softIntHandlers_g[intno])(softintqueue_g[sintIdxOut_g].param);
+#ifdef HAVE_IRQ_DISABLE_ALL
+      POS_IRQ_DISABLE_ALL;
+#endif
     }
     if (++sintIdxOut_g > POSCFG_SOFTINTQUEUELEN)
       sintIdxOut_g = 0;
   }
   while (sintIdxIn_g != sintIdxOut_g);
   --posInInterrupt_g;
+#ifdef HAVE_IRQ_DISABLE_ALL
+  POS_IRQ_ENABLE_ALL;
+#endif
+#ifdef POS_DEBUGHELP
+  posCurrentTask_g->deb.state = sst;
+#endif
 }
 
 #endif /* POSCFG_FEATURE_SOFTINTS */
@@ -586,12 +639,19 @@ static void pos_schedule(void)
 
       if (posCurrentTask_g != posNextTask_g)
       {
+#ifdef POS_DEBUGHELP
+        posNextTask_g->deb.state = task_running;
+#endif
         p_pos_softContextSwitch();
       }
 #if POSCFG_FEATURE_INHIBITSCHED != 0
     }
 #endif
   }
+#ifdef POS_DEBUGHELP
+  if (posRunning_g != 0)
+    posCurrentTask_g->deb.state = task_running;
+#endif
 }
 
 /*-------------------------------------------------------------------------*/
@@ -606,6 +666,9 @@ static VAR_t pos_sched_event(EVENT_t ev)
 #if POSCFG_FEATURE_SOFTINTS != 0
   if (softIntsPending())
   {
+#ifdef POS_DEBUGHELP
+    posCurrentTask_g->deb.state = task_suspended;
+#endif
     pos_schedule();
   }
 #endif
@@ -735,6 +798,10 @@ void c_pos_intExit(void)
           /* all ctx switch functions need to be called with lock acquired */
           POS_SCHED_LOCK;
 #endif
+#ifdef POS_DEBUGHELP
+          posCurrentTask_g->deb.state = task_suspended;
+          posNextTask_g->deb.state = task_running;
+#endif
           /* Note:
            * The processor does not return from this function call. When
            * this function returns anyway, the architecture port is buggy.
@@ -808,8 +875,8 @@ void c_pos_timerInterrupt(void)
   task = posSleepingTasks_g;
   while (task != NULL)
   {
-    --(task->ticks);
-    if (task->ticks == 0)
+    --tasktimerticks(task);
+    if (tasktimerticks(task) == 0)
     {
       pos_enableTask(task);
 #if SYS_TASKDOUBLELINK != 0
@@ -854,6 +921,9 @@ void posTaskYield(void)
 #if (POSCFG_ROUNDROBIN == 0) || (SYS_TASKTABSIZE_Y == 1)
   POS_LOCKFLAGS;
   POS_SCHED_LOCK;
+#ifdef POS_DEBUGHELP
+  posCurrentTask_g->deb.state = task_suspended;
+#endif
   pos_schedule();
   POS_SCHED_UNLOCK;
 #else
@@ -864,6 +934,9 @@ void posTaskYield(void)
   POS_SCHED_LOCK;
   if (posInInterrupt_g == 0)
   {
+#ifdef POS_DEBUGHELP
+    posCurrentTask_g->deb.state = task_suspended;
+#endif
     pos_doSoftInts();
 #if POSCFG_FEATURE_INHIBITSCHED != 0
     if (posInhibitSched_g == 0)
@@ -907,6 +980,9 @@ void posTaskYield(void)
       }
 #if POSCFG_FEATURE_INHIBITSCHED != 0
     }
+#endif
+#ifdef POS_DEBUGHELP
+    posCurrentTask_g->deb.state = task_running;
 #endif
   }
   POS_SCHED_UNLOCK;
@@ -1019,6 +1095,19 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 #endif
   pos_setTableBit(&posAllocatedTasks_g, task);
   pos_enableTask(task);
+#ifdef POS_DEBUGHELP
+  task->deb.handle = task;
+  task->deb.func   = funcptr;
+  task->deb.name   = NULL;
+  task->deb.state  = task_created;
+  task->deb.next   = picodeb_tasklist;
+  task->deb.prev   = NULL;
+  if (picodeb_tasklist != NULL)
+    picodeb_tasklist->prev = &task->deb;
+  picodeb_tasklist = &task->deb;
+  if (posRunning_g != 0)
+    posCurrentTask_g->deb.state = task_suspended;
+#endif
   pos_schedule();
   POS_SCHED_UNLOCK;
   return task;
@@ -1067,6 +1156,16 @@ void posTaskExit(void)
 #if POSCFG_TASKEXIT_HOOK != 0
   if (task->exithook != NULL)
     (task->exithook)(task, texh_freestackmem);
+#endif
+#ifdef POS_DEBUGHELP
+  if (task->deb.next != NULL)
+    task->deb.next->prev = task->deb.prev;
+  if (task->deb.prev == NULL) {
+    picodeb_tasklist = task->deb.next;
+  } else {
+    task->deb.prev->next = task->deb.next;
+  }
+  task->deb.state = task_notExisting;
 #endif
 #if SYS_TASKSTATE != 0
   task->state = POSTASKSTATE_UNUSED;
@@ -1196,10 +1295,13 @@ void posTaskSleep(UINT_t ticks)
   if (ticks != 0)
   {
     task = posCurrentTask_g;
-    task->ticks = ticks;
+    tasktimerticks(task) = ticks;
     pos_disableTask(task);
     pos_addToSleepList(task);
   }
+#ifdef POS_DEBUGHELP
+  posCurrentTask_g->deb.state = task_sleeping;
+#endif
   pos_schedule();
   POS_SCHED_UNLOCK;
 }
@@ -1230,6 +1332,9 @@ void posTaskSchedUnlock(void)
   if ((posInhibitSched_g == 0) &&
       (posMustSchedule_g != 0))
   {
+#ifdef POS_DEBUGHELP
+    posCurrentTask_g->deb.state = task_suspended;
+#endif
     pos_schedule();
   }
   POS_SCHED_UNLOCK;
@@ -1316,6 +1421,17 @@ POSSEMA_t posSemaCreate(INT_t initcount)
 #if SYS_TASKTABSIZE_Y > 1
     ev->e.pend.ymask = 0;
 #endif
+#ifdef POS_DEBUGHELP
+    ev->e.deb.handle = ev;
+    ev->e.deb.name   = NULL;
+    ev->e.deb.type   = event_semaphore;
+    ev->e.deb.counter= initcount;
+    ev->e.deb.next   = picodeb_eventlist;
+    ev->e.deb.prev   = NULL;
+    if (picodeb_eventlist != NULL)
+      picodeb_eventlist->prev = &ev->e.deb;
+    picodeb_eventlist = &ev->e.deb;
+#endif
 #if SYS_POSTALLOCATE == 0
   }
 #endif
@@ -1340,6 +1456,15 @@ void posSemaDestroy(POSSEMA_t sema)
 #endif
   {
     POS_SCHED_LOCK;
+#ifdef POS_DEBUGHELP
+    if (ev->e.deb.next != NULL)
+      ev->e.deb.next->prev = ev->e.deb.prev;
+    if (ev->e.deb.prev == NULL) {
+      picodeb_eventlist = ev->e.deb.next;
+    } else {
+      ev->e.deb.prev->next = ev->e.deb.next;
+    }
+#endif
     ev->l.next = posFreeEvents_g;
     posFreeEvents_g = ev;
     POS_SCHED_UNLOCK;
@@ -1366,11 +1491,17 @@ VAR_t posSemaGet(POSSEMA_t sema)
   if (ev->e.d.counter > 0)
   {
     --(ev->e.d.counter);
+#ifdef POS_DEBUGHELP
+    ev->e.deb.counter = ev->e.d.counter;
+#endif
   }
   else
   {
     pos_disableTask(task);
     pos_eventAddTask(ev, task);
+#ifdef POS_DEBUGHELP
+    task->deb.state = task_waitingForSemaphore;
+#endif
     pos_schedule();
   }
   POS_SCHED_UNLOCK;
@@ -1384,7 +1515,7 @@ VAR_t posSemaGet(POSSEMA_t sema)
 
 VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
 {
-  register EVENT_t  ev = (EVENT_t) sema;
+  register EVENT_t   ev = (EVENT_t) sema;
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
@@ -1398,6 +1529,9 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
   if (ev->e.d.counter > 0)
   {
     --(ev->e.d.counter);
+#ifdef POS_DEBUGHELP
+    ev->e.deb.counter = ev->e.d.counter;
+#endif
   }
   else
   {
@@ -1408,8 +1542,15 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
         POS_SCHED_UNLOCK;
         return 1;
       }
-      task->ticks = timeoutticks;
+      tasktimerticks(task) = timeoutticks;
       pos_addToSleepList(task);
+#ifdef POS_DEBUGHELP
+      task->deb.state = task_waitingForSemaphoreWithTimeout;
+    }
+    else
+    {
+      task->deb.state = task_waitingForSemaphore;
+#endif
     }
 
     pos_disableTask(task);
@@ -1429,6 +1570,7 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
       }
       else
       {
+        cleartimerticks(task);
         pos_removeFromSleepList(task);
       }
     }
@@ -1454,6 +1596,9 @@ VAR_t posSemaSignal(POSSEMA_t sema)
     if (pos_sched_event(ev) == 0)
     {
       ev->e.d.counter = 1;
+#ifdef POS_DEBUGHELP
+      ev->e.deb.counter = 1;
+#endif
     }
   }
   else
@@ -1461,6 +1606,9 @@ VAR_t posSemaSignal(POSSEMA_t sema)
     if (ev->e.d.counter != (((UINT_t)~0) >> 1))
     {
       ++(ev->e.d.counter);
+#ifdef POS_DEBUGHELP
+      ev->e.deb.counter = ev->e.d.counter;
+#endif
     }
   }
   POS_SCHED_UNLOCK;
@@ -1479,7 +1627,13 @@ VAR_t posSemaSignal(POSSEMA_t sema)
 
 POSMUTEX_t posMutexCreate(void)
 {
+#ifdef POS_DEBUGHELP
+  EVENT_t ev = (EVENT_t) posSemaCreate(1);
+  if (ev != NULL) ev->e.deb.type = event_mutex;
+  return (POSMUTEX_t) ev;
+#else
   return (POSMUTEX_t) posSemaCreate(1);
+#endif
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1509,6 +1663,9 @@ VAR_t posMutexTryLock(POSMUTEX_t mutex)
   if (ev->e.task == task)
   {
     --(ev->e.d.counter);
+#ifdef POS_DEBUGHELP
+    ev->e.deb.counter = ev->e.d.counter;
+#endif
   }
   else
   {
@@ -1519,6 +1676,9 @@ VAR_t posMutexTryLock(POSMUTEX_t mutex)
     }
     ev->e.d.counter = 0;
     ev->e.task = task;
+#ifdef POS_DEBUGHELP
+    ev->e.deb.counter = 0;
+#endif
   }
   POS_SCHED_UNLOCK;
   return 0;  /* have lock */
@@ -1540,17 +1700,26 @@ VAR_t posMutexLock(POSMUTEX_t mutex)
   if (ev->e.task == task)
   {
     --(ev->e.d.counter);
+#ifdef POS_DEBUGHELP
+    ev->e.deb.counter = ev->e.d.counter;
+#endif
   }
   else
   {
     if (ev->e.d.counter > 0)
     {
       ev->e.d.counter = 0;
+#ifdef POS_DEBUGHELP
+      ev->e.deb.counter = 0;
+#endif
     }
     else
     {
       pos_disableTask(task);
       pos_eventAddTask(ev, task);
+#ifdef POS_DEBUGHELP
+      task->deb.state = task_waitingForMutex;
+#endif
       pos_schedule();
     }
     ev->e.task = task;
@@ -1575,11 +1744,17 @@ VAR_t posMutexUnlock(POSMUTEX_t mutex)
     if (pos_sched_event(ev) == 0)
     {
       ev->e.d.counter = 1;
+#ifdef POS_DEBUGHELP
+      ev->e.deb.counter = 1;
+#endif
     }
   }
   else
   {
     ++(ev->e.d.counter);
+#ifdef POS_DEBUGHELP
+    ev->e.deb.counter = ev->e.d.counter;
+#endif
   }
   POS_SCHED_UNLOCK;
   return E_OK;
@@ -1773,9 +1948,15 @@ VAR_t posMessageSend(void *buf, POSTASK_t taskhandle)
     if ((posMustSchedule_g != 0) &&
         (taskhandle->idx_y >= posCurrentTask_g->idx_y))
     {
+#ifdef POS_DEBUGHELP
+      posCurrentTask_g->deb.state = task_suspended;
+#endif
       pos_schedule();
     }
 #else
+#ifdef POS_DEBUGHELP
+    posCurrentTask_g->deb.state = task_suspended;
+#endif
     pos_schedule();
 #endif
   }
@@ -1808,6 +1989,7 @@ void* posMessageGet(void)
     {
       return NULL;
     }
+    POS_SETEVENTNAME(sem, "taskMessageSem");
     POS_SCHED_LOCK;
     task->msgsem = sem;
   }
@@ -1822,6 +2004,9 @@ void* posMessageGet(void)
     task->msgwait = 1;
     pos_disableTask(task);
     pos_eventAddTask((EVENT_t)task->msgsem, task);
+#ifdef POS_DEBUGHELP
+    task->deb.state = task_waitingForMessage;
+#endif
     pos_schedule();
     mbuf = (MSGBUF_t*) (task->firstmsg);
   }
@@ -1868,6 +2053,7 @@ void* posMessageWait(UINT_t timeoutticks)
     {
       return NULL;
     }
+    POS_SETEVENTNAME(sem, "taskMessageSem");
     POS_SCHED_LOCK;
     task->msgsem = sem;
   }
@@ -1882,8 +2068,15 @@ void* posMessageWait(UINT_t timeoutticks)
   {
     if (timeoutticks != INFINITE)
     {
-      task->ticks = timeoutticks;
+      tasktimerticks(task) = timeoutticks;
       pos_addToSleepList(task);
+#ifdef POS_DEBUGHELP
+      task->deb.state = task_waitingForMessageWithTimeout;
+    }
+    else
+    {
+      task->deb.state = task_waitingForMessage;
+#endif
     }
 
     task->msgwait = 1;
@@ -1900,6 +2093,7 @@ void* posMessageWait(UINT_t timeoutticks)
     if ((timeoutticks != INFINITE) &&
         (task->prev != task))
     {
+      cleartimerticks(task);
       pos_removeFromSleepList(task);
     }
   }
@@ -2132,6 +2326,9 @@ POSFLAG_t posFlagCreate(void)
   ev = (EVENT_t) posSemaCreate(0);
   if (ev != NULL)
   {
+#ifdef POS_DEBUGHELP
+    ev->e.deb.type = event_flags;
+#endif
     ev->e.d.flags = 0;
   }
   return (POSFLAG_t) ev;
@@ -2189,6 +2386,9 @@ VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode)
     {
       pos_disableTask(task);
       pos_eventAddTask(ev, task);
+#ifdef POS_DEBUGHELP
+      task->deb.state = task_waitingForFlag;
+#endif
       pos_schedule();
     }
     while (ev->e.d.flags == 0);
@@ -2225,8 +2425,15 @@ VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
   {
     if (timeoutticks != INFINITE)
     {
-      task->ticks = timeoutticks;
+      tasktimerticks(task) = timeoutticks;
       pos_addToSleepList(task);
+#ifdef POS_DEBUGHELP
+      task->deb.state = task_waitingForFlagWithTimeout;
+    }
+    else
+    {
+      task->deb.state = task_waitingForFlag;
+#endif
     }
 
     do
@@ -2243,6 +2450,7 @@ VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
       pos_eventRemoveTask(ev, task);
       if (task->prev != task)
       {
+        cleartimerticks(task);
         pos_removeFromSleepList(task);
       }
     }
@@ -2272,7 +2480,7 @@ void posSoftInt(UVAR_t intno, UVAR_t param)
 
   if (intno < POSCFG_SOFTINTERRUPTS)
   {
-    POS_SCHED_LOCK;
+    POS_IRQ_DISABLE_ALL;
     next = sintIdxIn_g + 1;
     if (next > POSCFG_SOFTINTQUEUELEN)
       next = 0;
@@ -2282,7 +2490,7 @@ void posSoftInt(UVAR_t intno, UVAR_t param)
       softintqueue_g[sintIdxIn_g].param = param;
       sintIdxIn_g = next;    
     }
-    POS_SCHED_UNLOCK;
+    POS_IRQ_ENABLE_ALL;
   }
 }
 
@@ -2480,6 +2688,7 @@ POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
         listhead->sema = posSemaCreate(0);
         if (listhead->sema == NULL)
           return NULL;
+        POS_SETEVENTNAME(listhead->sema, "listSem");
 #if POSCFG_FEATURE_SEMAWAIT != 0
         POS_SCHED_LOCK;
 #endif
@@ -2811,6 +3020,8 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
   msgAllocWaitReq_g = 0;
   msgAllocSyncSem_g = posSemaCreate(1);
   msgAllocWaitSem_g = posSemaCreate(0);
+  POS_SETEVENTNAME(msgAllocSyncSem_g, "msgAllocSync");
+  POS_SETEVENTNAME(msgAllocWaitSem_g, "msgAllocWait");
 #if ((POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) < 2) && (SYS_POSTALLOCATE != 0)
   if ((msgAllocSyncSem_g == NULL) || (msgAllocWaitSem_g == NULL))
     return;

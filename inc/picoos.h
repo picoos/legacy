@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.16 2005/01/10 21:50:29 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.17 2005/01/11 19:54:35 dkuschel Exp $
  *
  */
 
@@ -21,7 +21,7 @@
  * pico]OS is a highly configurable and very fast real time operating
  * system. It targets a wide range of architectures, from the small
  * 8 bit processors with very low memory till huge architectures
- * like 32 bit processors with lots of memory.<br><br><br>
+ * like 32 bit processors with lots of memory.@n@n@n
  *
  * @subsection features Features
  * pico]OS is currently divided into two layer. The <b>pico-layer</b>
@@ -59,8 +59,9 @@
  * <b>Miscellaneous:</b>
  *  - atomic variables
  *  - blocking and nonblocking lists
+ *  - debugging support allows access to internal structures
  *
- * <br>
+ * @n
  * The optional <b>nano-layer</b> supports:
  *
  *  - Bottom Halfs for interrupt service routines
@@ -70,12 +71,13 @@
  *  - Named tasks, semaphores, mutexes and timer
  *  - CPU usage measurement
  *
- * <br><br>
+ * @n@n
  * @subsection ports Available Ports
  *
  * Currently, ports to the following platforms are available:
  *
  *  - Intel 80x86 in real mode, the executable is loadable from DOS
+ *  - MS Windows 32bit port, usefull for software development and debugging
  *  - 6502 / 65c02 / 6510 series, port for Commodore 64 available.
  *    Minimum configuration (4 tasks): 4.6kb code, 4.7kb data
  *  - PowerPC: IBM PPC440  (GNU C and MetaWare compiler supported)
@@ -83,7 +85,7 @@
  *  - ARM (SAMSUNG S3C2510A CPU / ARM940T core)
  *
  *
- * <br><br>
+ * @n@n
  * @subsection files Files
  *
  * The pico]OS Real Time Operating System consists of only
@@ -116,15 +118,15 @@
  *       - User supplied file (optional). This is the architecture specific
  *         assembler code of the platform port.
  * 
- * <br><br>
+ * @n@n
  * @section license License
  *
- *  Copyright (c) 2004-2005, Dennis Kuschel. <br>
- *  All rights reserved. <br>
+ *  Copyright (c) 2004-2005, Dennis Kuschel. @n
+ *  All rights reserved. @n
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
- *  are met: <br>
+ *  are met: @n
  *
  *   -# Redistributions of source code must retain the above copyright
  *      notice, this list of conditions and the following disclaimer.
@@ -145,18 +147,18 @@
  *  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
  *  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- *  OF THE POSSIBILITY OF SUCH DAMAGE. <br>
+ *  OF THE POSSIBILITY OF SUCH DAMAGE. @n
  *
  *
- * <br><br>
+ * @n@n
  * @section cont Contact Information
- * Dennis Kuschel <br>
- * Emanuel-Backhaus-Strasse 20 <br>
- * 28277 Bremen <br>
- * GERMANY <br>
+ * Dennis Kuschel @n
+ * Emanuel-Backhaus-Strasse 20 @n
+ * 28277 Bremen @n
+ * GERMANY @n
  *
- * mail: dennis_k@freenet.de <br>
- * web:  http://picoos.sourceforge.net <br>
+ * mail: dennis_k@freenet.de @n
+ * web:  http://picoos.sourceforge.net @n
  *
  * (C) 2004-2005 Dennis Kuschel
  */
@@ -197,13 +199,13 @@
  * is disabled by default to lower the memory usage for small devices.
  * There are two ways to enable the nano layer: First, if you run your
  * makefile, you can add the parameter @c NANO=1 to the make command line.
- * Second, you can set this parameter in your application makefile. <br>
+ * Second, you can set this parameter in your application makefile. @n
  * If the parameter @c NANO is set to 1, the makesystem will automatically
  * compile and link the nano layer source files. Also the global define
  * @c POSCFG_ENABLE_NANO is set, so you can test from within your sources
- * if the nano layer is enabled or not. <br><br>
+ * if the nano layer is enabled or not. @n@n
  *
- * <p><img src="../pic/layer.png" align="middle" border=0></p><br><br><br>
+ * <p><img src="../pic/layer.png" align="middle" border=0></p>@n@n@n
  *
  * @}
  */
@@ -212,8 +214,8 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0091
-#define POS_VER_S           "0.9.1"
+#define POS_VER_N           0x0092
+#define POS_VER_S           "0.9.2"
 #define POS_COPYRIGHT       "(c) 2004-2005, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
@@ -431,7 +433,14 @@
 #error  POSCFG_FEATURE_LISTJOIN not defined
 #endif
 #endif
-
+#ifndef POSCFG_FEATURE_DEBUGHELP
+#define POSCFG_FEATURE_DEBUGHELP  0
+#endif
+#ifdef _DBG
+#if POSCFG_FEATURE_DEBUGHELP
+#define POS_DEBUGHELP
+#endif
+#endif
 
 /* parameter range checking */
 #if (POSCFG_DYNAMIC_MEMORY != 0) && (POSCFG_DYNAMIC_REFILL != 0)
@@ -618,25 +627,25 @@
  * @{
  */
 
-/** Error Code: No Error (the operation was successful) */
+/** @brief  No Error (the operation was successful) */
 #define E_OK        0
 
-/** Error Code: The operation failed. */
+/** @brief  The operation failed. */
 #define E_FAIL      1
 
-/** Error Code: The System ran out of memory. */
+/** @brief  The System ran out of memory. */
 #define E_NOMEM     2
 
-/** Error Code: The given argument is wrong or inacceptable. */
+/** @brief  The given argument is wrong or inacceptable. */
 #define E_ARG       3
 
-/** Error Code: The operation is forbidden at the current operation stage. */
+/** @brief  The operation is forbidden at the current operation stage. */
 #define E_FORB      4
 
-/** Error Code: For query operations: End of query (no more elements) */
+/** @brief  For query operations: End of query (no more elements) */
 #define E_NOMORE    5
 
-/** Error Code: The query operation was not successfull */
+/** @brief  The query operation was not successfull */
 #define E_NOTFOUND  6
 
 /** @} */
@@ -665,14 +674,14 @@
  *  DATA TYPES
  *-------------------------------------------------------------------------*/
 
-/** Signed machine variable type.
+/** @brief  Signed machine variable type.
  * This variable type is the fastest for
  * the target architecture.
  * @sa UVAR_t
  */
 typedef signed MVAR_t     VAR_t;
 
-/** Unsigned machine variable type.
+/** @brief  Unsigned machine variable type.
  * This variable type is the fastest for
  * the target architecture.
  * @sa VAR_t
@@ -682,75 +691,99 @@ typedef unsigned MVAR_t   UVAR_t;
 #ifndef MINT_t
 #define MINT_t int
 #endif
-/** Signed integer.
+/** @brief  Signed integer.
+ *
  * The bit size can be changed by the user
- * by defining @b MINT_t to something other than @e int
- * in the pico]OS configuration file.
+ * by defining MINT_t to something other than @e int
+ * in the port configuration file.
  * This integer type is used by the operating system e.g.
  * for semaphore counters and timer.
+ * @sa UINT_t
  */
 typedef signed MINT_t     INT_t;
 
-/** Unsigned integer.
+/** @brief  Unsigned integer.
+ *
  * The bit size can be changed by the user
- * by defining @b MINT_t to something other than @e int
+ * by defining MINT_t to something other than @e int
  * in the pico]OS configuration file.
  * This integer type is used by the operating system e.g.
  * for semaphore counters and timer.
+ * @sa INT_t
  */
 typedef unsigned MINT_t   UINT_t;
 
 #ifndef MPTR_t
 #define MPTR_t long
 #endif
-/** Memory pointer type.
+/** @brief Memory pointer type.
+ *
  * This variable type is an integer with the width
  * of the address lines of memory architecure. The bit width
  * is equal to the width of a void-pointer.
  * This variable type is needed by the operating system for
  * lossless typecasting of void pointers to integers.
- * @b MPTR_t is a define that is set in the pico]OS configuration
- * file. When @b MPTR_t is not set, it defaults to @e long.
+ * ::MPTR_t is a define that is set in the port configuration
+ * file. When ::MPTR_t is not set, it defaults to @e long.
+ * @sa MPTR_t
  */
 typedef unsigned MPTR_t   MEMPTR_t;
 
 #if (DOX!=0) || (POSCFG_FEATURE_LARGEJIFFIES == 0)
-/** Signed type of JIF_t. */
+/** @brief  Signed type of ::JIF_t.
+ * @sa JIF_t
+ */
 typedef VAR_t             SJIF_t;
-/** Timer counter type. Can be @b UVAR_t or @b UINT_t. */
+/** @brief  Timer counter type. Can be ::UVAR_t or ::UINT_t.
+ * @sa SJIF_t
+ */
 typedef UVAR_t            JIF_t;
 #else
 typedef INT_t             SJIF_t;
 typedef UINT_t            JIF_t;
 #endif
 
-/** Generic function pointer. */
+/** @brief  Generic function pointer.
+ * @param arg  optional argument, can be NULL if not used.
+ */
 typedef void (*POSTASKFUNC_t)(void* arg);
 
-/** Software interrupt callback function pointer.
+/** @brief  Software interrupt callback function pointer.
+ *
  * The parameter @e arg is the value that was dropped
  * in the call to ::posSoftInt.
+ * @sa posSoftInt
  */
 typedef void (*POSINTFUNC_t)(UVAR_t arg);
 
 #if (DOX!=0) ||(POSCFG_FEATURE_IDLETASKHOOK != 0)
-/** Idle task function pointer */
+/** @brief  Idle task function pointer */
 typedef void (*POSIDLEFUNC_t)(void);
 #endif
 
-/** Handle to a semaphore object. */
+/** @brief  Handle to a semaphore object.
+ * @sa posSemaCreate, posSemaGet, posSemaWait, posSemaSignal
+ */
 typedef void*  POSSEMA_t;
 
-/** Handle to a mutex object. */
+/** @brief  Handle to a mutex object.
+ * @sa posMutexCreate, posMutexLock, posMutexTryLock, posMutexUnlock
+ */
 typedef void*  POSMUTEX_t;
 
-/** Handle to a flag object. */
+/** @brief  Handle to a flag object.
+ * @sa posFlagCreate, posFlagDestroy, posFlagGet, posFlagSet
+ */
 typedef void*  POSFLAG_t;
 
-/** Handle to a timer object. */
+/** @brief  Handle to a timer object.
+ * @sa posTimerCreate, posTimerDestroy, posTimerSet, posTimerStart
+ */
 typedef void*  POSTIMER_t;
 
-/** Atomic variable. */
+/** @brief  Atomic variable.
+ * @sa posAtomicGet, posAtomicSet, posAtomicAdd, posAtomicSub
+ */
 typedef volatile INT_t  POSATOMIC_t;
 
 #if (DOX!=0) || (POSCFG_FEATURE_LISTS != 0)
@@ -767,23 +800,25 @@ struct POSLIST {
   struct POSLIST        *next;
   struct POSLISTHEAD    *head;
 };
-/** List variable. This variable type is used as
- * running variable of a list or as list link.
+/** @brief  List variable.
+ * This variable type is used as running variable of a list or as list link.
+ * @sa POSLISTHEAD_t, posListInit, posListTerm, posListAdd, posListGet
  */
 typedef struct POSLIST POSLIST_t;
-/** List variable. This variable defines the head
- * of a list.
+/** @brief  List variable.
+ * This variable defines the head of a list.
+ * @sa POSLIST_t, posListInit, posListTerm, posListAdd, posListGet
  */
 typedef struct POSLISTHEAD POSLISTHEAD_t;
 #endif
 
 
-/** 
- * Task environment structure.
+/** @brief  Task environment structure.
+ *
  * Most members of this structure are private, and are hidden from the user.
  * The user can add its own members to the structure. For this purpose the
- * user must define the macro @b POS_USERTASKDATA in the pico]OS
- * configuration file. Here is an example of this macro:<br>
+ * user must define the macro ::POS_USERTASKDATA in the pico]OS
+ * configuration file. Here is an example of this macro:@n
  *
  * @code
  * #define POS_USERTASKDATA \
@@ -837,8 +872,7 @@ extern VAR_t const p_pos_fbittbl_rr[8][256];
  *  GLOBAL VARIABLES
  *-------------------------------------------------------------------------*/
 
-/**
- * Global task variable.
+/** @brief  Global task variable.
  * This variable points to the environment structure of the currently
  * active task.
  * @note  Only the context switch functions ::p_pos_softContextSwitch,
@@ -848,8 +882,7 @@ extern VAR_t const p_pos_fbittbl_rr[8][256];
  */
 POSEXTERN volatile POSTASK_t posCurrentTask_g;
 
-/**
- * Global task variable.
+/** @brief  Global task variable.
  * This variable points to the environment structure of the next task
  * that shall be scheduled.
  * @note  The context switch functions ::p_pos_softContextSwitch and
@@ -859,8 +892,7 @@ POSEXTERN volatile POSTASK_t posCurrentTask_g;
  */
 POSEXTERN volatile POSTASK_t posNextTask_g;
 
-/**
- * Global flag variable.
+/** @brief  Global flag variable.
  * This variable is nonzero when the CPU is currently executing an
  * interrupt service routine.
  * @note  Only the architecture specific ISR functions need to access
@@ -872,8 +904,7 @@ POSEXTERN volatile UVAR_t    posInInterrupt_g;
 POSEXTERN volatile UVAR_t    posInInterrupt_g = 1;
 #endif
 
-/**
- * Global flag variable.
+/** @brief  Global flag variable.
  * This variable is nonzero when the operating system is initialized
  * and running.
  * @note  Only the architecture specific ISR functions need to access
@@ -887,10 +918,10 @@ POSEXTERN volatile UVAR_t    posRunning_g = 0;
 
 
 #if DOX!=0
-/**
- * Unix style error variable.
+/** @brief  Unix style error variable.
  * This variable is global for the currently runnig task.
- * ::POSCFG_FEATURE_ERRNO must be set to 1 to enable this variable.
+ * @note ::POSCFG_FEATURE_ERRNO must be set to 1 to enable this variable.
+ * @sa POSCFG_FEATURE_ERRNO, E_OK
  */
 VAR_t   errno;
 #endif
@@ -919,45 +950,45 @@ POSEXTERN VAR_t* _errno_p(void);
  * that must be adapted to the architecute.
  * Before you start porting the operating system to your architecture,
  * you must choose a stack management type. You have the choice
- * between:<br>
+ * between:@n
  * 
- * ::POSCFG_TASKSTACKTYPE <b>= 0</b><br>
+ * ::POSCFG_TASKSTACKTYPE <b>= 0</b>@n
  * The stack memory is provided by the user. This is the best choice for
- * very small architectures with low memory.<br>
+ * very small architectures with low memory.@n
  *
- * ::POSCFG_TASKSTACKTYPE <b>= 1</b><br>
+ * ::POSCFG_TASKSTACKTYPE <b>= 1</b>@n
  * The stack memory is dynamically allocated by the architecture dependent
  * code of the operating system. The size of the stack frame is variable
  * and can be choosen by the user who creates the task. This is the best
- * choice for big architectures with lots of memory.<br>
+ * choice for big architectures with lots of memory.@n
  * 
- * ::POSCFG_TASKSTACKTYPE <b>= 2</b><br>
+ * ::POSCFG_TASKSTACKTYPE <b>= 2</b>@n
  * The stack memory is dynamically allocated by the architecture dependent
  * code of the operating system. The size of the stack frame is fixed and
  * can not be changed by the user. This may be an alternative to type 0,
- * it is a little bit more user friendly.<br>
+ * it is a little bit more user friendly.@n
  * 
  * Here is a list of the functions that are architecture specific and 
- * must be ported:<br>
+ * must be ported:@n
  * ::p_pos_initTask, ::p_pos_startFirstContext, ::p_pos_softContextSwitch,
- * ::p_pos_intContextSwitch.<br>
+ * ::p_pos_intContextSwitch.@n
  *
  * If you choose ::POSCFG_TASKSTACKTYPE <b>= 2</b> or <b>3</b>, you must
- * also provide the function ::p_pos_freeStack.<br><br><br>
+ * also provide the function ::p_pos_freeStack.@n@n@n
  *
  * <h4>Get more speed with optimized "findbit" function</h4>
  * If your application is critical in performance, you may also provide
  * an assembler version of the function "findbit".
  * There are two different function prototypes possible. The simple
  * prototype for the standard scheduling scheme
- * (::POSCFG_ROUNDROBIN <b>= 0</b>) is<br>
+ * (::POSCFG_ROUNDROBIN <b>= 0</b>) is@n
  *
  * <b>UVAR_t ::p_pos_findbit(const UVAR_t bitfield);</b>
  *
  * The prototype for a findbit function that supports round robin
- * scheduling (::POSCFG_ROUNDROBIN <b>= 1</b>) is<br>
+ * scheduling (::POSCFG_ROUNDROBIN <b>= 1</b>) is@n
  *
- * <b>UVAR_t ::p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset);</b><br>
+ * <b>UVAR_t ::p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset);</b>@n
  *
  * The function gets a bitfield as input, and returns the number of the
  * right most set bit (that is the number of the first lsb that is set).
@@ -967,18 +998,18 @@ POSEXTERN VAR_t* _errno_p(void);
  * right to left, starting with the bit denoted by the offset. The bitfield
  * is seen as circle, when the rightmost bit is not set the function
  * must continue scanning the leftmost bit (wrap around), so all bits
- * of the field are scanned.<br>
+ * of the field are scanned.@n
  * It is possible to implement the findbit mechanism as look up table.
  * For this purpose you can define the macro @b FINDBIT. Please see the
  * header file picoos.h (search for the word ::POSCFG_FBIT_USE_LUTABLE)
- * and the source file fbit_gen.c for details.<br>
+ * and the source file fbit_gen.c for details.@n
  *
- * <br><h3>Assembler Functions</h3>
+ * @n<h3>Assembler Functions</h3>
  * Unfortunately, not the whole operating system can be written in C.
  * The platform port must be written in assembly language. I tried to
  * keep the assembly part of the RTOS as small as possible. But there
  * are three assembly functions left, that are needed for doing
- * the context switching:<br>
+ * the context switching:@n
  *
  *   - ::p_pos_startFirstContext
  *   - ::p_pos_softContextSwitch
@@ -988,13 +1019,13 @@ POSEXTERN VAR_t* _errno_p(void);
  * to cut the task execution time into slices. Hardware interrupts
  * must comply with some conventions to be compatible to pico]OS.
  * So the fourth thing you need to write in assember is a framework
- * for hardware interrupts.<br>
+ * for hardware interrupts.@n
  *
  * The diagram shows the assembler functions in logical structure.
  * At the left side I have drawn a normal interrupt service routine
- * for reference.<br><br><br>
+ * for reference.@n@n@n
  *
- * <p><img src="../pic/portfc1.png" align="middle" border=0></p><br>
+ * <p><img src="../pic/portfc1.png" align="middle" border=0></p>@n
  *
  * The context switching (multitasking) is done by simply swaping the
  * stack frame when an interrupt service routine (eg. the timer interrupt)
@@ -1006,15 +1037,15 @@ POSEXTERN VAR_t* _errno_p(void);
  * stack frame by itself. Note that the second part of this function is
  * equal to the function ::p_pos_intContextSwitch, so the function must be
  * terminated by an return-from-interrupt instruction, even if the
- * function was called from a C-routine.<br>
+ * function was called from a C-routine.@n
  *
  * For completeness, the next diagram shows at its left side how
  * the function ::p_pos_startFirstContext works. Again, this function
  * looks like the lower part of the funtion ::p_pos_intContextSwitch
  * in the diagram above. In the middle you can see how the timer
- * interrupt routine must look like.<br><br><br>
+ * interrupt routine must look like.@n@n@n
  *
- * <p><img src="../pic/portfc2.png" align="middle" border=0></p><br>
+ * <p><img src="../pic/portfc2.png" align="middle" border=0></p>@n
  *
  * There is a special interrupt handling needed when  interrupts are
  * interruptable on your system. To prevent a deadlock situation (that
@@ -1024,7 +1055,7 @@ POSEXTERN VAR_t* _errno_p(void);
  * And only if no other interrupt is running, the ISR must save the
  * stack pointer to the task environment structure where ::posCurrentTask_g
  * points to. This behaviour is shown at the right side in the
- * diagram above.<br>
+ * diagram above.@n
  *
  * Note that interrupt service routines need some stack space to be
  * able to do their work - in the discussed configuration every ISR
@@ -1035,9 +1066,9 @@ POSEXTERN VAR_t* _errno_p(void);
  * set up a special stackframe that is only used by interrupt service
  * routines. The diagram below shows the small changes to the ISRs
  * discussed above. But attention - this method is only applicable on
- * platforms where interrupts can not interrupt each other.<br><br><br>
+ * platforms where interrupts can not interrupt each other.@n@n@n
  *
- * <p><img src="../pic/portfc3.png" align="middle" border=0></p><br>
+ * <p><img src="../pic/portfc3.png" align="middle" border=0></p>@n
  *
  * @{
  */
@@ -1094,9 +1125,9 @@ POSFROMEXT UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset);
  * This function is called from the ::posInit function to initialize
  * the architecture specific part of the operating system.
  * @note    ::POSCFG_CALLINITARCH must be defined to 1
- *          when ::posInit shall call this function.<br>
+ *          when ::posInit shall call this function.@n
  *          This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          A timer interrupt should be initialized in the funcion
  *          ::p_pos_startFirstContext.
  */
@@ -1117,9 +1148,9 @@ POSFROMEXT void p_pos_initArch(void);
  * @param   funcarg     argument that should be passed to the
  *                      first function.
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 0</b>
- *          to have this format of the function compiled in.<br>
+ *          to have this format of the function compiled in.@n
  *          This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          The processor interrupts are disabled when this function
  *          is called.
  */
@@ -1145,9 +1176,9 @@ POSFROMEXT void p_pos_initTask(POSTASK_t task, void *stackstart,
  * @return  zero on success. A negative value should be returned
  *          to denote an error (e.g. out of stack memory).
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 1</b>
- *          to have this format of the function compiled in.<br>
+ *          to have this format of the function compiled in.@n
  *          This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          The processor interrupts are disabled when this function
  *          is called.
  * @sa      p_pos_freeStack
@@ -1155,7 +1186,7 @@ POSFROMEXT void p_pos_initTask(POSTASK_t task, void *stackstart,
 POSFROMEXT VAR_t p_pos_initTask(POSTASK_t task, UINT_t stacksize,
                                 POSTASKFUNC_t funcptr,
                                 void *funcarg);  /* arch_c.c */
-/**
+/*
  * Stack free function.
  * This function is called by the operating system to
  * free a stack frame that was set up by the function
@@ -1164,9 +1195,9 @@ POSFROMEXT VAR_t p_pos_initTask(POSTASK_t task, UINT_t stacksize,
  * example on how to write this function.
  * @param   task  pointer to the task environment structure.
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 1 or 2</b>
- *          to have this format of the function compiled in.<br>
+ *          to have this format of the function compiled in.@n
  *          This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          The processor interrupts are disabled when this function
  *          is called; but the processor may still write some bytes to
  *          the stack frame after this function was called and before
@@ -1193,9 +1224,9 @@ POSFROMEXT void p_pos_freeStack(POSTASK_t task);/* arch_c.c */
  * @return  zero on success. A negative value should be returned
  *          to denote an error (e.g. out of stack memory).
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 2</b>
- *          to have this format of the function compiled in.<br>
+ *          to have this format of the function compiled in.@n
  *          This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          The processor interrupts are disabled when this function
  *          is called.
  * @sa      p_pos_freeStack
@@ -1212,9 +1243,9 @@ POSFROMEXT VAR_t p_pos_initTask(POSTASK_t task, POSTASKFUNC_t funcptr,
  * example on how to write this function.
  * @param   task  pointer to the task environment structure.
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 1 or 2</b>
- *          to have this format of the function compiled in.<br>
+ *          to have this format of the function compiled in.@n
  *          This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          The processor interrupts are disabled when this function
  *          is called.
  * @sa      p_pos_initTask
@@ -1230,7 +1261,7 @@ POSFROMEXT void p_pos_freeStack(POSTASK_t task);/* arch_c.c */
  * See the available port source files for an
  * example on how to write this function.
  * @note    This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          The processor interrupts are disabled when this function
  *          is called.
  * @sa      p_pos_softContextSwitch, p_pos_intContextSwitch
@@ -1246,7 +1277,7 @@ POSFROMEXT void p_pos_startFirstContext(void);   /* arch_c.c */
  * stack memory. See the available port source files for an
  * example on how to write this function.
  * @note    This function is not part of the pico]OS. It must be
- *          provided by the user, since it is architecture specific.<br>
+ *          provided by the user, since it is architecture specific.@n
  *          The processor interrupts are disabled when this function
  *          is called.
  * @sa      p_pos_intContextSwitch, p_pos_startFirstContext
@@ -1292,12 +1323,12 @@ POSEXTERN void c_pos_intExit(void);             /* picoos.c */
  * Timer interrupt control function.
  * This function must be called periodically from within a timer
  * interrupt service routine. The whole system timing is derived
- * from this timer interrupt.<br>
+ * from this timer interrupt.@n
  *
- * A timer ISR could look like this:<br>
+ * A timer ISR could look like this:@n
  *
  * @code
- * PUSH ALL; // push all registers to stack<br>
+ * PUSH ALL; // push all registers to stack@n
  *
  * if (posInInterrupt_g == 0)
  *   saveStackptrToCurrentTaskEnv();
@@ -1306,16 +1337,16 @@ POSEXTERN void c_pos_intExit(void);             /* picoos.c */
  * c_pos_timerInterrupt();
  * c_pos_intExit();
  *
- * PULL ALL; // pull all registers from stack<br>
- * RETI;     // return from interrupt<br>
+ * PULL ALL; // pull all registers from stack@n
+ * RETI;     // return from interrupt@n
  * @endcode
  *
  * @note    Any other ISR looks like this, only the function
- *          ::c_pos_timerInterrupt is replaced by an user function.<br>
+ *          ::c_pos_timerInterrupt is replaced by an user function.@n
  *          Dependent on the platform port, it can be necessary to
  *          evaluate the variable ::posRunning_g to ensure that the
  *          timer interrupt is not triggered when the OS is not yet
- *          running.<br>
+ *          running.@n
  *          To avoid this race condintions, it is better to initialize
  *          the timer interrupt in the function ::p_pos_startFirstContext.
  * @sa      c_pos_intEnter, c_pos_intExit
@@ -1354,7 +1385,7 @@ POSEXTERN void posTaskYield(void);
  * @param   ticks  delay time in timer ticks
  *          (see ::HZ define and ::MS macro)
  * @note    ::POSCFG_FEATURE_SLEEP must be defined to 1
- *          to have this function compiled in.<br>
+ *          to have this function compiled in.@n
  *          It is not guaranteed that the task will proceed
  *          execution exactly when the time has elapsed.
  *          A higher priorized task or a task having the same
@@ -1624,7 +1655,7 @@ POSEXTERN POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
  * execute a piece of code. Usually, a semaphore is initialized with
  * the value 1, so only one task can hold the semaphore at a time
  * (Please read the chapter about the mutex functions also if you
- * are interested in task synchronization).<br>
+ * are interested in task synchronization).@n
  * The second thing semaphores can be used for is sending signals
  * to waiting tasks. Imagine you have an interrupt service routine
  * that is triggered every time when a big chunk of data is available
@@ -1634,7 +1665,7 @@ POSEXTERN POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
  * running state and will process the data from the device. In this
  * case, the semaphore would be initialized with zero when it is created.
  * The first task requesting the semaphore would block immediately, and
- * can only proceed its work when the semaphore is triggered from outside.<br>
+ * can only proceed its work when the semaphore is triggered from outside.@n
  * 
  * Semaphores are implemented as counters. A task requesting a semaphore
  * (via ::posSemaGet or ::posSemaWait) will decrement the counter. If the
@@ -1664,7 +1695,7 @@ POSEXTERN POSSEMA_t posSemaCreate(INT_t initcount);
  * Frees a no more needed semaphore object.
  * @param   sema  handle to the semaphore object.
  * @note    ::POSCFG_FEATURE_SEMAPHORES must be defined to 1 
- *          to have semaphore support compiled in.<br>
+ *          to have semaphore support compiled in.@n
  *          ::POSCFG_FEATURE_SEMADESTROY must be defined to 1
  *          to have this function compiled in.
  * @sa      posSemaCreate
@@ -1720,7 +1751,7 @@ POSEXTERN VAR_t posSemaSignal(POSSEMA_t sema);
  * @return  zero on success. A positive value (1 or TRUE) is returned
  *          when the timeout was reached.
  * @note    ::POSCFG_FEATURE_SEMAPHORES must be defined to 1 
- *          to have semaphore support compiled in.<br>
+ *          to have semaphore support compiled in.@n
  *          ::POSCFG_FEATURE_SEMAWAIT must be defined to 1
  *          to have this function compiled in.
  * @sa      posSemaGet, posSemaSignal, posSemaCreate, HZ, MS
@@ -1763,7 +1794,7 @@ POSEXTERN POSMUTEX_t posMutexCreate(void);
  * Frees a no more needed mutex object.
  * @param   mutex  handle to the mutex object.
  * @note    ::POSCFG_FEATURE_MUTEXES must be defined to 1 
- *          to have mutex support compiled in.<br>
+ *          to have mutex support compiled in.@n
  *          ::POSCFG_FEATURE_MUTEXDESTROY must be defined to 1
  *          to have this function compiled in.
  * @sa      posMutexCreate
@@ -1782,7 +1813,7 @@ POSEXTERN void posMutexDestroy(POSMUTEX_t mutex);
  *          the mutex lock is yet helt by an other task, the function
  *          returns 1. A negative value is returned on error.
  * @note    ::POSCFG_FEATURE_MUTEXES must be defined to 1 
- *          to have mutex support compiled in.<br>
+ *          to have mutex support compiled in.@n
  *          ::POSCFG_FEATURE_MUTEXTRYLOCK must be defined to 1
  *          to have this function compiled in.
  * @sa      posMutexLock, posMutexUnlock, posMutexCreate
@@ -1831,13 +1862,13 @@ POSEXTERN VAR_t posMutexUnlock(POSMUTEX_t mutex);
  * got a new message. Note that a message box in the pico]OS
  * can hold chunk of messages, so that no message will be lost
  * while the receiving task is still busy processing the last
- * message. <br>
+ * message. @n
  * There are two possible types of message boxes: The simple type
  * can only hold a pointer to a user supplied buffer. The other
  * message box type can hold whole messages with different sizes.
  * A message buffer must be allocated with posMessageAlloc by the
  * sending task, and the receiving task must free this buffer
- * again with ::posMessageFree. <br>
+ * again with ::posMessageFree. @n
  * To select the simple message box type, you have to set
  * the define ::POSCFG_MSG_MEMORY to 0. When you want to have the
  * full message buffer support, you must set ::POSCFG_MSG_MEMORY to 1.
@@ -1853,7 +1884,7 @@ POSEXTERN VAR_t posMutexUnlock(POSMUTEX_t mutex);
  * in its data and send it via ::posMessageSend to the receiving task.
  * @return  the pointer to the new buffer. NULL is returned on error.
  * @note    ::POSCFG_FEATURE_MSGBOXES must be defined to 1 
- *          to have message box support compiled in.<br>
+ *          to have message box support compiled in.@n
  *          ::POSCFG_MSG_MEMORY must be defined to 1
  *          to have this function compiled in.
  * @sa      posMessageSend, posMessageGet, posMessageFree
@@ -1867,7 +1898,7 @@ POSEXTERN void* posMessageAlloc(void);
  * it has processed a message to free the message buffer again.
  * @param   buf  pointer to the message buffer that is no more used.
  * @note    ::POSCFG_FEATURE_MSGBOXES must be defined to 1 
- *          to have message box support compiled in.<br>
+ *          to have message box support compiled in.@n
  *          ::POSCFG_MSG_MEMORY must be defined to 1
  *          to have this function compiled in.
  * @sa      posMessageGet, posMessageSend, posMessageAlloc
@@ -1944,7 +1975,7 @@ POSEXTERN VAR_t posMessageAvailable(void);
  *          NULL is returned when no message was received
  *          within the specified time (=timeout).
  * @note    ::POSCFG_FEATURE_MSGBOXES must be defined to 1 
- *          to have message box support compiled in.<br>
+ *          to have message box support compiled in.@n
  *          ::POSCFG_FEATURE_MSGWAIT must be defined to 1
  *          to have this function compiled in.
  * @sa      posMessageFree, posMessageGet, posMessageAvailable,
@@ -1987,7 +2018,7 @@ POSEXTERN POSFLAG_t posFlagCreate(void);
  * Frees an unused flag object again.
  * @param   flg  handle to the flag object.
  * @note    ::POSCFG_FEATURE_FLAGS must be defined to 1 
- *          to have flag support compiled in.<br>
+ *          to have flag support compiled in.@n
  *          ::POSCFG_FEATURE_FLAGDESTROY must be defined to 1
  *          to have this function compiled in.
  * @sa      posFlagCreate
@@ -2040,7 +2071,7 @@ POSEXTERN VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode);
  *          If zero is returned, the timeout was reached.
  *          A negative value denotes an error.
  * @note    ::POSCFG_FEATURE_FLAGS must be defined to 1 
- *          to have flag support compiled in.<br>
+ *          to have flag support compiled in.@n
  *          ::POSCFG_FEATURE_FLAGWAIT must be defined to 1
  *          to have this function compiled in.
  * @sa      posFlagCreate, posFlagSet, posFlagGet, HZ, MS
@@ -2081,9 +2112,9 @@ POSEXTERN VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
 #define HZ (timerticks per second)
 #endif
 
-/** @var POSEXTERN JIF_t jiffies;
- * Global timer variable.
+/** @brief  Global timer variable.
  * The jiffies counter variable is incremented ::HZ times per second.
+ *
  * The maximum count the jiffie counter can reach until it wraps around
  * is system dependent.
  * @note    ::POSCFG_FEATURE_JIFFIES must be defined to 1 
@@ -2103,8 +2134,8 @@ POSEXTERN  JIF_t  posGetJiffies(void);
  * It handles timer variable wrap arounds correctly.
  * The macro is used in conjunction with the jiffies variable,
  * the current jiffies should be passed as first parameter
- * to the macro. Example:<br>
- * exptime = jiffies + HZ/2;<br>
+ * to the macro. Example:@n
+ * exptime = jiffies + HZ/2;@n
  * if (POS_TIMEAFTER(jiffies, exptime)) printf("500ms expired!\n");
  * @sa jiffies, HZ
  */
@@ -2175,7 +2206,7 @@ POSEXTERN VAR_t posTimerStop(POSTIMER_t tmr);
  * Deletes a timer object and free its resources.
  * @param   tmr  handle to the timer object.
  * @note    ::POSCFG_FEATURE_TIMER must be defined to 1 
- *          to have timer support compiled in. <br>
+ *          to have timer support compiled in. @n
  *          ::POSCFG_FEATURE_TIMERDESTROY must be defined to 1
  *          to have this function compiled in.
  * @sa      posTimerCreate
@@ -2190,7 +2221,7 @@ POSEXTERN void posTimerDestroy(POSTIMER_t tmr);
  * @return  1 when the timer has fired, otherwise 0.
  *          A negative value is returned on error.
  * @note    ::POSCFG_FEATURE_TIMER must be defined to 1 
- *          to have timer support compiled in. <br>
+ *          to have timer support compiled in. @n
  *          ::POSCFG_FEATURE_TIMERFIRED must be defined to 1
  *          to have this function compiled in.
  * @sa      posTimerCreate, posTimerSet, posTimerStart
@@ -2210,23 +2241,23 @@ POSEXTERN VAR_t posTimerFired(POSTIMER_t tmr);
  * For example, software interrupts can be used to connect hardware
  * interrupts, that are outside the scope of pico]OS, to the realtime
  * operating system. A hardware interrupt will trigger a software
- * interrupt that can then signalize a semaphore object.<br>
- * <br>
+ * interrupt that can then signalize a semaphore object.@n
+ * @n
  * Note that hardware interrupts, that do not call ::c_pos_intEnter and
  * ::c_pos_intExit, can't do calls to pico]OS functions, except to the
- * function ::posSoftInt.<br>
- * <br>
+ * function ::posSoftInt.@n
+ * @n
  * All software interrupts, that are triggered by a call to ::posSoftInt,
  * are chained into a global list. This list is then executed as soon
  * as possible, but at least when the pico]OS scheduler is called
  * (that is, for example, when a time slice has expired or a task
- * gives of processing time by itself).<br>
- * <br>
+ * gives of processing time by itself).@n
+ * @n
  * A software interrupt runs at interrupt level, that means with
  * interrupts disabled (pico]OS calls ::POS_SCHED_LOCK before executing
  * the software interrupt handler). The execution of software interrupt
  * handlers can not be inhibited by setting the ::posTaskSchedLock flag.
- * <br>
+ * @n
  * Note that software interrupts need additional space on the
  * processors call stack. Make sure to have space for at least
  * 5 additional subroutine calls, plus the calls you will make in the
@@ -2275,7 +2306,7 @@ POSEXTERN VAR_t posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler);
  * @param   intno number of the interrupt to rise. Must be in the
  *          range of 0 to ::POSCFG_SOFTINTERRUPTS - 1.
  * @note    ::POSCFG_FEATURE_SOFTINTS must be defined to 1 
- *          to have software interrupt support compiled in.<br>
+ *          to have software interrupt support compiled in.@n
  *          ::POSCFG_FEATURE_SOFTINTDEL must be defined to 1
  *          to have this function compiled in.
  * @return  zero on success.
@@ -2301,7 +2332,7 @@ POSEXTERN VAR_t posSoftIntDelHandler(UVAR_t intno);
  * and modified the variable but has not yet written the result back) is
  * interrupted by a second task that also modifies the variable. Thus the
  * modification the first task has done would be lost. Atomic variables
- * prevent this possible race condition. <br><br>
+ * prevent this possible race condition. @n@n
  * pico]OS supports four functions to operate on atomic variables:
  * ::posAtomicSet, ::posAtomicGet, ::posAtomicAdd and ::posAtomicSub.
  * @{
@@ -2364,12 +2395,12 @@ POSEXTERN INT_t posAtomicSub(POSATOMIC_t *var, INT_t value);
  * @ingroup userapip
  * Lists are multifunctional, often they are used for buffer queues or
  * other elements that need to be listed. pico]OS provides a set of
- * functions for managing nonblocking and blocking lists. <br>
+ * functions for managing nonblocking and blocking lists. @n
  * Nonblocking means that elements can be put to or taken from a list
  * without blocking the active task while an other task is also attempting
  * to access the list. This behaviour is very usefull for interrupt service
  * routines that need to send buffers through a queue to the
- * application task. <br>
+ * application task. @n
  * An example program that demonstrates the usage of lists is available
  * in the examples directory: lists.c
  * @{
@@ -2388,7 +2419,7 @@ POSEXTERN INT_t posAtomicSub(POSATOMIC_t *var, INT_t value);
  *                    the tail of the list.
  * @param   new       pointer to the list element to add.
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
- *          to have list support compiled in. <br>
+ *          to have list support compiled in. @n
  *          Note that list heads must be initialized before elements
  *          can be added to the list.
  * @sa      posListGet, posListLen, posListRemove, posListJoin, posListInit
@@ -2417,7 +2448,7 @@ POSEXTERN void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new);
  *          function returns a NULL pointer when the list is empty
  *          (timeout == 0) or the timeout has expired (timeout != 0).
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
- *          to have list support compiled in. <br>
+ *          to have list support compiled in. @n
  *          To be able to wait with timeout (timeout is set to nonzero and
  *          is not equal to INFINITE), the feature ::POSCFG_FEATURE_SEMAWAIT
  *          must be enabled. Note that only one task per time can wait
@@ -2453,7 +2484,7 @@ POSEXTERN void posListRemove(POSLIST_t *listelem);
  * @param   joinlisthead  pointer to the list which contents shall be
  *                        moved to the baselist.
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
- *          to have list support compiled in. <br>
+ *          to have list support compiled in. @n
  *          ::POSCFG_FEATURE_LISTJOIN must be defined to 1
  *          to have this function compiled in.
  * @sa      posListAdd, posListGet, posListJoin, posListInit
@@ -2478,7 +2509,7 @@ POSEXTERN UINT_t posListLen(POSLISTHEAD_t *listhead);
  * before elements can be added to the list.
  * @param   listhead    pointer to the listhead to initialize.
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
- *          to have list support compiled in. <br>
+ *          to have list support compiled in. @n
  *          If a list is no more used, the function ::posListTerm
  *          should be called to free operating system resources.
  * @sa      posListTerm, posListAdd, posListGet
@@ -2629,6 +2660,255 @@ POSEXTERN void posListTerm(POSLISTHEAD_t *listhead);
 /** @} */
 
 
+/*---------------------------------------------------------------------------
+ *  DEBUG FEATURES
+ *-------------------------------------------------------------------------*/
+
+/** @defgroup debug Debug Features
+ * @ingroup intro
+ *
+ * Sometimes it is realy hard to debug multitasking applications.
+ * Pico]OS supports you by providing assess to some helpful informations.
+ * In conjunction with an incircuit-debugger with the appropriated debugger
+ * IDE you will have a powerfull tool to debug your applications. @n
+ *
+ * You need to enable the internal pico]OS debugging support by setting
+ * the define ::POSCFG_FEATURE_DEBUGHELP to 1. It is also required that
+ * you compile the code with debug flags set, and the global preprocessor
+ * define _DBG must be set. @n
+ *
+ * Pico]OS exports some variables that are helpful for debugging: @n
+ *
+ * - ::picodeb_tasklist   points to the list of all currently started tasks@n
+ * - ::picodeb_eventlist  points to the list of all used events (semaphores,
+ *                        mutexes, flag events etc.) @n
+ * - ::posCurrentTask_g   contains the handle to the currently running task@n
+ * - ::posInInterrupt_g   is nonzero when pico]OS executes an interupt @n
+ *
+ * @n@b Hint: @n
+ * The global variables ::picodeb_tasklist and ::picodeb_eventlist are
+ * pointing to double-chained lists. This lists contain helpful informations
+ * about the state of tasks and events. When you observe that some task of
+ * your application hangs and you don't know why, you can search the
+ * task-list for the appropriated task (simply follow as often as necessary
+ * the 'next' pointer in the structure until you have found the task) and
+ * then have a look to the tasks state. If the task pends on an event, you
+ * can follow the event reference pointer to observe the current state of
+ * the event. Some IDE do have a kind of "OS-awareness". The both variables
+ * ::picodeb_tasklist and ::picodeb_eventlist should make it possible to
+ * teach your IDE the pico]OS. Please have a look into the debuggers
+ * documentation for how to integrate OS-awareness into your debugger. @n
+ *
+ * If you consider to use the internal pico]OS debug feature, you should
+ * name your tasks and events. This simplifies the search for tasks and
+ * events in the global lists. Pico]OS provides two macros for doing this:
+ * ::POS_SETTASKNAME and ::POS_SETEVENTNAME.
+ * @{
+ */
+#if (DOX!=0) || defined(POS_DEBUGHELP)
+
+/** @brief  Task states
+ * (used for debugging when ::POSCFG_FEATURE_DEBUGHELP is set to 1)
+ * @sa POSCFG_FEATURE_DEBUGHELP
+ */
+enum PTASKSTATE
+{
+  task_notExisting = 0,  /*!< 0: Task does not exist. */
+  task_created     = 1,  /*!< 1: Task was created but did not run yet. */
+  task_running     = 2,  /*!< 2: Task is currently running. */
+  task_suspended   = 3,  /*!< 3: Task was suspended. */
+  task_sleeping    = 4,  /*!< 4: Task is sleeping for a period of time. */
+  task_waitingForSemaphore = 5, /*!< 5: Task is waiting for a semaphore.*/
+  task_waitingForSemaphoreWithTimeout = 6, /*!< 6: Task is waiting for a
+                           semaphore, with timeout. */
+  task_waitingForMutex = 7, /*!< 7: Task is waiting for a mutex. */
+  task_waitingForMutexWithTimeout = 8,  /*!< 8: Task is waiting for a
+                           mutex, with timeout. */
+  task_waitingForFlag  = 9, /*!< 9: Task is waiting for a flag event. */
+  task_waitingForFlagWithTimeout = 10, /*!< 10: Task is waiting for a
+                           flag event, with timeout. */
+  task_waitingForMessage = 11, /*!< 11: Task is waiting for a message. */
+  task_waitingForMessageWithTimeout = 12   /*!< 12: Task is waiting for a
+                           message, with timeout. */
+};
+typedef enum PTASKSTATE PTASKSTATE;
+
+/** @brief  Event types
+ * (used for debugging when ::POSCFG_FEATURE_DEBUGHELP is set to 1)
+ * @sa POSCFG_FEATURE_DEBUGHELP
+ */
+enum PEVENTTYPE
+{
+  event_semaphore = 0,  /*!< 0: The event object is a semaphore. */
+  event_mutex     = 1,  /*!< 1: The event object is a mutex. */
+  event_flags     = 2   /*!< 2: The event object is a flags field. */
+};
+typedef enum PEVENTTYPE PEVENTTYPE;
+
+/** @brief Event info structure.
+ *
+ * This structure can be used by a debugger IDE to display
+ * event status information.
+ * (used for debugging when ::POSCFG_FEATURE_DEBUGHELP is set to 1)
+ * @note  This structure must never be changed to keep
+ *         compatibility with existing debugger integrations.
+ * @sa picodeb_eventlist, PICOTASK
+ */
+typedef struct PICOEVENT
+{
+  struct PICOEVENT  *next;  /*!< @brief
+                                 Pointer to the next event info structure. */
+  struct PICOEVENT  *prev;  /*!< @brief
+                                 Pointer to the previous event structure. */
+#if DOX
+  PEVENTTYPE        type;   /*!< @brief
+                                 Type of the event (semaphore / mutex /
+                                 flag event, see PEVENTTYPE for details). */
+#else
+  enum PEVENTTYPE   type;
+#endif
+  void              *handle;/*!< @brief
+                                 Handle value of the pico]OS event. */ 
+  const char        *name;  /*!< @brief
+                                 Name of this event (ASCII string) */
+  INT_t             counter;/*!< @brief
+                                 State of the internal counter of
+                                 the event (semaphore or mutex), or
+                                 bitfield of flags (flag event) */
+} PICOEVENT;
+
+/** @brief Task info structure.
+ * 
+ * This structure can be used by a debugger IDE to display
+ * task status information.
+ * (used for debugging when ::POSCFG_FEATURE_DEBUGHELP is set to 1)
+ * @note  This structure must never be changed to keep
+ *        compatibility with existing debugger integrations.
+ * @sa picodeb_tasklist, PICOEVENT
+ */
+typedef struct PICOTASK
+{
+  struct PICOTASK   *next;  /*!< @brief
+                                 Pointer to the next task info structure. */
+  struct PICOTASK   *prev;  /*!< @brief
+                                 Pointer to the previous task structure. */
+  POSTASK_t         handle; /*!< @brief
+                                 Handle value of the pico]OS task. */ 
+  POSTASKFUNC_t     func;   /*!< @brief
+                                 First function that ran in the task context.*/
+  const char        *name;  /*!< @brief
+                                 Name of this task (ASCII string) */
+#if DOX
+  PTASKSTATE        state;  /*!< @brief
+                                 Current state of the task
+                                 (see PTASKSTATE for details).*/
+#else
+  enum PTASKSTATE   state;
+#endif
+  struct PICOEVENT  *event; /*!< @brief
+                                 Cross-reference to the involved event.*/
+  UINT_t            timeout;/*!< @brief
+                                 State of the task's timeout counter. */
+} PICOTASK;
+
+#if DOX
+/** @brief  This macro assigns a name to a pico]OS task.
+ * 
+ * This is usefull when you are debugging your application by
+ * using the global tasklist that is referenced by the variable
+ * ::picodeb_tasklist. It is easier to navigate through
+ * the list when the tasks have names. Examples:
+ *
+ * @code
+ *   POSTASK_t htask;
+ *   htask = posTaskCreate(workertaskfunc, NULL, 2);
+ *   POS_SETTASKNAME(htask, "worker task");
+ * @endcode
+ *
+ * @code
+ *   POS_SETTASKNAME(posGetCurrentTask(), "receiver task");
+ * @endcode
+ *
+ * @note It is not necessary to use this macro when you are
+ *       using the function ::nosTaskCreate to start a new task.
+ *   
+ * @sa POS_SETEVENTNAME
+ */
+#define POS_SETTASKNAME(taskhandle, taskname)
+
+/** @brief  This macro assigns a name to a pico]OS event.
+ *
+ * You can use this macro to assign a name to a pico]OS events,
+ * such as semaphores, mutextes and flag events.
+ * This is usefull when you are debugging your application by
+ * using the global eventlist that is referenced by the variable
+ * ::picodeb_eventlist. It is easier to navigate through
+ * the list when the events have names. Example:
+ *
+ * @code
+ *   POSSEMA_t sem;
+ *   sem = posSemaCreate(0);
+ *   POS_SETEVENTNAME(sem, "timer semaphore");
+ * @endcode
+ *
+ * @note If you are using nano-layer functions to create semaphores,
+ *       mutexes and flag events, you do not need this macro.
+ * @sa POS_SETTASKNAME
+ */
+#define POS_SETEVENTNAME(eventhandle, name)
+
+#else
+#define POS_SETTASKNAME(taskhandle, taskname)  \
+  do { if ((taskhandle) != NULL) (taskhandle)->deb.name = taskname;} while(0)
+#define POS_SETEVENTNAME(eventhandle, name) \
+  posdeb_setEventName(eventhandle, name)
+POSEXTERN void posdeb_setEventName(void *event, const char *name);
+#endif
+
+#ifdef _POSCORE_C
+struct PICOTASK  *picodeb_tasklist = NULL;
+struct PICOEVENT *picodeb_eventlist = NULL;
+#else
+/** @brief  Pointer to the list of active tasks.
+ *
+ * This variable can be used for debugging. It points to a list of
+ * all currently active (=created) tasks in the system. The list is
+ * double-chained with next- and prev- pointers. See the description
+ * of the ::PICOTASK structure for details.
+ * @note  You can use the macro ::POS_SETTASKNAME to assign a name
+ *        to a task. @n
+ *        ::POSCFG_FEATURE_DEBUGHELP must be defined to 1 to enable
+ *        debug support
+ * @sa picodeb_eventlist
+ */
+extern struct PICOTASK  *picodeb_tasklist;
+
+/** @brief  Pointer to the list of all system events.
+ *
+ * This variable can be used for debugging. It points to a list of
+ * all active events in the system. An event can be a semaphore,
+ * a mutex or a flag object. To differentiate the events, there is
+ * a type-field in the ::PICOEVENT structure.
+ * The list is double-chained with next- and prev- pointers.
+ * See the description of the ::PICOEVENT structure for details.
+ * @note  You can use the macro ::POS_SETEVENTNAME to assign a name
+ *        to an event.
+ * @note  ::POSCFG_FEATURE_DEBUGHELP must be defined to 1 to enable
+ *        debug support
+ * @sa picodeb_tasklist
+ */
+extern struct PICOEVENT *picodeb_eventlist;
+#endif
+
+#else /* POS_DEBUGHELP */
+
+#define POS_SETTASKNAME(taskhandle, name)  do { } while(0)
+#define POS_SETEVENTNAME(eventhandle, name)  do { } while(0)
+
+#endif /* POS_DEBUGHELP */
+/** @} */
+
+
 /* ==== END OF USER API ==== */
 
 
@@ -2715,7 +2995,9 @@ struct POSTASK {
     UVAR_t      bit_y;
     UVAR_t      idx_y;
 #endif
+#ifndef POS_DEBUGHELP
     UINT_t      ticks;
+#endif
 #if SYS_TASKSTATE != 0
     UVAR_t      state;
 #endif
@@ -2727,6 +3009,9 @@ struct POSTASK {
     POSSEMA_t   msgsem;
     void        *firstmsg;
     void        *lastmsg;
+#endif
+#ifdef POS_DEBUGHELP
+    struct PICOTASK  deb;
 #endif
 #endif /* !DOX */
 };
