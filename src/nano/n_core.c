@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.4 2005/01/03 16:46:08 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.5 2005/01/15 21:18:23 dkuschel Exp $
  */
 
 #define _N_CORE_C
@@ -598,6 +598,7 @@ static void nano_init(void *arg)
 #if NOSCFG_FEATURE_REGISTRY != 0
   REGELEM_t re;
 #endif
+  POS_SETTASKNAME(posCurrentTask_g, "root task");
 #if POSCFG_TASKSTACKTYPE == 0
   posCurrentTask_g->nosstkroot = arg;
   posCurrentTask_g->exithook = nos_taskExitHook;
