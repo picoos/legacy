@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.4 2004/03/07 15:02:43 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.5 2004/03/13 19:10:28 dkuschel Exp $
  */
 
 
@@ -180,6 +180,14 @@
  * and ::POSCFG_ROUNDROBIN = 1.
  */
 #define POSCFG_REALTIME_PRIO     0
+
+/** When this define is set to a non-zero value, some user
+ * available space is inserted into each task control block. The user
+ * can call the function ::posTaskGetUserspace to get a pointer to the
+ * user memory in the current tcb. Set this define to the number of bytes
+ * you need to have in the task control block.
+ */
+#define POSCFG_TASKCB_USERSPACE  0
 
 /** Enable the use of system supported message buffers.
  * By default, only buffer pointers can be posted with the messaging system.
