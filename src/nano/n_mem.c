@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_mem.c,v 1.2 2004/03/21 18:34:38 dkuschel Exp $
+ * CVS-ID $Id: n_mem.c,v 1.3 2005/01/03 16:47:44 dkuschel Exp $
  */
 
 #define _N_MEM_C
@@ -242,6 +242,7 @@ void* nos_malloc(unsigned int size)
    */
 
   bp = NULL;
+  bl = NULL;
   l  = NULL;
   s  = (unsigned int) -1;
 
