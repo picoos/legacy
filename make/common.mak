@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: common.mak,v 1.3 2005/01/10 21:46:48 dkuschel Exp $
+#  $Id: common.mak,v 1.4 2005/02/01 21:15:18 dkuschel Exp $
 
 
 # Include configuration
@@ -75,17 +75,22 @@ SHCMDPATH =
 # Generate macro for Unix style paths
 adjpath = $(subst \,/,$(1))
 # Get current path
-ifeq '$(strip $(CURRENTDIR))' ''
 CURRENTDIR = $(shell pwd)
-endif
 else
 # Set path to tools
 SHCMDPATH = $(RELROOT)make/tools/
 # Generate macro for DOS style paths
 adjpath = $(subst /,\,$(1))
 # Get current path
-ifeq '$(strip $(CURRENTDIR))' ''
 CURRENTDIR = $(subst \,/,$(shell cd))
+ifeq '$(strip $(CURRENTDIR))' ''
+CURRENTDIR := $(subst \,/,$(shell cmd /Ccd))
+ifeq '$(strip $(CURRENTDIR))' ''
+$(warning Failed to determine the current directory!)
+endif
+endif
+ifneq '$(strip $(firstword $(CURRENTDIR)))' '$(strip $(CURRENTDIR))'
+$(warning Current directory path contains spaces! ($(CURRENTDIR)))
 endif
 endif
 
@@ -104,8 +109,8 @@ endif
 
 # Define Port Name
 ifeq '$(strip $(PORT))' ''
-$(warning !!!)
-$(warning !!! You must specify the name\
+$(warning *** !!!)
+$(error !!! You must specify the name\
  of the architecture port, e.g. PORT=x86dos)
 PORT =
 BUILD = DEBUG
