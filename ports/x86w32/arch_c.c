@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.1 2005/01/10 22:39:26 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.2 2005/01/17 21:23:05 dkuschel Exp $
  */
 
 
@@ -189,7 +189,7 @@ static void do_assert(const char* file, int line)
   fprintf(stderr, "thistask: name       = %s\n", posCurrentTask_g->deb.name);
   fprintf(stderr, "thistask: deb_state  = %i\n", posCurrentTask_g->deb.state);
 #else
-  fprintf(stderr, "thistask: handle     = %08x\n", (unsigned long)posCurrentTask_g);
+  fprintf(stderr, "thistask: handle     = %08x\n", (unsigned int)posCurrentTask_g);
 #endif
   fprintf(stderr, "thistask: pico_state = %i\n", posCurrentTask_g->state);
   fprintf(stderr, "thistask: arch_state = %i\n", thistask->state);
@@ -201,7 +201,7 @@ static void do_assert(const char* file, int line)
     fprintf(stderr, "\nnexttask: name       = %s\n", posNextTask_g->deb.name);
     fprintf(stderr, "nexttask: deb_state  = %i\n", posNextTask_g->deb.state);
 #else
-    fprintf(stderr, "\nnexttask: handle     = %08x\n", (unsigned long)posNextTask_g);
+    fprintf(stderr, "\nnexttask: handle     = %08x\n", (unsigned int)posNextTask_g);
 #endif
     fprintf(stderr, "nexttask: pico_state = %i\n", posNextTask_g->state);
     fprintf(stderr, "nexttask: arch_state = %i\n", nexttask->state);
