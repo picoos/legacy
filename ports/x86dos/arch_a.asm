@@ -32,7 +32,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id:$
+; CVS-ID $Id: arch_a.asm,v 1.1.1.1 2004/02/16 20:11:39 smocz Exp $
 ;
 
 
@@ -51,6 +51,7 @@
     PUBLIC __timerIrq
 IFDEF POSNANO
     PUBLIC __keyboardIrq
+    PUBLIC _p_putchar
 ENDIF
 
 
@@ -190,14 +191,19 @@ _intRun:
     IRET
 
 
+
+IFDEF POSNANO
 ;-----------------------------------------------------------------------------
-;  KEYBOARD INTERRUPT
+;  FUNCTIONS NEEDED BY THE NANO LAYER
+
+
+;-----------------------------------------------------------------------------
+;  KEYBOARD INTERRUPT  - nano layer option
 ;
 ; This system interrupt (INT 09h) is executed every time a key is pressed.
 ; The key code is read from the DOS keyboard buffer and 
 ; is then fed into the nano layer via the software interrupt 0.
 ;-----------------------------------------------------------------------------
-IFDEF POSNANO
 __keyboardIrq:
     PUSHA                                   ;save registers
     PUSH DS
@@ -221,6 +227,24 @@ _nokey:
     POP  DS
     POPA
     IRET                                    ;back from interrupt
+
+
+;-----------------------------------------------------------------------------
+;  PRINT CHARACTER  - nano layer option
+;
+; The nano layer calls this function to print a character to the screen.
+;-----------------------------------------------------------------------------
+_p_putchar:
+    PUSH  BP
+    MOV   BP,SP
+    MOV   AL,[BP+06]                        ;get parameter: char
+    MOV   AH,14
+    MOV   BL,15
+    INT   10h                               ;print character to screen
+    POP   BP
+    MOV   AL,1                              ;return 1 (=TRUE)
+    RETF
+
 ENDIF
 
 

@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.1.1.1 2004/02/16 20:11:40 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.2 2004/02/23 21:11:01 dkuschel Exp $
  */
 
 
@@ -430,18 +430,3 @@ void  p_pos_freeStack(POSTASK_t task)
 
 #endif
 
-
-/*---------------------------------------------------------------------------
- * OPTIONAL NANO LAYER FEATURES
- *-------------------------------------------------------------------------*/
-
-#if POSCFG_ENABLE_NANO != 0
-#if NOSCFG_FEATURE_CONOUT != 0
-
-void p_putchar(char c)
-{
-  putch(c);
-}
-
-#endif /* NOSCFG_FEATURE_CONOUT */
-#endif /* POSCFG_ENABLE_NANO */
