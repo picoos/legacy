@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.2 2004/02/21 14:34:35 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.3 2004/02/23 19:39:17 smocz Exp $
  */
 
 
@@ -440,6 +440,12 @@
  * ::POSCFG_FEATURE_SOFTINTS must be set to 1.
  */
 #define POSCFG_FEATURE_SOFTINTDEL    0
+
+/** Enable atomic variable support.
+ * If this definition is set to 1, the functions needed for accessing
+ * atomic variables will be added to the user API.
+ */
+#define POSCFG_FEATURE_ATOMICVAR     0
 
 /** Include function ::posInstallIdleTaskHook.
  * If this definition is set to 1, the function ::posInstallIdleTaskHook

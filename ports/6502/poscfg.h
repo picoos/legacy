@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.1.1.1 2004/02/16 20:11:27 smocz Exp $
+ * CVS-ID $Id: poscfg.h,v 1.2 2004/02/21 14:41:45 dkuschel Exp $
  */
 
 
@@ -446,6 +446,17 @@
  * will be added to the user API.
  */
 #define POSCFG_FEATURE_IDLETASKHOOK  1
+
+/** Enable atomic variable support.
+ * If this definition is set to 1, the functions needed for accessing
+ * atomic variables will be added to the user API.
+ */
+#define POSCFG_FEATURE_ATOMICVAR     1
+
+/** Provide a task global error state variable.
+ * If this definition is set to 1, the ::errno variable is supported.
+ */
+#define POSCFG_FEATURE_ERRNO         1
 
 /** @} */
 
