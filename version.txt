@@ -1,1 +1,1 @@
-pico]OS version:  0.6.0
+pico]OS version:  0.7.0

@@ -1,6 +1,7 @@
 
 Version 0.7.0:
   o  nonblocking/blocking lists added (lists can be used for packet queues)
+  o  added user local storage in task control block
   o  some small bug fixes in dynamic memory management
   o  6502 port supports now dynamic count of tasks
 
