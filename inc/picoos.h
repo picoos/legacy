@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: picoos.h,v 1.1.1.1 2004/02/16 20:11:21 smocz Exp $
  *
  */
 
@@ -280,8 +280,8 @@
 #ifndef POSCFG_FEATURE_SEMAPHORES
 #error  POSCFG_FEATURE_SEMAPHORES not defined
 #endif
-#ifndef POSCFG_FEATURE_SEMAFREE
-#error  POSCFG_FEATURE_SEMAFREE not defined
+#ifndef POSCFG_FEATURE_SEMADESTROY
+#error  POSCFG_FEATURE_SEMADESTROY not defined
 #endif
 #ifndef POSCFG_FEATURE_SEMAWAIT
 #error  POSCFG_FEATURE_SEMAWAIT not defined
@@ -289,8 +289,8 @@
 #ifndef POSCFG_FEATURE_MUTEXES
 #error  POSCFG_FEATURE_MUTEXES not defined
 #endif
-#ifndef POSCFG_FEATURE_MUTEXFREE
-#error  POSCFG_FEATURE_MUTEXFREE not defined
+#ifndef POSCFG_FEATURE_MUTEXDESTROY
+#error  POSCFG_FEATURE_MUTEXDESTROY not defined
 #endif
 #ifndef POSCFG_FEATURE_MUTEXTRYLOCK
 #error  POSCFG_FEATURE_MUTEXTRYLOCK not defined
@@ -298,8 +298,8 @@
 #ifndef POSCFG_FEATURE_GETTASK
 #error  POSCFG_FEATURE_GETTASK not defined
 #endif
-#ifndef POSCFG_FEATURE_ISTASKUNUSED
-#error  POSCFG_FEATURE_ISTASKUNUSED not defined
+#ifndef POSCFG_FEATURE_TASKUNUSED
+#error  POSCFG_FEATURE_TASKUNUSED not defined
 #endif
 #ifndef POSCFG_FEATURE_MSGBOXES
 #error  POSCFG_FEATURE_MSGBOXES not defined
@@ -316,8 +316,8 @@
 #ifndef POSCFG_FEATURE_TIMER
 #error  POSCFG_FEATURE_TIMER not defined
 #endif
-#ifndef POSCFG_FEATURE_TIMERFREE
-#error  POSCFG_FEATURE_TIMERFREE not defined
+#ifndef POSCFG_FEATURE_TIMERDESTROY
+#error  POSCFG_FEATURE_TIMERDESTROY not defined
 #endif
 #ifndef POSCFG_FEATURE_TIMERFIRED
 #error  POSCFG_FEATURE_TIMERFIRED not defined
@@ -325,8 +325,8 @@
 #ifndef POSCFG_FEATURE_FLAGS
 #error  POSCFG_FEATURE_FLAGS not defined
 #endif
-#ifndef POSCFG_FEATURE_FLAGFREE
-#error  POSCFG_FEATURE_FLAGFREE not defined
+#ifndef POSCFG_FEATURE_FLAGDESTROY
+#error  POSCFG_FEATURE_FLAGDESTROY not defined
 #endif
 #ifndef POSCFG_FEATURE_FLAGWAIT
 #error  POSCFG_FEATURE_FLAGWAIT not defined
@@ -417,20 +417,20 @@
 
 /* parameter reconfiguration */
 #if POSCFG_FEATURE_SEMAPHORES == 0
-#undef POSCFG_FEATURE_SEMAFREE
-#define POSCFG_FEATURE_SEMAFREE  0
+#undef POSCFG_FEATURE_SEMADESTROY
+#define POSCFG_FEATURE_SEMADESTROY  0
 #endif
 #if POSCFG_FEATURE_FLAGS == 0
-#undef POSCFG_FEATURE_FLAGFREE
-#define POSCFG_FEATURE_FLAGFREE  0
+#undef POSCFG_FEATURE_FLAGDESTROY
+#define POSCFG_FEATURE_FLAGDESTROY  0
 #endif
 #if POSCFG_FEATURE_MUTEXES == 0
-#undef POSCFG_FEATURE_MUTEXFREE
-#define POSCFG_FEATURE_MUTEXFREE  0
+#undef POSCFG_FEATURE_MUTEXDESTROY
+#define POSCFG_FEATURE_MUTEXDESTROY  0
 #else
-#if (POSCFG_FEATURE_MUTEXFREE != 0) && (POSCFG_FEATURE_SEMAFREE == 0)
-#undef POSCFG_FEATURE_SEMAFREE
-#define POSCFG_FEATURE_SEMAFREE 1
+#if (POSCFG_FEATURE_MUTEXDESTROY != 0) && (POSCFG_FEATURE_SEMADESTROY == 0)
+#undef POSCFG_FEATURE_SEMADESTROY
+#define POSCFG_FEATURE_SEMADESTROY 1
 #endif
 #endif
 #if POSCFG_FEATURE_MSGBOXES != 0
@@ -450,8 +450,8 @@
 #define SYS_EVENTS_USED  \
       (POSCFG_FEATURE_MUTEXES | POSCFG_FEATURE_MSGBOXES | POSCFG_FEATURE_FLAGS)
 #define SYS_FEATURE_EVENTS  (POSCFG_FEATURE_SEMAPHORES | SYS_EVENTS_USED)
-#define SYS_FEATURE_EVENTFREE  (POSCFG_FEATURE_SEMAFREE | \
-          POSCFG_FEATURE_MUTEXFREE | POSCFG_FEATURE_FLAGFREE)
+#define SYS_FEATURE_EVENTFREE  (POSCFG_FEATURE_SEMADESTROY | \
+          POSCFG_FEATURE_MUTEXDESTROY | POSCFG_FEATURE_FLAGDESTROY)
 #if (POSCFG_FEATURE_MSGBOXES != 0) && (POSCFG_FEATURE_EXIT != 0)
 #undef  SYS_FEATURE_EVENTFREE
 #define SYS_FEATURE_EVENTFREE  1
@@ -485,7 +485,7 @@
 #define SYS_TASKTABSIZE_Y  POSCFG_MAX_PRIO_LEVEL
 #endif
 
-#define SYS_TASKSTATE (POSCFG_FEATURE_ISTASKUNUSED | POSCFG_FEATURE_MSGBOXES)
+#define SYS_TASKSTATE (POSCFG_FEATURE_TASKUNUSED | POSCFG_FEATURE_MSGBOXES)
 
 #if POSCFG_LOCK_USEFLAGS != 0
 #define POS_LOCKFLAGS   POSCFG_LOCK_FLAGSTYPE flags
@@ -499,6 +499,17 @@
 
 #define INFINITE   ((UINT_t)~0)
 
+/** Convert milliseconds into HZ timer ticks.
+ * This macro is used to convert milliseconds into the timer tick
+ * rate (see ::HZ define).
+ * Example:  Use  ::posTaskSleep(MS(1000))  to sleep 1000 ms.
+ */
+#if (DOX==0) && (HZ <= 1000)
+#define MS(msec)  (((UINT_t)(msec)<(1000/HZ)) ? \
+                    ((UINT_t)1) : ((UINT_t)((1L*HZ*(UINT_t)(msec))/1000)))
+#else
+#define MS(msec)  ((UINT_t)((1L*HZ*(UINT_t)(msec))/1000))
+#endif
 
 
 /*---------------------------------------------------------------------------
@@ -1134,7 +1145,8 @@ void        posTaskYield(void);
 /**
  * Task function.
  * Delay task execution for a couple of timer ticks.
- * @param   ticks  delay time in timer ticks (see ::HZ define)
+ * @param   ticks  delay time in timer ticks
+ *          (see ::HZ define and ::MS macro)
  * @note    ::POSCFG_FEATURE_SLEEP must be defined to 1
  *          to have this function compiled in.<br>
  *          It is not guaranteed that the task will proceed
@@ -1142,7 +1154,7 @@ void        posTaskYield(void);
  *          A higher priorized task or a task having the same
  *          priority may steal the processing time.
  *          Sleeping a very short time is inaccurate.
- * @sa      posTaskYield
+ * @sa      posTaskYield, HZ, MS
  */
 void        posTaskSleep(UINT_t ticks);
 #endif
@@ -1287,7 +1299,7 @@ void        posTaskExit(void);
 POSTASK_t   posTaskGetCurrent(void);
 #endif
 
-#if (DOX!=0) || (POSCFG_FEATURE_ISTASKUNUSED != 0)
+#if (DOX!=0) || (POSCFG_FEATURE_TASKUNUSED != 0)
 /**
  * Task function.
  * Tests if a task is yet in use by the operating system.
@@ -1297,7 +1309,7 @@ POSTASK_t   posTaskGetCurrent(void);
  * @return  1 (=true) when the task is unused. If the task
  *          is still in use, zero is returned.
  *          A negative value is returned on error.
- * @note    ::POSCFG_FEATURE_ISTASKUNUSED must be defined to 1 
+ * @note    ::POSCFG_FEATURE_TASKUNUSED must be defined to 1 
  *          to have this function compiled in.
  * @sa      posTaskCreate, posTaskExit
  */
@@ -1419,9 +1431,9 @@ void posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
  * @return  the pointer to the new semaphore object. NULL is returned on error.
  * @note    ::POSCFG_FEATURE_SEMAPHORES must be defined to 1 
  *          to have semaphore support compiled in.
- * @sa      posSemaFree, posSemaGet, posSemaWait, posSemaSignal
+ * @sa      posSemaDestroy, posSemaGet, posSemaWait, posSemaSignal
  */
-POSSEMA_t   posSemaAlloc(INT_t initcount);
+POSSEMA_t   posSemaCreate(INT_t initcount);
 
 #if (DOX!=0) || (SYS_FEATURE_EVENTFREE != 0)
 /**
@@ -1430,11 +1442,11 @@ POSSEMA_t   posSemaAlloc(INT_t initcount);
  * @param   sema  handle to the semaphore object.
  * @note    ::POSCFG_FEATURE_SEMAPHORES must be defined to 1 
  *          to have semaphore support compiled in.<br>
- *          ::POSCFG_FEATURE_SEMAFREE must be defined to 1
+ *          ::POSCFG_FEATURE_SEMADESTROY must be defined to 1
  *          to have this function compiled in.
- * @sa      posSemaAlloc
+ * @sa      posSemaCreate
  */
-void        posSemaFree(POSSEMA_t sema);
+void        posSemaDestroy(POSSEMA_t sema);
 #endif
 
 /**
@@ -1447,7 +1459,7 @@ void        posSemaFree(POSSEMA_t sema);
  * @return  zero on success.
  * @note    ::POSCFG_FEATURE_SEMAPHORES must be defined to 1 
  *          to have semaphore support compiled in.
- * @sa      posSemaWait, posSemaSignal, posSemaAlloc
+ * @sa      posSemaWait, posSemaSignal, posSemaCreate
  */
 #if (DOX!=0) || (POSCFG_SMALLCODE == 0) || (POSCFG_FEATURE_SEMAWAIT == 0)
 VAR_t       posSemaGet(POSSEMA_t sema);
@@ -1465,7 +1477,7 @@ VAR_t       posSemaGet(POSSEMA_t sema);
  * @return  zero on success.
  * @note    ::POSCFG_FEATURE_SEMAPHORES must be defined to 1 
  *          to have semaphore support compiled in.
- * @sa      posSemaGet, posSemaWait, posSemaAlloc
+ * @sa      posSemaGet, posSemaWait, posSemaCreate
  */
 VAR_t       posSemaSignal(POSSEMA_t sema);
 
@@ -1477,7 +1489,8 @@ VAR_t       posSemaSignal(POSSEMA_t sema);
  * this function blocks the task execution until the semaphore
  * gets signaled or a timeout happens.
  * @param   sema  handle to the semaphore object.
- * @param   timeoutticks  timeout in timer ticks (see ::HZ define).
+ * @param   timeoutticks  timeout in timer ticks
+ *          (see ::HZ define and ::MS macro).
  *          If this parameter is set to zero, the function immediately
  *          returns. If this parameter is set to INFINITE, the
  *          function will never time out.
@@ -1486,7 +1499,7 @@ VAR_t       posSemaSignal(POSSEMA_t sema);
  *          to have semaphore support compiled in.<br>
  *          ::POSCFG_FEATURE_SEMAWAIT must be defined to 1
  *          to have this function compiled in.
- * @sa      posSemaGet, posSemaSignal, posSemaAlloc, HZ
+ * @sa      posSemaGet, posSemaSignal, posSemaCreate, HZ, MS
  */
 VAR_t       posSemaWait(POSSEMA_t sema, UINT_t timeoutticks);
 #endif
@@ -1515,22 +1528,22 @@ VAR_t       posSemaWait(POSSEMA_t sema, UINT_t timeoutticks);
  * @return  the pointer to the new mutex object. NULL is returned on error.
  * @note    ::POSCFG_FEATURE_MUTEXES must be defined to 1 
  *          to have mutex support compiled in.
- * @sa      posMutexFree, posMutexLock, posMutexTryLock, posMutexUnlock
+ * @sa      posMutexDestroy, posMutexLock, posMutexTryLock, posMutexUnlock
  */
-POSMUTEX_t  posMutexAlloc(void);
+POSMUTEX_t  posMutexCreate(void);
 
-#if (DOX!=0) || (POSCFG_FEATURE_MUTEXFREE != 0)
+#if (DOX!=0) || (POSCFG_FEATURE_MUTEXDESTROY != 0)
 /**
  * Mutex function.
  * Frees a no more needed mutex object.
  * @param   mutex  handle to the mutex object.
  * @note    ::POSCFG_FEATURE_MUTEXES must be defined to 1 
  *          to have mutex support compiled in.<br>
- *          ::POSCFG_FEATURE_MUTEXFREE must be defined to 1
+ *          ::POSCFG_FEATURE_MUTEXDESTROY must be defined to 1
  *          to have this function compiled in.
- * @sa      posMutexAlloc
+ * @sa      posMutexCreate
  */
-void        posMutexFree(POSMUTEX_t mutex);
+void        posMutexDestroy(POSMUTEX_t mutex);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_MUTEXTRYLOCK != 0)
@@ -1547,7 +1560,7 @@ void        posMutexFree(POSMUTEX_t mutex);
  *          to have mutex support compiled in.<br>
  *          ::POSCFG_FEATURE_MUTEXTRYLOCK must be defined to 1
  *          to have this function compiled in.
- * @sa      posMutexLock, posMutexUnlock, posMutexAlloc
+ * @sa      posMutexLock, posMutexUnlock, posMutexCreate
  */
 VAR_t       posMutexTryLock(POSMUTEX_t mutex);
 #endif
@@ -1562,7 +1575,7 @@ VAR_t       posMutexTryLock(POSMUTEX_t mutex);
  * @return  zero on success.
  * @note    ::POSCFG_FEATURE_MUTEXES must be defined to 1 
  *          to have mutex support compiled in.
- * @sa      posMutexTryLock, posMutexUnlock, posMutexAlloc
+ * @sa      posMutexTryLock, posMutexUnlock, posMutexCreate
  */
 VAR_t       posMutexLock(POSMUTEX_t mutex);
 
@@ -1574,7 +1587,7 @@ VAR_t       posMutexLock(POSMUTEX_t mutex);
  * @return  zero on success.
  * @note    ::POSCFG_FEATURE_MUTEXES must be defined to 1 
  *          to have mutex support compiled in.
- * @sa      posMutexLock, posMutexTryLock, posMutexAlloc
+ * @sa      posMutexLock, posMutexTryLock, posMutexCreate
  */
 VAR_t       posMutexUnlock(POSMUTEX_t mutex);
 
@@ -1693,7 +1706,8 @@ VAR_t       posMessageAvailable(void);
  * Gets a new message from the message box.
  * If no message is available, the task blocks until a new message
  * is received or the timeout has been reached.
- * @param   timeoutticks  timeout in timer ticks (see ::HZ define).
+ * @param   timeoutticks  timeout in timer ticks
+ *          (see ::HZ define and ::MS macro).
  *          If this parameter is set to zero, the function immediately
  *          returns. If this parameter is set to INFINITE, the
  *          function will never time out.
@@ -1707,7 +1721,7 @@ VAR_t       posMessageAvailable(void);
  *          ::POSCFG_FEATURE_MSGWAIT must be defined to 1
  *          to have this function compiled in.
  * @sa      posMessageFree, posMessageGet, posMessageAvailable,
- *          posMessageSend, HZ
+ *          posMessageSend, HZ, MS
  */
 void*       posMessageWait(UINT_t timeoutticks);
 #endif
@@ -1735,22 +1749,22 @@ void*       posMessageWait(UINT_t timeoutticks);
  * @return  handle to the new flag object. NULL is returned on error.
  * @note    ::POSCFG_FEATURE_FLAGS must be defined to 1 
  *          to have flag support compiled in.
- * @sa      posFlagGet, posFlagSet, posFlagFree
+ * @sa      posFlagGet, posFlagSet, posFlagDestroy
  */
-POSFLAG_t   posFlagAlloc(void);
+POSFLAG_t   posFlagCreate(void);
 
-#if (DOX!=0) || (POSCFG_FEATURE_FLAGFREE != 0)
+#if (DOX!=0) || (POSCFG_FEATURE_FLAGDESTROY != 0)
 /**
  * Flag function.
  * Frees an unused flag object again.
  * @param   flg  handle to the flag object.
  * @note    ::POSCFG_FEATURE_FLAGS must be defined to 1 
  *          to have flag support compiled in.<br>
- *          ::POSCFG_FEATURE_FLAGFREE must be defined to 1
+ *          ::POSCFG_FEATURE_FLAGDESTROY must be defined to 1
  *          to have this function compiled in.
- * @sa      posFlagAlloc
+ * @sa      posFlagCreate
  */
-void        posFlagFree(POSFLAG_t flg);
+void        posFlagDestroy(POSFLAG_t flg);
 #endif
 
 /**
@@ -1763,7 +1777,7 @@ void        posFlagFree(POSFLAG_t flg);
  * @return  zero on success.
  * @note    ::POSCFG_FEATURE_FLAGS must be defined to 1 
  *          to have flag support compiled in.
- * @sa      posFlagAlloc, posFlagGet, posFlagWait
+ * @sa      posFlagCreate, posFlagGet, posFlagWait
  */
 VAR_t       posFlagSet(POSFLAG_t flg, UVAR_t flgnum);
 
@@ -1779,7 +1793,7 @@ VAR_t       posFlagSet(POSFLAG_t flg, UVAR_t flgnum);
  *          returned. A negative value is returned on error.
  * @note    ::POSCFG_FEATURE_FLAGS must be defined to 1 
  *          to have flag support compiled in.
- * @sa      posFlagAlloc, posFlagSet, posFlagWait
+ * @sa      posFlagCreate, posFlagSet, posFlagWait
  */
 VAR_t       posFlagGet(POSFLAG_t flg, UVAR_t mode);
 
@@ -1789,7 +1803,8 @@ VAR_t       posFlagGet(POSFLAG_t flg, UVAR_t mode);
  * Pends on a flag object and waits until one of the flags 
  * in the flag object is set or a timeout has happened.
  * @param   flg   handle to the flag object.
- * @param   timeoutticks  timeout in timer ticks (see ::HZ define).
+ * @param   timeoutticks  timeout in timer ticks
+ *          (see ::HZ define and ::MS macro).
  *          If this parameter is set to zero, the function immediately
  *          returns. If this parameter is set to INFINITE, the
  *          function will never time out.
@@ -1800,7 +1815,7 @@ VAR_t       posFlagGet(POSFLAG_t flg, UVAR_t mode);
  *          to have flag support compiled in.<br>
  *          ::POSCFG_FEATURE_FLAGWAIT must be defined to 1
  *          to have this function compiled in.
- * @sa      posFlagAlloc, posFlagSet, posFlagGet, HZ
+ * @sa      posFlagCreate, posFlagSet, posFlagGet, HZ, MS
  */
 VAR_t       posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
 #endif
@@ -1831,7 +1846,7 @@ VAR_t       posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
  * timeout parameters measured in timer ticks; thus
  * the HZ define can be taken as time base: HZ = 1 second,
  * 10*HZ = 10s, HZ/10 = 100ms, etc.
- * @sa jiffies
+ * @sa jiffies, MS
  */
 #if DOX!=0
 #define HZ (timerticks per second)
@@ -1877,9 +1892,9 @@ JIF_t       posGetJiffies(void);
  * @return  handle to the new timer object. NULL is returned on error.
  * @note    ::POSCFG_FEATURE_TIMER must be defined to 1 
  *          to have timer support compiled in.
- * @sa      posTimerSet, posTimerStart, posTimerFree
+ * @sa      posTimerSet, posTimerStart, posTimerDestroy
  */
-POSTIMER_t  posTimerAlloc(void);
+POSTIMER_t  posTimerCreate(void);
 
 /**
  * Timer function.
@@ -1896,7 +1911,7 @@ POSTIMER_t  posTimerAlloc(void);
  * @return  zero on success.
  * @note    ::POSCFG_FEATURE_TIMER must be defined to 1 
  *          to have timer support compiled in.
- * @sa      posTimerAlloc, posTimerStart
+ * @sa      posTimerCreate, posTimerStart
  */
 VAR_t       posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
                         UINT_t waitticks, UINT_t periodticks);
@@ -1921,22 +1936,22 @@ VAR_t       posTimerStart(POSTIMER_t tmr);
  * @return  zero on success.
  * @note    ::POSCFG_FEATURE_TIMER must be defined to 1 
  *          to have timer support compiled in.
- * @sa      posTimerStart, posTimerFree
+ * @sa      posTimerStart, posTimerDestroy
  */
 VAR_t       posTimerStop(POSTIMER_t tmr);
 
-#if (DOX!=0) || (POSCFG_FEATURE_TIMERFREE != 0)
+#if (DOX!=0) || (POSCFG_FEATURE_TIMERDESTROY != 0)
 /**
  * Timer function.
  * Deletes a timer object and free its resources.
  * @param   tmr  handle to the timer object.
  * @note    ::POSCFG_FEATURE_TIMER must be defined to 1 
  *          to have timer support compiled in. <br>
- *          ::POSCFG_FEATURE_TIMERFREE must be defined to 1
+ *          ::POSCFG_FEATURE_TIMERDESTROY must be defined to 1
  *          to have this function compiled in.
- * @sa      posTimerAlloc
+ * @sa      posTimerCreate
  */
-void        posTimerFree(POSTIMER_t tmr);
+void        posTimerDestroy(POSTIMER_t tmr);
 #endif
 #if (DOX!=0) || (POSCFG_FEATURE_TIMERFIRED != 0)
 /**
@@ -1949,7 +1964,7 @@ void        posTimerFree(POSTIMER_t tmr);
  *          to have timer support compiled in. <br>
  *          ::POSCFG_FEATURE_TIMERFIRED must be defined to 1
  *          to have this function compiled in.
- * @sa      posTimerAlloc, posTimerSet, posTimerStart
+ * @sa      posTimerCreate, posTimerSet, posTimerStart
  */
 VAR_t       posTimerFired(POSTIMER_t tmr);
 #endif
@@ -2041,6 +2056,28 @@ VAR_t       posSoftIntDelHandler(UVAR_t intno);
 
 #endif  /* POSCFG_FEATURE_SOFTINTS */
 /** @} */
+
+
+/* ==== END OF USER API ==== */
+
+
+
+/*---------------------------------------------------------------------------
+ *  INTERNAL DEFINITIONS
+ *-------------------------------------------------------------------------*/
+
+#ifdef PICOS_PRIVINCL
+
+#if MVAR_BITS == 8
+#ifndef _POSCORE_C
+POSEXTERN UVAR_t posShift1lTab_g[8];
+#endif
+#define pos_shift1l(bits)   posShift1lTab_g[(UVAR_t)(bits)]
+#else
+#define pos_shift1l(bits)   (((UVAR_t)1)<<(bits))
+#endif
+
+#endif /* PICOS_PRIV_H */
 
 /*-------------------------------------------------------------------------*/
 
