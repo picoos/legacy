@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.5 2004/03/13 19:12:30 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.6 2004/03/14 18:57:27 dkuschel Exp $
  */
 
 
@@ -78,7 +78,7 @@
  *  LOCAL TYPES AND VARIABLES
  *-------------------------------------------------------------------------*/
 
-typedef struct TBITS_s {
+typedef struct TBITS {
   UVAR_t         xtable[SYS_TASKTABSIZE_Y];
 #if SYS_TASKTABSIZE_Y > 1
   UVAR_t         ymask;
@@ -88,12 +88,12 @@ typedef struct TBITS_s {
 
 #if SYS_FEATURE_EVENTS != 0
 
-typedef union EVENT_s {
+typedef union EVENT {
   struct {
 #if POSCFG_ARGCHECK > 1
     UVAR_t       magic;
 #endif
-    union EVENT_s *next;
+    union EVENT *next;
   } l;
   struct {
 #if POSCFG_ARGCHECK > 1
@@ -117,7 +117,7 @@ static EVENT_t   posFreeEvents_g;
 
 #if (POSCFG_DYNAMIC_MEMORY == 0) && \
     ((POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) != 0)
-STATICBUFFER(posStaticEventMem_g, sizeof(union EVENT_s), \
+STATICBUFFER(posStaticEventMem_g, sizeof(union EVENT), \
              (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS));
 #endif
 
@@ -126,7 +126,7 @@ STATICBUFFER(posStaticEventMem_g, sizeof(union EVENT_s), \
 
 #if POSCFG_FEATURE_MSGBOXES != 0
 
-typedef struct MSGBUF_s {
+typedef struct MSGBUF {
 #if POSCFG_MSG_MEMORY != 0
   unsigned char  buffer[POSCFG_MSG_BUFSIZE];
 #else
@@ -135,7 +135,7 @@ typedef struct MSGBUF_s {
 #if POSCFG_ARGCHECK > 1
   UVAR_t         magic;
 #endif
-  struct MSGBUF_s *next;
+  struct MSGBUF *next;
 } MSGBUF_t;
 
 static POSSEMA_t msgAllocSyncSem_g;
@@ -152,12 +152,12 @@ STATICBUFFER(posStaticMessageMem_g, sizeof(MSGBUF_t), POSCFG_MAX_MESSAGES);
 
 #if POSCFG_FEATURE_TIMER != 0
 
-typedef struct TIMER_s {
+typedef struct TIMER {
 #if POSCFG_ARGCHECK > 1
   UVAR_t         magic;
 #endif
-  struct TIMER_s *prev;
-  struct TIMER_s *next;
+  struct TIMER   *prev;
+  struct TIMER   *next;
   POSSEMA_t      sema;
   UINT_t         counter;
   UINT_t         wait;
@@ -206,7 +206,7 @@ static POSIDLEFUNC_t  posIdleTaskFuncHook_g;
 #endif
 
 #if (POSCFG_DYNAMIC_MEMORY == 0) && (POSCFG_MAX_TASKS != 0)
-STATICBUFFER(posStaticTaskMem_g, sizeof(struct POSTASK_s), POSCFG_MAX_TASKS);
+STATICBUFFER(posStaticTaskMem_g, sizeof(struct POSTASK), POSCFG_MAX_TASKS);
 #endif
 
 
@@ -943,7 +943,7 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   if (task == NULL)
   {
     POS_SCHED_UNLOCK;
-    task = (POSTASK_t) POS_MEM_ALLOC(sizeof(struct POSTASK_s) +
+    task = (POSTASK_t) POS_MEM_ALLOC(sizeof(struct POSTASK) +
                                      (POSCFG_ALIGNMENT - 1));
     if (task == NULL)
       return NULL;
@@ -981,7 +981,7 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   posFreeTasks_g = task->next;
 
   m = (unsigned char*) task;
-  i = sizeof(struct POSTASK_s);
+  i = sizeof(struct POSTASK);
   while (i != 0) { *m = 0; ++m; --i; };
 
 #if POSCFG_ARGCHECK > 1
@@ -1265,7 +1265,7 @@ POSSEMA_t posSemaCreate(INT_t initcount)
   if (ev == NULL)
   {
     POS_SCHED_UNLOCK;
-    ev = (EVENT_t) POS_MEM_ALLOC(sizeof(union EVENT_s) +
+    ev = (EVENT_t) POS_MEM_ALLOC(sizeof(union EVENT) +
                                  (POSCFG_ALIGNMENT - 1));
     if (ev == NULL)
       return NULL;
@@ -2678,9 +2678,10 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #if POSCFG_DYNAMIC_MEMORY != 0
   (void) m;
   (void) task;
+  (void) ev;
 
 #if POSCFG_MAX_TASKS != 0
-  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(struct POSTASK_s),
+  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(struct POSTASK),
                     POSCFG_MAX_TASKS));
 #if POSCFG_ARGCHECK > 1
   if (m == NULL)
@@ -2693,7 +2694,7 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 
 #if SYS_FEATURE_EVENTS != 0
 #if (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) != 0
-  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(union EVENT_s), 
+  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(union EVENT), 
                     (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS)));
 #if POSCFG_ARGCHECK > 1
   if (m == NULL)
@@ -2802,9 +2803,13 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #endif
 
 #if POSCFG_FEATURE_MSGBOXES != 0
+  msgAllocWaitReq_g = 0;
   msgAllocSyncSem_g = posSemaCreate(1);
   msgAllocWaitSem_g = posSemaCreate(0);
-  msgAllocWaitReq_g = 0;
+#if ((POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) < 2) && (SYS_POSTALLOCATE != 0)
+  if ((msgAllocSyncSem_g == NULL) || (msgAllocWaitSem_g == NULL))
+    return;
+#endif
 #if POSCFG_MAX_MESSAGES != 0
   mbuf = posFreeMessagebuf_g;
   for (i=0; i<POSCFG_MAX_MESSAGES-1; ++i)
@@ -2897,10 +2902,7 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #endif
 
   /* start mutlitasking */
-  posCurrentTask_g  = posFreeTasks_g;
-  posNextTask_g     = posFreeTasks_g;
-
-  posTaskCreate(firstfunc, funcarg,
+  posNextTask_g = posTaskCreate(firstfunc, funcarg,
 #if POSCFG_TASKSTACKTYPE == 0
                 priority, stackFirstTask);
 #elif POSCFG_TASKSTACKTYPE == 1
@@ -2909,6 +2911,7 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
                 priority);
 #endif
   POS_SCHED_LOCK;
+  posCurrentTask_g  = posNextTask_g;
   posRunning_g      = 1;
   posInInterrupt_g  = 0;
   p_pos_startFirstContext();

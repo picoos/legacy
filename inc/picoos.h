@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.6 2004/03/13 19:12:30 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.7 2004/03/14 18:57:27 dkuschel Exp $
  *
  */
 
@@ -148,8 +148,8 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0060
-#define POS_VER_S           "0.6.0"
+#define POS_VER_N           0x0070
+#define POS_VER_S           "0.7.0"
 #define POS_COPYRIGHT       "(c) 2004, Dennis Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
@@ -387,8 +387,11 @@
 #if (POSCFG_ROUNDROBIN == 0) && (POSCFG_MAX_PRIO_LEVEL > (MVAR_BITS*MVAR_BITS))
 #error POSCFG_MAX_PRIO_LEVEL must not exceed (MVAR_BITS * MVAR_BITS)
 #endif 
-#if (POSCFG_MAX_TASKS < 3) || (POSCFG_MAX_TASKS > (POSCFG_TASKS_PER_PRIO * POSCFG_MAX_PRIO_LEVEL))
-#error POSCFG_MAX_TASKS is less than 3 or much to big
+#if (POSCFG_MAX_TASKS < 3) && (SYS_POSTALLOCATE == 0)
+#error POSCFG_MAX_TASKS is less than 3
+#endif
+#if (POSCFG_MAX_TASKS > (POSCFG_TASKS_PER_PRIO * POSCFG_MAX_PRIO_LEVEL))
+#error POSCFG_MAX_TASKS is much to big
 #endif
 #if (POSCFG_MAX_EVENTS < 1) && (SYS_POSTALLOCATE == 0)
 #error POSCFG_MAX_EVENTS must be at least 1
@@ -463,7 +466,7 @@
 #define POSCFG_FEATURE_SEMADESTROY 1
 #endif
 #endif
-#if POSCFG_FEATURE_MSGBOXES != 0
+#if (POSCFG_FEATURE_MSGBOXES != 0) && (SYS_POSTALLOCATE == 0)
 #define SYS_MSGBOXEVENTS  2
 #else
 #define SYS_MSGBOXEVENTS  0
@@ -716,7 +719,7 @@ typedef struct POSLISTHEAD POSLISTHEAD_t;
  * into the task environment structure (e.g. when ::POSCFG_TASKSTACKTYPE
  * is defined to 2).
  */
-typedef struct POSTASK_s *POSTASK_t; /* forward declaration */
+typedef struct POSTASK  *POSTASK_t; /* forward declaration */
 
 
 
@@ -2587,7 +2590,7 @@ POSEXTERN UVAR_t posShift1lTab_g[8];
 typedef void (*POSSTKFREEFUNC_t)(POSTASK_t task);
 #endif
 
-struct POSTASK_s {
+struct POSTASK {
     POS_USERTASKDATA
     NOS_TASKDATA
 #if POSCFG_TASKCB_USERSPACE > 0
@@ -2602,9 +2605,9 @@ struct POSTASK_s {
     UVAR_t      magic;
 #endif
 #if SYS_TASKDOUBLELINK != 0
-    struct POSTASK_s *prev;
+    struct POSTASK  *prev;
 #endif
-    struct POSTASK_s *next;
+    struct POSTASK  *next;
     UVAR_t      bit_x;
 #if SYS_TASKTABSIZE_Y > 1
     UVAR_t      bit_y;
