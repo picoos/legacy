@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.17 2005/01/11 19:54:35 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.18 2005/01/17 21:24:49 dkuschel Exp $
  *
  */
 
@@ -17,7 +17,40 @@
 /**
  * @mainpage pico]OS - Real Time Operating System
  *
- * @section intro Introduction
+ * <b> Table Of Contents </b>@n@htmlonly<font size="-1">@endhtmlonly
+ * <ul><li>@ref overview <ul>
+ *   <li> @ref features </li><li> @ref ports     </li>
+ *   <li> @ref files    </li><li> @ref license   </li></ul></li></ul>
+ * <ul><li> @ref intro <ul>
+ *   <li> @ref layer    </li><li> @ref port      </li>
+ *   <li> @ref debug    </li><li> @ref make      </li></ul></li></ul>
+ * <ul><li><b>Configuration</b><ul>
+ *   <li><b>Pico Layer</b><ul>
+ *     <li> @ref arch     </li><li> @ref codestyle </li>
+ *     <li> @ref lock     </li><li> @ref feature   </li>
+ *     <li> @ref findbit  </li><li> @ref portnlcfg </li>
+ *     <li> @ref coreset  </li></ul></li></ul><ul>
+ *   <li><b>Nano Layer</b><ul>
+ *     <li> @ref cfgabstr </li><li> @ref cfgnosbh </li>
+ *     <li> @ref cfgnoscio</li><li> @ref cfgcpuu  </li>
+ *     <li> @ref cfgnosmem</li><li> @ref cfgnosreg</li></ul></li></ul>
+ * </li></ul><ul><li><b>User API Function Reference</b><ul>
+ *   <li><b>Pico Layer</b><ul>
+ *     <li> @ref atomic   </li><li> @ref errcodes </li>
+ *     <li> @ref flag     </li><li> @ref lists    </li>
+ *     <li> @ref msg      </li><li> @ref mutex    </li>
+ *     <li> @ref sema     </li><li> @ref sint     </li>
+ *     <li> @ref task     </li><li> @ref timer    </li></ul></li>
+ *   <li><b>Nano Layer</b><ul><li> @ref absfunc <ul>
+ *       <li> @ref nanoflag </li><li> @ref nanomsg  </li>
+ *       <li> @ref nanomutex</li><li> @ref nanosema </li>
+ *       <li> @ref nanotask </li><li> @ref nanotimer</li></ul></li>
+ *     <li> @ref bhalf    </li><li> @ref conio    </li>
+ *     <li> @ref cpuusage </li><li> @ref nanoinit </li>
+ *     <li> @ref mem      </li><li> @ref registry </li></ul></li></ul>
+ * </li></ul>@htmlonly</font>@endhtmlonly@n<hr>@n
+ * 
+ * @section overview Overview
  * pico]OS is a highly configurable and very fast real time operating
  * system. It targets a wide range of architectures, from the small
  * 8 bit processors with very low memory till huge architectures
@@ -84,7 +117,6 @@
  *  - AVR (GNU C compiler supported)
  *  - ARM (SAMSUNG S3C2510A CPU / ARM940T core)
  *
- *
  * @n@n
  * @subsection files Files
  *
@@ -148,7 +180,6 @@
  *  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  *  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  *  OF THE POSSIBILITY OF SUCH DAMAGE. @n
- *
  *
  * @n@n
  * @section cont Contact Information
@@ -214,8 +245,8 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0092
-#define POS_VER_S           "0.9.2"
+#define POS_VER_N           0x0093
+#define POS_VER_S           "0.9.3"
 #define POS_COPYRIGHT       "(c) 2004-2005, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
@@ -431,6 +462,9 @@
 #else
 #ifndef POSCFG_FEATURE_LISTJOIN
 #error  POSCFG_FEATURE_LISTJOIN not defined
+#endif
+#ifndef POSCFG_FEATURE_LISTLEN
+#define POSCFG_FEATURE_LISTLEN  1
 #endif
 #endif
 #ifndef POSCFG_FEATURE_DEBUGHELP
@@ -761,25 +795,31 @@ typedef void (*POSINTFUNC_t)(UVAR_t arg);
 typedef void (*POSIDLEFUNC_t)(void);
 #endif
 
+/* forward declarations (just dummies) */
+struct POSSEMA;
+struct POSMUTEX;
+struct POSFLAG;
+struct POSTIMER;
+
 /** @brief  Handle to a semaphore object.
  * @sa posSemaCreate, posSemaGet, posSemaWait, posSemaSignal
  */
-typedef void*  POSSEMA_t;
+typedef struct POSSEMA *POSSEMA_t;
 
 /** @brief  Handle to a mutex object.
  * @sa posMutexCreate, posMutexLock, posMutexTryLock, posMutexUnlock
  */
-typedef void*  POSMUTEX_t;
+typedef struct POSMUTEX *POSMUTEX_t;
 
 /** @brief  Handle to a flag object.
  * @sa posFlagCreate, posFlagDestroy, posFlagGet, posFlagSet
  */
-typedef void*  POSFLAG_t;
+typedef struct POSFLAG *POSFLAG_t;
 
 /** @brief  Handle to a timer object.
  * @sa posTimerCreate, posTimerDestroy, posTimerSet, posTimerStart
  */
-typedef void*  POSTIMER_t;
+typedef struct POSTIMER *POSTIMER_t;
 
 /** @brief  Atomic variable.
  * @sa posAtomicGet, posAtomicSet, posAtomicAdd, posAtomicSub
@@ -798,7 +838,9 @@ struct POSLISTHEAD {
 struct POSLIST {
   struct POSLIST        *prev;
   struct POSLIST        *next;
+#if POSCFG_FEATURE_LISTLEN != 0
   struct POSLISTHEAD    *head;
+#endif
 };
 /** @brief  List variable.
  * This variable type is used as running variable of a list or as list link.
@@ -2470,6 +2512,7 @@ POSEXTERN POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
  */
 POSEXTERN void posListRemove(POSLIST_t *listelem);
 
+#if (DOX!=0) || (POSCFG_FEATURE_LISTJOIN != 0)
 /**
  * List Function.
  * Joins two lists together. The elements contained in the joinlist 
@@ -2491,17 +2534,22 @@ POSEXTERN void posListRemove(POSLIST_t *listelem);
  */
 POSEXTERN void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
                            POSLISTHEAD_t *joinlisthead);
+#endif
 
+#if (DOX!=0) || (POSCFG_FEATURE_LISTLEN != 0)
 /**
  * List Function.
  * Returns the length of a list.
  * @param   listhead  pointer to the head of the list.
  * @return  the length of the list
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
- *          to have list support compiled in.
+ *          to have list support compiled in. @n
+ *          ::POSCFG_FEATURE_LISTLEN must be defined to 1
+ *          to have this function compiled in.
  * @sa      posListAdd, posListGet, posListRemove
  */
 POSEXTERN UINT_t posListLen(POSLISTHEAD_t *listhead);
+#endif
 
 /**
  * List Function.
