@@ -1,4 +1,13 @@
 
+Version 0.8.0:
+  o  nano layer introduced. New features are:
+       - Bottom Halfs
+       - Multitasking able console I/O
+       - Multitasking able dynamic memory management
+       - Standardized API for easier task creation
+       - CPU usage measurement
+
+
 Version 0.7.0:
   o  nonblocking/blocking lists added (lists can be used for packet queues)
   o  added user local storage in task control block
