@@ -38,22 +38,13 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: lists.c,v 1.1 2004/03/13 19:14:47 dkuschel Exp $
  */
 
 
 /**
  *
  *  This file demonstrates the usage of the lists supported by pico]OS.
- *
- *
- *  NOTE:  This file is based on the nano-layer of the pico]OS
- *         realtime operating system that has not been published yet.
- *         In the current pico]OS distribution the functions with
- *         preceding 'nos' identifier are not available, so you will
- *         not be able to compile this file.
- *         The nano-layer will be published with pico]OS v0.8.0
- *
  *
  *  When you run this program, you will get this output:
  *  (tested with the 6502 port on a Commodore 64)
