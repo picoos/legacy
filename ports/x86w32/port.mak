@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.1 2005/01/10 22:39:26 dkuschel Exp $
+#  $Id: port.mak,v 1.2 2005/01/15 21:16:51 dkuschel Exp $
 
 
 # Set default compiler.
@@ -55,18 +55,18 @@ export COMPILER
 # Set to 1 to include generic pico]OS "findbit" function
 GENERIC_FINDBIT = 1
 
+
+#----------------------------------------------------------------------------
+#  MS Visual C++ Compiler
+#
+ifeq '$(COMPILER)' 'VC6'
+
 # Define extensions
 EXT_C   = .c
 EXT_ASM = .asm
 EXT_OBJ = .obj
 EXT_LIB = .lib
 EXT_OUT = .exe
-
-
-#----------------------------------------------------------------------------
-#  MS Visual C++ Compiler
-#
-ifeq '$(COMPILER)' 'VC6'
 
 # Define tools: compiler, assembler, archiver, linker
 CC = cl
@@ -133,10 +133,38 @@ ARFLAGS = /NOLOGO /OUT:
 #
 else
 
+# Define extensions
+EXT_C   = .c
+EXT_ASM = .s
+EXT_OBJ = .o
+EXT_LIB = .a
+EXT_OUT = .exe
+
 # Set path to the compiler
 #GCC_DIR = E:/Programme/mingw
-GCC_DIR =
 
+# If GCC_DIR is not set, try to find mingw-gcc in the DOS search path
+ifeq '$(strip $(GCC_DIR))' ''
+MNSEARCH = gcc.exe
+MNEMPTY =
+MNSPACE = $(MNEMPTY) $(MNEMPTY)
+DOSSEARCHPATH = $(subst \,/,$(subst ;, ,$(subst $(MNSPACE),?,$(PATH))))
+MINGWTMP0 := $(wildcard $(addsuffix /../../mingw/bin/$(MNSEARCH),$(DOSSEARCHPATH)))
+MINGWTMP1 = $(subst $(MNSPACE),?,$(MINGWTMP0))
+MINGWTMP2 = $(subst /bin/$(MNSEARCH)?,$(MNSPACE),$(MINGWTMP1))
+MINGWTMP3 = $(subst /bin/$(MNSEARCH),,$(MINGWTMP2))
+ifneq '$(strip $(MINGWTMP3))' ''
+MINGWTMP4 = $(firstword $(MINGWTMP3))
+MINGWTMP5 = $(subst /, ,$(MINGWTMP4))
+MINGWTMP6 = $(subst $(word $(words $(MINGWTMP5)),** ** ** $(MINGWTMP5))/../,,$(MINGWTMP4))
+MINGWTMP7 = $(subst $(word $(words $(MINGWTMP5)),** ** ** ** $(MINGWTMP5))/../,,$(MINGWTMP6))
+ifneq '$(wildcard $(MINGWTMP7)/bin/$(MNSEARCH))' ''
+GCC_DIR := $(subst ?,$(MNSPACE),$(MINGWTMP7))
+endif
+endif
+endif
+
+# Check if we have now the GCC directory.
 ifeq '$(strip $(GCC_DIR))' ''
 ifeq '$(strip $(GCC_DIRWARNED))' ''
 $(warning ******> GCC_DIR not set! Please set this variable to your\
@@ -147,6 +175,10 @@ endif
 GCC_BINDIR =
 GCC_LIBDIR =
 else
+ifneq '$(GCC_DIR)' '$(firstword $(GCC_DIR))'
+$(error ERROR: GCC is installed in a path that contains spaces: '$(GCC_DIR)')
+endif
+export GCC_DIR
 GCC_BINDIR = $(GCC_DIR)/bin/
 GCC_LIBDIR = $(GCC_DIR)/lib/
 endif
@@ -171,7 +203,7 @@ ADEFINES = GCC
 ifeq '$(strip $(GCC_LIBDIR))' ''
 LINKLIBS =
 else
-LINKLIBS = $(GCC_LIBDIR)libwinmm.a
+LINKLIBS = $(GCC_LIBDIR)libwinmm$(EXT_LIB)
 CDEFINES += HAVEMMLIB
 endif
 
