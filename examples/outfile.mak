@@ -14,6 +14,9 @@
 # Set relative path to the picoos root directory  -> YOU NEED TO CHANGE THIS!
 RELROOT = ../../../picoos/
 
+# Set fixed target platform                       -> YOU MAY CHANGE THIS!
+#PORT = x86w32  (->need to be specified at the command line)
+
 # Set fixed build mode (DEBUG or RELEASE)         -> YOU MAY CHANGE THIS!
 #BUILD = DEBUG  (->need to be specified at the command line)
 
