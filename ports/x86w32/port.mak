@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.2 2005/01/15 21:16:51 dkuschel Exp $
+#  $Id: port.mak,v 1.3 2005/02/01 21:06:49 dkuschel Exp $
 
 
 # Set default compiler.
@@ -148,6 +148,11 @@ ifeq '$(strip $(GCC_DIR))' ''
 MNSEARCH = gcc.exe
 MNEMPTY =
 MNSPACE = $(MNEMPTY) $(MNEMPTY)
+MNDRIVES = c: d: e: f: g: h:
+MINGWTMP8 = $(firstword $(foreach mdir,$(MNDRIVES),$(wildcard $(mdir)/mingw/bin/$(MNSEARCH))))
+ifneq '$(strip $(MINGWTMP8))' ''
+GCC_DIR := $(subst /bin/$(MNSEARCH),,$(MINGWTMP8))
+else
 DOSSEARCHPATH = $(subst \,/,$(subst ;, ,$(subst $(MNSPACE),?,$(PATH))))
 MINGWTMP0 := $(wildcard $(addsuffix /../../mingw/bin/$(MNSEARCH),$(DOSSEARCHPATH)))
 MINGWTMP1 = $(subst $(MNSPACE),?,$(MINGWTMP0))
@@ -160,6 +165,7 @@ MINGWTMP6 = $(subst $(word $(words $(MINGWTMP5)),** ** ** $(MINGWTMP5))/../,,$(M
 MINGWTMP7 = $(subst $(word $(words $(MINGWTMP5)),** ** ** ** $(MINGWTMP5))/../,,$(MINGWTMP6))
 ifneq '$(wildcard $(MINGWTMP7)/bin/$(MNSEARCH))' ''
 GCC_DIR := $(subst ?,$(MNSPACE),$(MINGWTMP7))
+endif
 endif
 endif
 endif
