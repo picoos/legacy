@@ -100,3 +100,13 @@ Overview and short description of the examples:
   test.c     :  This is an example program for pico]OS (pico layer only).
   test.txt   :  Description of the output that is produced by test.c.
 
+
+
+In the examples directory is also a makefile that can be used to build the
+executables of the listed files above. Syntax:  make PORT=yourport
+If PORT is not specified, the makefile chooses 6502 (C64) as default. You may
+download the CC65 compiler and the 6502 simulator to play with the examples:
+
+Download CC65 compiler at       http://www.cc65.org/
+Download VICE 6502 emulator at  http://www.viceteam.org/
+
