@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id:$
+#  $Id: makefile,v 1.1.1.1 2004/02/16 20:11:12 smocz Exp $
 
 
 # Set root path and include base make file
@@ -59,13 +59,17 @@ endif
 # Set port source files
 FILES_PORT = \
 	$(wildcard $(DIR_PORT)/*$(EXT_C)) \
-	$(wildcard $(DIR_PORT)/*$(EXT_ASM))
+	$(wildcard $(DIR_PORT)/*$(EXT_ASM)) \
+	$(wildcard $(DIR_PORT)/boot/*$(EXT_C)) \
+	$(wildcard $(DIR_PORT)/boot/*$(EXT_ASM))
 
 # Set header files
 FILES_HEADER = \
 	$(wildcard $(DIR_INC)/*.h) \
 	$(wildcard $(DIR_SRC)/*.h) \
-	$(wildcard $(DIR_PORT)/*.h)
+	$(wildcard $(DIR_PORT)/*.h) \
+	$(wildcard $(DIR_PORT)/boot/*.h)
+
 
 # ---------------------------------------------------------------------------
 
