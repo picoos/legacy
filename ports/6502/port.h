@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,12 +38,21 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.4 2004/03/14 18:54:11 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.5 2004/03/21 18:37:45 dkuschel Exp $
  */
 
 
 #ifndef _PORT_H
 #define _PORT_H
+
+
+/*---------------------------------------------------------------------------
+ *  COMPILER SPECIFIC SETTINGS
+ *-------------------------------------------------------------------------*/
+
+/* The cc65 compiler does not support the 'volatile' -keyword correctly */
+#define volatile
+
 
 
 /*---------------------------------------------------------------------------
