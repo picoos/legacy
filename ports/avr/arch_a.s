@@ -254,7 +254,7 @@ SIG_OUTPUT_COMPARE1A:
 
         PUSH_GPRS
 
-		clr    r1, r1		// clear r1, the gcc expect here always 0x00
+		clr    r1          // clear r1, the gcc expect here always 0x00
 
         // if (posInInterrupt_g == 0)  posCurrentTask_g->stackptr = SP;
         lds    r18, posInInterrupt_g
