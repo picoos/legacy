@@ -50,6 +50,9 @@
 
 .macro PUSH_GPRS
         push   r0
+        in     r0, _SFR_IO_ADDR(SREG)
+        cli
+        push   r0
 		push   r1
         push   r2
         push   r3
@@ -81,14 +84,10 @@
         push   r29
         push   r30
         push   r31
-        in     r0, _SFR_IO_ADDR(SREG)
-        push   r0
 .endm
 
 
 .macro POP_GPRS
-        pop    r0
-        out    _SFR_IO_ADDR(SREG), r0
         pop    r31
         pop    r30
         pop    r29
@@ -120,6 +119,8 @@
         pop    r3
         pop    r2
         pop    r1
+        pop    r0
+        out    _SFR_IO_ADDR(SREG), r0
         pop    r0
 .endm
 
@@ -253,7 +254,7 @@ SIG_OUTPUT_COMPARE1A:
 
         PUSH_GPRS
 
-		sub    r1, r1		// clear r1, the gcc expect here always 0x00
+		clr    r1, r1		// clear r1, the gcc expect here always 0x00
 
         // if (posInInterrupt_g == 0)  posCurrentTask_g->stackptr = SP;
         lds    r18, posInInterrupt_g
