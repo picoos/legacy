@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.9 2005/01/10 21:54:08 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.10 2005/01/17 21:24:38 dkuschel Exp $
  */
 
 
@@ -2633,7 +2633,9 @@ void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
   new->next  = next;
   new->prev  = prev;
   prev->next = new;
+#if POSCFG_FEATURE_LISTLEN != 0
   new->head  = listhead;
+#endif
   listhead->length++;
   if (listhead->flag != 0)
   {
@@ -2729,7 +2731,9 @@ void posListRemove(POSLIST_t *listelem)
   if (listelem != NULL)
   {
     pos_listRemove(listelem);
+#if POSCFG_FEATURE_LISTLEN != 0
     listelem->head->length--;
+#endif
   }
   POS_SCHED_UNLOCK;
 }
@@ -2751,10 +2755,12 @@ void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
   }
   else
   {
+#if POSCFG_FEATURE_LISTLEN != 0
     POSLIST_FOR_EACH_ENTRY(joinlisthead, elem)
     {
       elem->head = baselisthead;
     }
+#endif
     elem = joinlisthead->next;
     pos_listRemove((POSLIST_t*)joinlisthead);
     if (pos == POSLIST_HEAD)
@@ -2786,6 +2792,8 @@ void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
 
 /*-------------------------------------------------------------------------*/
 
+#if POSCFG_FEATURE_LISTLEN != 0
+
 UINT_t posListLen(POSLISTHEAD_t *listhead)
 {
   UINT_t len;
@@ -2799,6 +2807,8 @@ UINT_t posListLen(POSLISTHEAD_t *listhead)
   POS_SCHED_UNLOCK;
   return len;
 }
+
+#endif /* POSCFG_FEATURE_LISTJOIN */
 
 /*-------------------------------------------------------------------------*/
 
@@ -3109,12 +3119,18 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
   posIdleTaskFuncHook_g = NULL;
 #endif
 
+#ifdef POS_DEBUGHELP
+  task =
+#endif
 #if POSCFG_TASKSTACKTYPE == 0
   posTaskCreate(pos_idletask, NULL, 0, stackIdleTask);
 #elif POSCFG_TASKSTACKTYPE == 1
   posTaskCreate(pos_idletask, NULL, 0, idleStackSize);
 #else
   posTaskCreate(pos_idletask, NULL, 0);
+#endif
+#ifdef POS_DEBUGHELP
+  POS_SETTASKNAME(task, "idle task");
 #endif
 
   /* start mutlitasking */
@@ -3126,6 +3142,7 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #else
                 priority);
 #endif
+  POS_SETTASKNAME(posNextTask_g, "root task");
   POS_SCHED_LOCK;
   posCurrentTask_g  = posNextTask_g;
   posRunning_g      = 1;
