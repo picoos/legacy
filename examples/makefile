@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: $
+#  $Id: makefile,v 1.1 2004/06/05 13:41:47 dkuschel Exp $
 
 
 # Set root path
@@ -50,6 +50,7 @@ ifeq '$(strip $(SOURCEFILE))' ''
 MAKECMD = -$(MAKE) -f $(SRCDIR)/makefile -C .. SOURCEFILE=$(SRCDIR)/
 
 default: all
+
 all:
 	$(MAKE) -C .. clean NANO=0
 	$(MAKECMD)test.c NANO=0
@@ -74,6 +75,10 @@ all:
 	$(MAKECMD)ex_timr1.c
 	$(MAKECMD)ex_timr2.c
 	$(MAKECMD)test.c
+
+clean:
+	$(MAKE) -C .. clean NANO=0
+	$(MAKE) -C .. clean NANO=1
 
 else
 
