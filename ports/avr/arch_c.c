@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.3 2004/05/09 21:24:09 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.4 2004/05/15 19:09:58 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -110,38 +110,11 @@ void my_free(void *p) {
 #endif
 
 
-
-/*
- * Initialize the port. 
- * 
- * The timer for the scheduler will be started here.
- */
-/*void p_pos_initArch(void) {
-  
-    POS_SCHED_LOCK;
-
-    // TODO: consistent-check with #error possible? 
-    // CRYSTAL_CLOCK / (TIMER_PRESCALER_VALUE * HZ) < 65536
-    uint16_t outputCompare = CRYSTAL_CLOCK / (TIMER_PRESCALER_VALUE * HZ);
-    
-    OCR1A = outputCompare;
-    TCCR1A = 0x00;
-    // set WGM12 for Clear Timer on Compare match (CTC) mode
-    TCCR1B = _BV(WGM12) | TIMER_PRESCALER_FLAGS;
-    TIMSK |= _BV(OCIE1A);   // enable interrupt
-
-    POS_SCHED_UNLOCK;
-}*/
-
 void p_pos_initArch(void) {
   
-    // TODO: Globale Interrupts abschalten
     POS_SCHED_LOCK;
 
     TIMER_COUNTER_REG = TIMER_COUNTER_VALUE;
-    
-    // TODO: need we that ?
-    // TCCR1A = 0x00;
     
     TIMER_CONFIG_REG = TIMER_CONFIG_VALUE;
     TIMER_INTERRUPT_REG |= _BV(TIMER_INTERRUPT_ENABLE_BIT);   // enable interrupt
@@ -155,25 +128,25 @@ void p_pos_initArch(void) {
 
 #if 0
 void p_pos_startFirstContext(void) {
-  /* TO DO:  restore new task data from new task control block */
+  /* restore new task data from new task control block */
 }
 
 void p_pos_softContextSwitch(void) {
-  /* TO DO:  save old task data to current task control block */
+  /* save old task data to current task control block */
   
   /* set new task */
   posCurrentTask_g = posNextTask_g;
   
-  /* TO DO:  restore new task data from new task control block */
+  /* restore new task data from new task control block */
 }
 
 void p_pos_intContextSwitch(void) {
-  /* TO DO:  save old task data to current task control block */
+  /* save old task data to current task control block */
   
   /* set new task */
   posCurrentTask_g = posNextTask_g;
   
-  /* TO DO:  restore new task data from new task control block */
+  /* restore new task data from new task control block */
 }
 #endif
 
@@ -230,7 +203,6 @@ VAR_t p_pos_initTask(POSTASK_t task,
                     void *funcarg) {
     // Stack pointer is in the stack memory 
     // (with fixed size) in the task structure.
-    //uint8_t *stackPtr = &(task->stack[FIXED_STACK_SIZE-1]);
     uint8_t *stackPtr = (task->stack) + (FIXED_STACK_SIZE-1);
 
     constructStackFrame(task, stackPtr, funcptr, funcarg);
@@ -275,19 +247,11 @@ void constructStackFrame(POSTASK_t task, uint8_t* stackPtr,
     
     // Initialize the register from R0 to the register, 
     // that pass the argument with 0x00
-
-    //uint8_t* registerStartPtr = stackPtr;
     
     *stackPtr = 0;                  // initialize R0
     stackPtr--;
     *stackPtr = INITIAL_SREG;       // initialize SREG
     stackPtr--;
-    
-    // initialize R1 .. R[ARGUMENT_REGISTER_NUM]
-    /*
-    for (; stackPtr > (registerStartPtr - ARGUMENT_REGISTER_NUM); stackPtr--) {
-        *stackPtr = 0;
-    }*/
     
     uint8_t i;
     // ARGUMENT_REGISTER_NUM - 2
@@ -302,16 +266,10 @@ void constructStackFrame(POSTASK_t task, uint8_t* stackPtr,
     stackPtr = putPointerOnStack(stackPtr, funcarg);
     
     // Now fill the remaining gp-registers with 0.
-    /*for (; stackPtr > (registerStartPtr - GP_REGISTER_AMOUNT); stackPtr--) {
-        *stackPtr = 0;
-    }*/
     for (i = 0; i < (GP_REGISTER_AMOUNT - (ARGUMENT_REGISTER_NUM + 2)); i++) {
         *stackPtr = 0;
         stackPtr--;
     }
-    // setup the stack 
-    //*stackPtr = INITIAL_SREG;
-    //stackPtr--;
     
     task->stackptr = (void*) stackPtr;
 }
