@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.10 2004/03/21 18:36:29 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.11 2004/03/21 19:19:36 dkuschel Exp $
  *
  */
 
@@ -716,7 +716,10 @@ typedef UINT_t            JIF_t;
 /** Generic function pointer. */
 typedef void (*POSTASKFUNC_t)(void* arg);
 
-/** Software interrupt callback function pointer. */
+/** Software interrupt callback function pointer.
+ * The parameter @e arg is the value that was dropped
+ * in the call to ::posSoftInt.
+ */
 typedef void (*POSINTFUNC_t)(UVAR_t arg);
 
 #if (DOX!=0) ||(POSCFG_FEATURE_IDLETASKHOOK != 0)
@@ -900,7 +903,7 @@ VAR_t*  _errno_p(void);
  * and to 32 bit architectures with lots of memory. To keep the
  * porting as simple as possible, there are only a couple of functions
  * that must be adapted to the architecute.
- * Befor you start porting the operating system to your architecture,
+ * Before you start porting the operating system to your architecture,
  * you must choose a stack management type. You have the choice
  * between:<br>
  * 
@@ -1701,7 +1704,8 @@ VAR_t       posSemaSignal(POSSEMA_t sema);
  *          If this parameter is set to zero, the function immediately
  *          returns. If this parameter is set to INFINITE, the
  *          function will never time out.
- * @return  zero on success.
+ * @return  zero on success. A positive value (1 or TRUE) is returned
+ *          when the timeout was reached.
  * @note    ::POSCFG_FEATURE_SEMAPHORES must be defined to 1 
  *          to have semaphore support compiled in.<br>
  *          ::POSCFG_FEATURE_SEMAWAIT must be defined to 1
@@ -1869,7 +1873,8 @@ void        posMessageFree(void *buf);
  *               Exception: ::POSCFG_MSG_MEMORY = 0 and
  *               ::POSCFG_FEATURE_MSGWAIT = 0.
  * @param   taskhandle  handle to the task to send the message to.
- * @return  zero on success.
+ * @return  zero on success. When an error condition exist, a
+ *          negative value is returned and the message buffer is freed.
  * @note    ::POSCFG_FEATURE_MSGBOXES must be defined to 1 
  *          to have message box support compiled in.
  * @sa      posMessageAlloc, posMessageGet
@@ -2070,7 +2075,7 @@ VAR_t       posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
  * is system dependent.
  * @note    ::POSCFG_FEATURE_JIFFIES must be defined to 1 
  *          to have jiffies support compiled in.
- * @sa HZ
+ * @sa HZ, POS_TIMEAFTER
  */
 #if (DOX!=0) || (POSCFG_FEATURE_JIFFIES != 0)
 #if (DOX!=0) || (POSCFG_FEATURE_LARGEJIFFIES == 0)
@@ -2236,7 +2241,7 @@ void        posSoftInt(UVAR_t intno, UVAR_t param);
 
 /**
  * Software Interrupt Function.
- * Sets a software interrupt handler function. Befor a software interrupt
+ * Sets a software interrupt handler function. Before a software interrupt
  * can be rised by a call to ::posSoftInt, this function must be called
  * to tell pico]OS the handler function for the interrupt.
  * @param   intno number of the interrupt to rise. Must be in the
@@ -2371,7 +2376,7 @@ INT_t       posAtomicSub(POSATOMIC_t *var, INT_t value);
  * @param   new       pointer to the list element to add.
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
  *          to have list support compiled in. <br>
- *          Note that list heads must be initialized befor elements
+ *          Note that list heads must be initialized before elements
  *          can be added to the list.
  * @sa      posListGet, posListLen, posListRemove, posListJoin, posListInit
  */
@@ -2457,7 +2462,7 @@ UINT_t      posListLen(POSLISTHEAD_t *listhead);
 /**
  * List Function.
  * Initializes the head of a list. This function must be called first
- * befor elements can be added to the list.
+ * before elements can be added to the list.
  * @param   listhead    pointer to the listhead to initialize.
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
  *          to have list support compiled in. <br>
