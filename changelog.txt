@@ -1,9 +1,15 @@
-Version ? (CVS Head):
+
+Version 0.8.1:
+  o  many new examples added to the examples directory
+  o  port directory structure changed: subdirectory 'boot' introduced
+  o  Bottom Halfs can now be triggered from outside the pico]OS interrupt scope
+  o  ARM port for SAMSUNG S3C2510A added (thanks Jun Li)
   o  AVR-Port: 
        - Bugfix: Set R0 in the frame for the ISR to Zero(0)
-       - New Feature: Add a dedicated stack for the interrups.
-       - New Feature: Add a macro for generating a picoos compatible interrupt 
-         frame (PICOOS_SIGNAL).
+       - New Feature: Added a dedicated stack for the interrupts.
+       - New Feature: Added a macro for generating a picoos compatible
+         interrupt frame (PICOOS_SIGNAL).
+
 
 Version 0.8.0:
   o  nano layer introduced. New features are:
