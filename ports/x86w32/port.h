@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.3 2005/02/01 21:08:07 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.4 2005/02/07 22:01:23 dkuschel Exp $
  */
 
 
@@ -391,6 +391,18 @@ extern void p_pos_globalUnlock(int flags);
  *       it is not allowed to call this function from a pico]OS task.
  */
 extern void callInterruptHandler( void (*handlerfunc)(void) );
+
+/* Call this function to enter a critical section of code. This function
+ * works like the MS Windows function EnterCriticalSection(), but it is
+ * allowed to call this function from anywhere you want, whereas the
+ * MS Windows function can not be used in pico]OS tasks.
+ * A critical section must be left again by calling singleThreadExit().
+ */
+extern void singleThreadEnter(void);
+
+/* This is the counterpart function of singleThreadEnter().
+ */
+extern void singleThreadExit(void);
 
 #endif
 
