@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.15 2005/01/03 18:12:30 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.16 2005/01/10 21:50:29 dkuschel Exp $
  *
  */
 
@@ -212,8 +212,8 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0090
-#define POS_VER_S           "0.9.0"
+#define POS_VER_N           0x0091
+#define POS_VER_S           "0.9.1"
 #define POS_COPYRIGHT       "(c) 2004-2005, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
