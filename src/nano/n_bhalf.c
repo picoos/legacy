@@ -38,12 +38,24 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: n_bhalf.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
  */
 
 #include "../src/nano/privnano.h"
 
 #if NOSCFG_FEATURE_BOTTOMHALF != 0
+
+/* check features */
+#if POSCFG_FEATURE_INHIBITSCHED == 0
+#error POSCFG_FEATURE_INHIBITSCHED not enabled
+#endif
+#if POSCFG_FEATURE_SEMAPHORES == 0
+#error POSCFG_FEATURE_SEMAPHORES not enabled
+#endif
+#if NOSCFG_FEATURE_TASKCREATE == 0
+#error NOSCFG_FEATURE_TASKCREATE not enabled
+#endif
+
 
 
 /*---------------------------------------------------------------------------
@@ -135,6 +147,7 @@ void nosBottomHalfStart(UVAR_t number)
   }
 }
 
+/*-------------------------------------------------------------------------*/
 
 VAR_t nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func, void *arg)
 {
@@ -155,9 +168,7 @@ VAR_t nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func, void *arg)
   return 0;
 }
 
-
 /*-------------------------------------------------------------------------*/
-
 
 void nos_initBottomHalfs(void)
 {

@@ -38,11 +38,26 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: n_core.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
  */
 
 #define _N_CORE_C
 #include "../src/nano/privnano.h"
+
+/* check features */
+#if NOS_FEATURE_CPUUSAGE != 0
+#if POSCFG_FEATURE_SLEEP == 0
+#error POSCFG_FEATURE_SLEEP not enabled
+#endif
+#if POSCFG_FEATURE_IDLETASKHOOK == 0
+#error POSCFG_FEATURE_IDLETASKHOOK not enabled
+#endif
+#endif
+#if POSCFG_TASKSTACKTYPE == 0
+#if NOSCFG_FEATURE_MEMALLOC == 0
+#error NOSCFG_FEATURE_MEMALLOC not enabled
+#endif
+#endif
 
 
 
@@ -187,6 +202,9 @@ POSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   if (stk == NULL)
     return NULL;
 
+#if POSCFG_FEATURE_INHIBITSCHED == 0
+#error POSCFG_FEATURE_INHIBITSCHED not enabled
+#endif
   posTaskSchedLock();
 #if NOSCFG_STACK_GROWS_UP == 0
   task = posTaskCreate(funcptr, funcarg, priority, 

@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: pos_nano.h,v 1.1 2004/03/16 21:38:30 dkuschel Exp $
  */
 
 #ifndef _POS_NANO_H
@@ -47,6 +47,7 @@
 #ifndef DOX
 #define DOX  0
 #endif
+
 
 
 /*---------------------------------------------------------------------------
@@ -88,6 +89,12 @@
 #endif
 #ifndef NOSCFG_FEATURE_CONOUT
 #error  NOSCFG_FEATURE_CONOUT not defined
+#endif
+#ifndef NOSCFG_CONOUT_HANDSHAKE
+#error  NOSCFG_CONOUT_HANDSHAKE not defined
+#endif
+#ifndef NOSCFG_CONOUT_FIFOSIZE
+#error  NOSCFG_CONOUT_FIFOSIZE not defined
 #endif
 #ifndef NOSCFG_FEATURE_PRINTF
 #error  NOSCFG_FEATURE_PRINTF not defined
@@ -145,6 +152,7 @@
  *  DATA TYPES
  *-------------------------------------------------------------------------*/
 
+#if (DOX!=0) || (NOSCFG_FEATURE_BOTTOMHALF != 0)
 /** Bottom half function pointer.
  * @param   arg         Optional argument that was set when the
  *                      bottom half was registered with
@@ -153,6 +161,7 @@
  *                      (0 .. ::NOS_MAX_BOTTOMHALFS - 1)
  */
 typedef void (*NOSBHFUNC_t)(void* arg, UVAR_t bh);
+#endif
 
 
 
@@ -291,8 +300,10 @@ void nosMemCopy(void *dst, void *src, UINT_t count);
  * The nano layer supplies a set of multitasking able console I/O functions.
  * Note that the platform port must support some basic I/O mechanisms.
  * For console output, pico]OS calls the function ::p_putchar to output
- * a single character. Input from a terminal or keyboard is fet into
- * pico]OS by calling the function ::c_nos_keyinput or by rising the
+ * a single character. This function may fail when a transmitter FIFO
+ * ran out of space, and the function ::c_nos_putcharReady should be called
+ * when the transmitter is ready again. Input from a terminal or keyboard is
+ * fet into pico]OS by calling the function ::c_nos_keyinput or by rising the
  * software interrupt number zero with the keycode as parameter. Not all
  * platform ports may support console I/O, please read the port documentation
  * for further information.<br>
@@ -300,7 +311,7 @@ void nosMemCopy(void *dst, void *src, UINT_t count);
  * you may no more need a large runtime library in some special cases.
  * @{
  */
-#if (DOX != 0) || (NOSCFG_FEATURE_CONIN != 0)
+#if (DOX!=0) || (NOSCFG_FEATURE_CONIN != 0)
 
 /**
  * Keyboard input.
@@ -340,22 +351,59 @@ UVAR_t  nosKeyPressed(void);
 #endif  /* NOSCFG_FEATURE_CONIN */
 
 
-#if (DOX != 0)
+#if (DOX!=0)
 /**
  * Print a character to the console or terminal. This function
  * must be supplied by the architecture port; it is not callable
  * by the user.
  * @param   c  character to print out.
+ * @return  This function should return nonzero (=TRUE) when the
+ *          character could be printed. If the function could not
+ *          print the character (e.g. the FIFO of a serial line
+ *          is full), this function should return zero (=FALSE).
+ *          The nano layer will try to send the character later again.
  * @note    This function must not do a CR/LF conversion, a CR
  *          must result in a simple carriage return, and a LF
  *          must result in a simple line feed without returning
  *          the carriage.
- * @sa      c_nos_keyinput
+ * @note    If this function returns FALSE, the platform port
+ *          must do a call to ::c_nos_putcharReady when it is
+ *          ready again for accepting new characters. When
+ *          ::NOSCFG_CONOUT_HANDSHAKE is disabled, the return
+ *          value of this function is ignored.
+ * @sa      c_nos_putcharReady, c_nos_keyinput
  */
-void p_putchar(char c); 
+UVAR_t  p_putchar(char c); 
 #endif
 
-#if (DOX != 0) || (NOSCFG_FEATURE_CONOUT != 0)
+
+#if (DOX!=0) || (NOSCFG_CONOUT_HANDSHAKE != 0)
+/**
+ * This is the optional handshake function for ::p_putchar.
+ * The handshake function is usefull for console output over
+ * a serial line. The function ::p_putchar will fail when the
+ * transmitter FIFO is full, and the nano layer will save the
+ * last character for later transmission. The platform port
+ * should than call ::c_nos_putcharReady when the transmitter
+ * FIFO has space again (when the last character has left the
+ * output shift register); most commonly this is signalled by
+ * a hardware interrupt, that would be used to call this
+ * handshake function. @n
+ * The purpose of this handshaking is to reduce CPU usage
+ * by avoiding polling on the standard output until the stdout
+ * is ready again. In the current implementation this function
+ * triggers a semaphore that wakes the task waiting for
+ * service on standard out. @n
+ * Note that this function must be supplied by the
+ * architecture port; it is not callable by the user.
+ * @note To enable this handshake function, the define
+ *       ::NOSCFG_CONOUT_HANDSHAKE must be set to 1.
+ */
+void    c_nos_putcharReady(void);
+#endif
+
+
+#if (DOX!=0) || (NOSCFG_FEATURE_CONOUT != 0)
 
 /**
  * Print a character to the console or terminal.
@@ -637,9 +685,15 @@ UVAR_t nosCpuUsage(void);
 /** @} */
 
 
+
 /*---------------------------------------------------------------------------
- *  TASK MANAGEMENT
+ *  ABSTRACTED FUNCTIONS
  *-------------------------------------------------------------------------*/
+
+/** @defgroup absfunc Abstracted Functions
+ * @ingroup userapin
+ * @{
+ */
 
 #if (DOX!=0) || (NOSCFG_FEATURE_TASKCREATE != 0)
 /**
@@ -665,6 +719,7 @@ POSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
                         VAR_t priority, UINT_t stacksize,
                         const char* name);
 #endif
+/** @} */
 
 
 

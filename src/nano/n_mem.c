@@ -38,13 +38,20 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: n_mem.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
  */
 
 #define _N_MEM_C
 #include "../src/nano/privnano.h"
 
+/* check features */
+#if NOSCFG_FEATURE_MEMALLOC != 0
+#if POSCFG_FEATURE_INHIBITSCHED == 0
+#error POSCFG_FEATURE_INHIBITSCHED not enabled
+#endif
+#endif
 
+/* include malloc from runtime library */
 #if (NOSCFG_MEM_MANAGER_TYPE == 0)
 #ifdef NULL
 #undef NULL

@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.7 2004/03/14 18:55:38 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.8 2004/03/15 21:07:42 dkuschel Exp $
  */
 
 
@@ -51,6 +51,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup coreset Configuration: OS Core Settings
+ * @ingroup configp
  * @{
  */
 
@@ -252,6 +253,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup codestyle Configuration: Code style
+ * @ingroup configp
  * @{
  */
 
@@ -302,6 +304,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup feature Configuration: Features
+ * @ingroup configp
  * @{
  */
 

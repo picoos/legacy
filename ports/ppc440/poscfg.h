@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.6 2004/03/14 18:55:44 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.7 2004/03/15 21:07:42 dkuschel Exp $
  */
 
 
@@ -51,6 +51,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup coreset Configuration: OS Core Settings
+ * @ingroup configp
  * @{
  */
 
@@ -77,7 +78,7 @@
  * allocated. Even if the define ::POSCFG_MAX_PRIO_LEVEL allows in conjunction
  * with ::POSCFG_TASKS_PER_PRIO more tasks, the maximum count of usable tasks
  * is limmited by this define. The value of this define can be in the
- * range 3..(::POSCFG_TASKS_PER_PRIO * ::POSCFG_MAX_PRIO_LEVEL). This define
+ * range 2..(::POSCFG_TASKS_PER_PRIO * ::POSCFG_MAX_PRIO_LEVEL). This define
  * should be set as small as possible to decrease memory usage. Remember
  * that the OS has a built in idle task that also needs a task structure.
  * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
@@ -252,6 +253,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup codestyle Configuration: Code style
+ * @ingroup configp
  * @{
  */
 
@@ -302,6 +304,7 @@
  *-------------------------------------------------------------------------*/
 
 /** @defgroup feature Configuration: Features
+ * @ingroup configp
  * @{
  */
 

@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.8 2004/03/15 21:09:22 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.9 2004/03/16 21:36:08 dkuschel Exp $
  *
  */
 
@@ -24,6 +24,8 @@
  * like 32 bit processors with lots of memory.<br><br><br>
  *
  * @subsection features Features
+ * pico]OS is currently divided into two layer. The <b>pico-layer</b>
+ * (the core of the operating system) includes this features:
  *
  * <b>Scheduler:</b>
  *  - two modes: standard priority based or round robin
@@ -57,6 +59,15 @@
  * <b>Miscellaneous:</b>
  *  - atomic variables
  *  - blocking and nonblocking lists
+ *
+ * <br>
+ * The optional <b>nano-layer</b> supports:
+ *
+ *  - Bottom Halfs for interrupt service routines
+ *  - Multitasking able console I/O
+ *  - Multitasking able dynamic memory management
+ *  - Standardized API for easier task creation
+ *  - CPU usage measurement
  *
  * <br><br>
  * @subsection ports Available Ports
@@ -194,8 +205,8 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0070
-#define POS_VER_S           "0.7.0"
+#define POS_VER_N           0x0080
+#define POS_VER_S           "0.8.0"
 #define POS_COPYRIGHT       "(c) 2004, Dennis Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
@@ -433,8 +444,8 @@
 #if (POSCFG_ROUNDROBIN == 0) && (POSCFG_MAX_PRIO_LEVEL > (MVAR_BITS*MVAR_BITS))
 #error POSCFG_MAX_PRIO_LEVEL must not exceed (MVAR_BITS * MVAR_BITS)
 #endif 
-#if (POSCFG_MAX_TASKS < 3) && (SYS_POSTALLOCATE == 0)
-#error POSCFG_MAX_TASKS is less than 3
+#if (POSCFG_MAX_TASKS < 2) && (SYS_POSTALLOCATE == 0)
+#error POSCFG_MAX_TASKS is less than 2
 #endif
 #if (POSCFG_MAX_TASKS > (POSCFG_TASKS_PER_PRIO * POSCFG_MAX_PRIO_LEVEL))
 #error POSCFG_MAX_TASKS is much to big
