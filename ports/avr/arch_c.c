@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.2 2004/05/08 19:51:43 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.3 2004/05/09 21:24:09 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -347,6 +347,35 @@ uint8_t* putPointerOnStack(uint8_t* stackPtr, void* pointer) {
     stackPtr--;
     
     return stackPtr;
+}
+
+
+void p_pos_softContextSwitch(void) __attribute__ ((naked));
+void p_pos_softContextSwitch(void) {
+        SAVE_CONTEXT();
+        posCurrentTask_g->stackptr = (void*)SP;
+
+        asm volatile("jmp    p_pos_intContextSwitch");
+}
+
+void p_pos_intContextSwitch(void) __attribute__ ((naked));
+void p_pos_intContextSwitch(void) {
+        posCurrentTask_g = posNextTask_g;
+
+        asm volatile("jmp    p_pos_startFirstContext");
+}
+
+void p_pos_startFirstContext(void) __attribute__ ((naked));
+void p_pos_startFirstContext(void) {
+
+        SP = (uint16_t)posCurrentTask_g->stackptr;
+
+        asm volatile("jmp    interruptReturn");
+}
+
+void interruptReturn(void) {
+        RESTORE_CONTEXT();
+        asm volatile("reti");
 }
 
 
