@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_bhalf.c,v 1.3 2004/06/16 05:45:08 dkuschel Exp $
+ * CVS-ID $Id: n_bhalf.c,v 1.4 2005/01/03 16:42:57 dkuschel Exp $
  */
 
 #define _N_BHALF_C
@@ -95,6 +95,8 @@ static void nos_bhtask(void *arg)
   POS_LOCKFLAGS;
 
   (void) arg;
+
+  POS_SETTASKNAME(posCurrentTask_g, "bottomhalf task");
 
   for (;;)
   {
@@ -203,6 +205,7 @@ void nos_initBottomHalfs(void)
   }
   bhexecmask_g  = 0;
   bhsema_g = posSemaCreate(0);
+  POS_SETEVENTNAME(bhsema_g, "bottomhalf tasksync");
   (void) nosTaskCreate(nos_bhtask, NULL, POSCFG_MAX_PRIO_LEVEL - 1, 0, NULL);
   posSoftIntSetHandler(1, nos_bhtrigger);
 }

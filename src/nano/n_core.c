@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.3 2004/04/18 18:04:51 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.4 2005/01/03 16:46:08 dkuschel Exp $
  */
 
 #define _N_CORE_C
@@ -228,6 +228,7 @@ NOSSEMA_t nosSemaCreate(INT_t initcount, UVAR_t options, const char *name)
   else
   {
     nos_regEnableSysKey(re, sem);
+    POS_SETEVENTNAME(sem, re->name);
   }
   return (NOSSEMA_t) sem;
 }
@@ -277,6 +278,7 @@ NOSMUTEX_t nosMutexCreate(UVAR_t options, const char *name)
   else
   {
     nos_regEnableSysKey(re, mtx);
+    POS_SETEVENTNAME(mtx, re->name);
   }
   return (NOSMUTEX_t) mtx;
 }
@@ -369,6 +371,7 @@ NOSFLAG_t nosFlagCreate(const char* name)
   else
   {
     nos_regEnableSysKey(re, flg);
+    POS_SETEVENTNAME(flg, re->name);
   }
   return (NOSFLAG_t) flg;
 }
@@ -512,6 +515,7 @@ NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 #if NOSCFG_FEATURE_REGISTRY != 0
       nos_regEnableSysKey(re, task);
 #endif
+      POS_SETTASKNAME(task, re->name);
     }
     posTaskSchedUnlock();
 
@@ -539,8 +543,11 @@ NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   {
     task->exithook = nos_taskExitHook;
     nos_regEnableSysKey(re, task);
+    POS_SETTASKNAME(task, re->name);
   }
   posTaskSchedUnlock();
+#else
+  POS_SETTASKNAME(task, name);
 #endif
 
   /*-----------------------------------------------*/
@@ -558,8 +565,11 @@ NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   {
     task->exithook = nos_taskExitHook;
     nos_regEnableSysKey(re, task);
+    POS_SETTASKNAME(task, re->name);
   }
   posTaskSchedUnlock();
+#else
+  POS_SETTASKNAME(task, name);
 #endif
 
 #endif /* POSCFG_TASKSTACKTYPE == 2 */

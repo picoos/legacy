@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.3 2005/01/03 16:44:20 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.4 2005/01/10 21:55:48 dkuschel Exp $
  */
 
 #define _N_CONIO_C
@@ -609,6 +609,7 @@ void nos_initConIO(void)
   cin_outptr_g  = 0;
   cin_waiting_g = 0;
   cin_sema_g    = posSemaCreate(0);
+  POS_SETEVENTNAME(cin_sema_g, "conio key wait");
 #if (POSCFG_FEATURE_SOFTINTS != 0)
   posSoftIntSetHandler(0, c_nos_keyinput);
 #endif
@@ -616,11 +617,13 @@ void nos_initConIO(void)
 
 #if FEAT_PRINTOUT != 0
   printsema_g = posSemaCreate(1);
+  POS_SETEVENTNAME(printsema_g, "conio print sync");
 #endif
 #if (NOSCFG_FEATURE_CONOUT != 0) && (NOSCFG_CONOUT_HANDSHAKE != 0)
   deferedCharFlag_g = HAVEDEFCHAR_NO;
   stdoutWaiting_g = 0;
   stdoutPollsema_g = posSemaCreate(0);
+  POS_SETEVENTNAME(cin_sema_g, "conio print wait");
 #if NOSCFG_CONOUT_FIFOSIZE > 0
   cout_inptr_g  = 0;
   cout_outptr_g = 0;
