@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id: arch_a.s,v 1.1.1.1 2004/02/16 20:11:24 smocz Exp $
+; CVS-ID $Id: arch_a.s,v 1.2 2004/03/07 14:58:52 dkuschel Exp $
 ;
 
 
@@ -72,6 +72,7 @@
     .import     _c_pos_intEnter
     .import     _c_pos_intExit
     .import     _c_pos_timerInterrupt
+    .import     incsp1
     .import     incsp2
 
     .export     _p_get_sp
@@ -181,6 +182,7 @@ putc1:
 putc5:
     jsr     SCREEN_OUT
 putc2:
+    lda     #1
     jmp     incsp1
 
 .endproc
