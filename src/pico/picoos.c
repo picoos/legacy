@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.6 2004/03/14 18:57:27 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.7 2004/03/15 21:09:22 dkuschel Exp $
  */
 
 
@@ -1033,6 +1033,10 @@ void posTaskExit(void)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
+#if POSCFG_TASKEXIT_HOOK != 0
+  if (task->exithook != NULL)
+    (task->exithook)(task, texh_exitcalled);
+#endif
 #if POSCFG_FEATURE_MSGBOXES != 0
   if (task->msgsem != NULL)
   {
@@ -1060,9 +1064,9 @@ void posTaskExit(void)
 #if (POSCFG_TASKSTACKTYPE == 1) || (POSCFG_TASKSTACKTYPE == 2)
   p_pos_freeStack(task);
 #endif
-#if POSCFG_STKFREE_HOOK != 0
-  if (task->stkfree != NULL)
-    (task->stkfree)(task);
+#if POSCFG_TASKEXIT_HOOK != 0
+  if (task->exithook != NULL)
+    (task->exithook)(task, texh_freestackmem);
 #endif
 #if SYS_TASKSTATE != 0
   task->state = POSTASKSTATE_UNUSED;
