@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,10 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_bhalf.c,v 1.2 2004/03/21 18:34:38 dkuschel Exp $
+ * CVS-ID $Id: n_bhalf.c,v 1.3 2004/06/16 05:45:08 dkuschel Exp $
  */
 
+#define _N_BHALF_C
 #include "../src/nano/privnano.h"
 
 #if NOSCFG_FEATURE_BOTTOMHALF != 0
