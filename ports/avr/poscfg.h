@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.8 2004/03/15 21:07:42 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.9 2004/03/21 18:36:29 dkuschel Exp $
  */
 
 
@@ -199,8 +199,8 @@
 
 /** Enable the use of system supported message buffers.
  * By default, only buffer pointers can be posted with the messaging system.
- * If this definition is set to 1 (=enabled), the functions ::posMsgAlloc
- * and ::posMsgFree are supported to allow dynamic buffer allocation, and
+ * If this definition is set to 1 (=enabled), the functions ::posMessageAlloc
+ * and ::posMessageFree are supported to allow dynamic buffer allocation, and
  * real data with many bytes can be posted into the tasks message boxes.
  * Note: This requires that message boxes are enabled (the defintion
  * ::POSCFG_FEATURE_MSGBOXES must be set to 1).
@@ -384,8 +384,8 @@
  */
 #define POSCFG_FEATURE_GETTASK       1
 
-/** Include function ::posIsTaskUnused.
- * If this definition is set to 1, the function ::posIsTaskUnused will
+/** Include function ::posTaskUnused.
+ * If this definition is set to 1, the function ::posTaskUnused will
  * be included into the pico]OS kernel.
  */
 #define POSCFG_FEATURE_TASKUNUSED    1
@@ -396,8 +396,8 @@
  */
 #define POSCFG_FEATURE_MSGBOXES      0
 
-/** Include function ::posMsgWait.
- * If this definition is set to 1, the function ::posMsgWait will
+/** Include function ::posMessageWait.
+ * If this definition is set to 1, the function ::posMessageWait will
  * be included into the pico]OS kernel. Note that also
  * ::POSCFG_FEATURE_MSGBOXES must be set to 1.
  */
@@ -468,17 +468,22 @@
  */
 #define POSCFG_FEATURE_SOFTINTDEL    0
 
+/** Include function ::posInstallIdleTaskHook.
+ * If this definition is set to 1, the function ::posInstallIdleTaskHook
+ * will be added to the user API.
+ */
+#define POSCFG_FEATURE_IDLETASKHOOK  0
+
 /** Enable atomic variable support.
  * If this definition is set to 1, the functions needed for accessing
  * atomic variables will be added to the user API.
  */
 #define POSCFG_FEATURE_ATOMICVAR     0
 
-/** Include function ::posInstallIdleTaskHook.
- * If this definition is set to 1, the function ::posInstallIdleTaskHook
- * will be added to the user API.
+/** Provide a task global error state variable.
+ * If this definition is set to 1, the ::errno variable is supported.
  */
-#define POSCFG_FEATURE_IDLETASKHOOK  0
+#define POSCFG_FEATURE_ERRNO         1
 
 /** Enable list support.
  * If this definition is set to 1, the list functions are
