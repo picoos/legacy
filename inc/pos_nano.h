@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: pos_nano.h,v 1.1 2004/03/16 21:38:30 dkuschel Exp $
+ * CVS-ID $Id: pos_nano.h,v 1.2 2004/03/21 18:36:29 dkuschel Exp $
  */
 
 #ifndef _POS_NANO_H
@@ -648,8 +648,8 @@ VAR_t nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func, void *arg);
  * @param   number      Number of the bottom half. Must be between
  *                      0 and ::NOS_MAX_BOTTOMHALFS - 1.
  * @note    This function is called by the top half of an
- *          interrupt service routine. Note that the ISR must be
- *          enclosured by a ::c_pos_intEnter / ::c_pos_intExit pair. <br>
+ *          interrupt service routine. The ISR that calls this function
+ *          does not need to call ::c_pos_intEnter before. <br>
  *          ::NOSCFG_FEATURE_BOTTOMHALF must be defined to 1
  *          to enable bottom half support.
  * @sa      nosBottomHalfRegister, nosBottomHalfUnregister
