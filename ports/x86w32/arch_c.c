@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.4 2005/02/01 21:05:43 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.5 2005/02/07 22:10:59 dkuschel Exp $
  */
 
 
@@ -116,9 +116,10 @@ typedef struct TASKPRIV_s {
 
 static            HANDLE    timerEvent_g;
 static            HANDLE    globalSyncSem_g;
-static            HANDLE    windowsThreadSyncSem_g;
+static            HANDLE    windowsThreadSyncMutex_g;
 static            HANDLE    interruptWaitSem_g;
 static  volatile  DWORD     interruptTaskId_g;
+static  volatile  DWORD     intlevelCounter_g;
 static  volatile  int       taskLockCnt_g;
 static  volatile  int       blockInterrupt_g;
 static  volatile  int       interruptWaiting_g;
@@ -126,6 +127,7 @@ static  volatile  int       interruptActive_g;
 static  volatile  int       interruptExecuting_g;
 static  volatile  int       idleTaskCreated_g;
 static  volatile  int       archInitialized_g = 0;
+static  volatile  int       barrierCtr_g = 0;
 
 
 
@@ -140,10 +142,14 @@ void p_pos_intContextSwitch(void);
 void p_pos_startFirstContext(void);
 void p_pos_globalLock(int *flags);
 void p_pos_globalUnlock(int flags);
+void singleThreadEnter(void);
+void singleThreadExit(void);
 void callInterruptHandler( void (*handlerfunc)(void) );
 
 /* local functions */
 static DWORD WINAPI a_newThread(LPVOID param);
+static void a_enterInterruptlevel(void);
+static void a_exitInterruptlevel(void);
 static void a_quitThisTask(TASKPRIV_t thistask);
 static void a_createThisTask(TASKPRIV_t thistask);
 static void a_timerTask(void);
@@ -151,6 +157,7 @@ static void a_initTimer(void);
 static void a_initTask(POSTASK_t task, UINT_t stacksize,
                        POSTASKFUNC_t funcptr, void *funcarg);
 static void do_assert(const char* file, int line);
+static void barrier(void);
 #if POSCFG_ENABLE_NANO
 static void a_keyboardInput(void);
 #endif
@@ -166,9 +173,11 @@ static void CALLBACK a_timerCallback(UINT uTimerID, UINT uMsg,
  *-------------------------------------------------------------------------*/
 
 #define GETTASKPRIV(taskhandle)  ((TASKPRIV_t)((taskhandle)->portmem))
-#define assert(x)     if (!(x)) do_assert(__FILE__, __LINE__)
-#define SemaWait(s)   assert(WaitForSingleObject(s,INFINITE)==WAIT_OBJECT_0)
-#define SemaSignal(s) ReleaseSemaphore(s, 1, NULL)
+#define assert(x)      if (!(x)) do_assert(__FILE__, __LINE__)
+#define SemaWait(s)    assert(WaitForSingleObject(s,INFINITE)==WAIT_OBJECT_0)
+#define SemaSignal(s)  ReleaseSemaphore(s, 1, NULL)
+#define MutexWait(m)   assert(WaitForSingleObject(m,INFINITE)==WAIT_OBJECT_0)
+#define MutexSignal(m) ReleaseMutex(m)
 
 
 
@@ -217,35 +226,78 @@ static void do_assert(const char* file, int line)
 }
 
 
+static void barrier(void)
+{
+  barrierCtr_g++;
+}
+
+
+void singleThreadEnter(void)
+{
+  TASKPRIV_t  thistask;
+  DWORD curthread = GetCurrentThreadId();
+  int flags, i;
+
+  i = 1;
+  while (!posRunning_g)
+  {
+    Sleep(i);
+    i = i * 2;
+    if (i > 500) i = 500;
+  }
+
+  if (interruptTaskId_g == curthread)
+    return;
+
+  thistask = GETTASKPRIV(posCurrentTask_g);
+  if (thistask->ownTaskID == curthread)
+  {
+    p_pos_globalLock(&flags);
+    return;
+  }
+
+  a_enterInterruptlevel();
+}
+
+
+void singleThreadExit(void)
+{
+  TASKPRIV_t  thistask  = GETTASKPRIV(posCurrentTask_g);
+  DWORD curthread = GetCurrentThreadId();
+
+  if (interruptTaskId_g == curthread)
+    return;
+
+  if (thistask->ownTaskID == curthread)
+  {
+    p_pos_globalUnlock(taskLockCnt_g - 1);
+    return;
+  }
+
+  a_exitInterruptlevel();
+}
+
+
 void callInterruptHandler( void (*handlerfunc)(void) )
 {
+  DWORD curthread = GetCurrentThreadId();
+  int i;
+
   if (handlerfunc == NULL)
     return;
 
-  /* synchronize Windows threads */
-  SemaWait(windowsThreadSyncSem_g);
-
-  /* wait here until it is allowed to run the pico]OS functions */
-  interruptActive_g = 1;
-  while ((blockInterrupt_g != 0) || (taskLockCnt_g != 0))
+  i = 1;
+  while (!posRunning_g)
   {
-    interruptWaiting_g = 1;
-    if (taskLockCnt_g == 0)
-    {
-      if (!interruptWaiting_g)
-        SemaWait(interruptWaitSem_g);
-      interruptWaiting_g = 0;
-      break;
-    }
-    interruptActive_g = 0;
-    SemaWait(interruptWaitSem_g);
-    interruptActive_g = 1;
+    Sleep(i);
+    i = i * 2;
+    if (i > 500) i = 500;
   }
-  assert(taskLockCnt_g == 0);
-  SemaWait(globalSyncSem_g);
-  assert(taskLockCnt_g == 0);
-  interruptExecuting_g = 1;
-  assert(taskLockCnt_g == 0);
+
+  a_enterInterruptlevel();
+
+  /* remember that we are in interrupt context now */
+  interruptTaskId_g = curthread;
 
   /* call the pico]OS interrupt handler */
   c_pos_intEnter();
@@ -256,13 +308,67 @@ void callInterruptHandler( void (*handlerfunc)(void) )
   (handlerfunc)();
   c_pos_intExit();
 
-  /* end the interrupt handler */
-  interruptExecuting_g = 0;
-  interruptActive_g = 0;
-  SemaSignal(globalSyncSem_g);
+  interruptTaskId_g = 0;
+  a_exitInterruptlevel();
+}
 
-  /* allow other threads to enter this function */
-  SemaSignal(windowsThreadSyncSem_g);
+
+static void a_enterInterruptlevel(void)
+{
+  /* synchronize Windows threads */
+  MutexWait(windowsThreadSyncMutex_g);
+  intlevelCounter_g++;
+
+  /* wait here until it is allowed to run the pico]OS functions */
+  if (intlevelCounter_g == 1)
+  {
+again:
+    interruptActive_g = 1;
+    barrier();
+    while ((blockInterrupt_g != 0) || (taskLockCnt_g != 0))
+    {
+      interruptWaiting_g = 1;
+      if (taskLockCnt_g == 0)
+      {
+        if (!interruptWaiting_g)
+          SemaWait(interruptWaitSem_g);
+        interruptWaiting_g = 0;
+        break;
+      }
+      interruptActive_g = 0;
+      SemaWait(interruptWaitSem_g);
+      interruptActive_g = 1;
+    }
+/*    assert(taskLockCnt_g == 0); */
+    SemaWait(globalSyncSem_g);
+/*    assert(taskLockCnt_g == 0); */
+    if (taskLockCnt_g != 0)
+    {
+      /* this is a fast hack to catch a seldom race condition
+         on Windows 9x machines */
+      SemaSignal(globalSyncSem_g);
+      fprintf(stderr, "WARNING: arch_c.c: race condition detected\n");
+      goto again;
+    }
+    interruptExecuting_g = 1;
+    assert(taskLockCnt_g == 0);
+  }
+}
+
+
+static void a_exitInterruptlevel(void)
+{
+  /* end the interrupt handler / interrupt level */
+  if (intlevelCounter_g == 1)
+  {
+    interruptExecuting_g = 0;
+    interruptActive_g = 0;
+    SemaSignal(globalSyncSem_g);
+  }
+
+  /* allow other threads to get to interrupt level */
+  intlevelCounter_g--;
+  MutexSignal(windowsThreadSyncMutex_g);
 }
 
 
@@ -432,13 +538,14 @@ void p_pos_initArch(void)
     globalSyncSem_g = CreateSemaphore(NULL, 1, 1, NULL);
     assert(globalSyncSem_g != NULL);
 
-    windowsThreadSyncSem_g = CreateSemaphore(NULL, 1, 1, NULL);
-    assert(windowsThreadSyncSem_g != NULL);
+    windowsThreadSyncMutex_g = CreateMutex(NULL, FALSE, NULL);
+    assert(windowsThreadSyncMutex_g != NULL);
 
     timerEvent_g         = NULL;
     taskLockCnt_g        = 0;
     blockInterrupt_g     = 0;
     interruptTaskId_g    = 0;
+    intlevelCounter_g    = 0;
     idleTaskCreated_g    = 0;
     interruptWaiting_g   = 0;
     interruptActive_g    = 0;
@@ -627,7 +734,6 @@ void p_pos_startFirstContext(void)
   SemaSignal(globalSyncSem_g);
 
   /* OK. We continue with doing the timer interrupt. */
-  interruptTaskId_g = GetCurrentThreadId();
   a_initTimer();
   a_timerTask();
 }
@@ -652,7 +758,8 @@ void p_pos_globalLock(int *flags)
 
     i = 0;
     blockInterrupt_g = 1;
-    while ((interruptActive_g || interruptExecuting_g))
+    barrier();
+    while (interruptActive_g || interruptExecuting_g)
     {
       blockInterrupt_g = 1;
       Sleep(i);
@@ -663,6 +770,7 @@ void p_pos_globalLock(int *flags)
 
     *flags = taskLockCnt_g;
     taskLockCnt_g++;
+    barrier();
     blockInterrupt_g = 0;
   }
   else
