@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.7 2004/03/15 21:09:22 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.8 2005/01/03 16:27:48 dkuschel Exp $
  */
 
 
@@ -179,9 +179,9 @@ STATICBUFFER(posStaticTmrMem_g, sizeof(TIMER_t), POSCFG_MAX_TIMER);
 
 #if POSCFG_FEATURE_JIFFIES != 0
 #if POSCFG_FEATURE_LARGEJIFFIES == 0
-JIF_t  jiffies;
+volatile JIF_t jiffies;
 #else
-static JIF_t     pos_jiffies_g;
+static volatile JIF_t pos_jiffies_g;
 #endif
 #endif /* POSCFG_FEATURE_JIFFIES */
 
@@ -2425,6 +2425,7 @@ void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
   new->next  = next;
   new->prev  = prev;
   prev->next = new;
+  new->head  = listhead;
   listhead->length++;
   if (listhead->flag != 0)
   {
