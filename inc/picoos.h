@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.3 2004/02/22 20:11:46 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.4 2004/02/23 21:11:55 dkuschel Exp $
  *
  */
 
@@ -53,6 +53,9 @@
  *  - up to 256 simulated software interrupts on 8 bit processors
  *  - can be used to interface fast hardware interrupts outside the scope of
  *    pico]OS to the operating system
+ *
+ * <b>Miscellaneous:</b>
+ *  - atomic variables
  *
  * <br><br>
  * @subsection ports Available Ports
@@ -135,7 +138,7 @@
  * GERMANY <br>
  *
  * mail: dennis_k@freenet.de <br>
- * http: http://mycpu.mikrocontroller.net <br>
+ * web:  http://picoos.sourceforge.net <br>
  *
  * (C) 2004 Dennis Kuschel
  */
@@ -144,8 +147,8 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0051
-#define POS_VER_S           "0.5.1"
+#define POS_VER_N           0x0060
+#define POS_VER_S           "0.6.0"
 #define POS_COPYRIGHT       "(c) 2004, Dennis Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
@@ -227,6 +230,9 @@
 #endif
 #ifndef POSCFG_DYNAMIC_MEMORY
 #error  POSCFG_DYNAMIC_MEMORY not defined
+#endif
+#ifndef POSCFG_DYNAMIC_REFILL
+#error  POSCFG_DYNAMIC_REFILL
 #endif
 #if POSCFG_DYNAMIC_MEMORY != 0
 #ifndef POS_MEM_ALLOC
@@ -346,6 +352,12 @@
 #endif
 #ifndef POSCFG_FEATURE_IDLETASKHOOK
 #error POSCFG_FEATURE_IDLETASKHOOK not defined
+#endif
+#ifndef POSCFG_FEATURE_ERRNO
+#error POSCFG_FEATURE_ERRNO not defined
+#endif
+#ifndef POSCFG_FEATURE_ATOMICVAR
+#error POSCFG_FEATURE_ATOMICVAR not defined
 #endif
 
 
@@ -518,19 +530,19 @@
  */
 
 /** Error Code: No Error (the operation was successful) */
-#define EOK         0
+#define E_OK        0
 
 /** Error Code: The operation failed. */
-#define EFAIL       1
+#define E_FAIL      1
 
 /** Error Code: The System ran out of memory. */
-#define ENOMEM      2
+#define E_NOMEM     2
 
 /** Error Code: The given argument is wrong or inacceptable. */
-#define EARG        3
+#define E_ARG       3
 
 /** Error Code: The operation is forbidden at the current operation stage. */
-#define EFORB       4
+#define E_FORB      4
 
 /** @} */
 
@@ -640,6 +652,10 @@ typedef void*  POSFLAG_t;
 /** Handle to a timer object. */
 typedef void*  POSTIMER_t;
 
+/** Atomic variable. */
+typedef volatile INT_t  POSATOMIC_t;
+
+
 /** 
  * Task environment structure.
  * Most members of this structure are private, and are hidden from the user.
@@ -743,6 +759,20 @@ POSEXTERN  UVAR_t    posInInterrupt_g = 1;
 POSEXTERN  UVAR_t    posRunning_g;
 #else
 POSEXTERN  UVAR_t    posRunning_g = 0;
+#endif
+
+
+#if DOX!=0
+/**
+ * Unix style error variable.
+ * This variable is global for the currently runnig task.
+ * ::POSCFG_FEATURE_ERRNO must be set to 1 to enable this variable.
+ */
+VAR_t   errno;
+#endif
+#if POSCFG_FEATURE_ERRNO != 0
+VAR_t*  _errno_p(void);
+#define errno (*_errno_p())
 #endif
 
 
@@ -1426,10 +1456,14 @@ void        posTaskSchedUnlock(void);
  * @param   idlefunc  function pointer to the new idle task handler.
  *                    If this parameter is set to NULL, the idle
  *                    task function hook is removed again.
+ * @return  This function may return a pointer to the last hook
+ *          function set. If so (pointer is not NULL), the previous
+ *          hook function should be called from within your
+ *          idle task hook. This enables chaining of hook functions.
  * @note    ::POSCFG_FEATURE_IDLETASKHOOK must be defined to 1 
  *          to have this function compiled in.
  */
-void posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
+POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
 #endif
 
 /** @} */
@@ -2099,6 +2133,73 @@ VAR_t       posSoftIntDelHandler(UVAR_t intno);
 #endif  /* POSCFG_FEATURE_SOFTINTS */
 /** @} */
 
+/*-------------------------------------------------------------------------*/
+
+#if (DOX!=0) || (POSCFG_FEATURE_ATOMICVAR != 0)
+/** @defgroup atomic User API: Atomic Variables
+ * Atomic variables are variables that can be accessed in an atomic manner,
+ * that means a read-modify-write instruction is done in virtually one
+ * single cycle. For example, the atomic access to a variable is necessary
+ * when two tasks will do read-modify-write operations on a common
+ * variable. Under usual circumstances you can ran into trouble when
+ * a task that is just modifying the variable (that means it has read
+ * and modified the variable but has not yet written the result back) is
+ * interrupted by a second task that also modifies the variable. Thus the
+ * modification the first task has done would be lost. Atomic variables
+ * prevent this possible race condition. <br><br>
+ * pico]OS supports four functions to operate on atomic variables:
+ * ::posAtomicSet, ::posAtomicGet, ::posAtomicAdd and ::posAtomicSub.
+ * @{
+ */
+/**
+ * Atomic Variable Function.
+ * Sets an atomic variable to the specified value.
+ * @param   var    pointer to the atomic variable that shall be set.
+ * @param   value  the value the atomic variable shall be set to.
+ * @note    ::POSCFG_FEATURE_ATOMICVAR must be defined to 1 
+ *          to have atomic variable support compiled in.
+ * @sa      posAtomicGet, posAtomicAdd, posAtomicSub
+ */
+void        posAtomicSet(POSATOMIC_t *var, INT_t value);
+
+/**
+ * Atomic Variable Function.
+ * Returns the current value of an atomic variable.
+ * @param   var    pointer to the atomic variable which value
+ *                 shall be read and returned.
+ * @note    ::POSCFG_FEATURE_ATOMICVAR must be defined to 1 
+ *          to have atomic variable support compiled in.
+ * @return  the value of the atomic variable.
+ * @sa      posAtomicSet, posAtomicAdd, posAtomicSub
+ */
+INT_t       posAtomicGet(POSATOMIC_t *var);
+
+/**
+ * Atomic Variable Function.
+ * Adds a value onto the current value of the atomic variable.
+ * @param   var    pointer to the atomic variable.
+ * @param   value  value that shall be added to the atomic variable.
+ * @note    ::POSCFG_FEATURE_ATOMICVAR must be defined to 1 
+ *          to have atomic variable support compiled in.
+ * @return  the content of the atomic variable before it was incremented.
+ * @sa      posAtomicSet, posAtomicGet, posAtomicSub
+ */
+INT_t       posAtomicAdd(POSATOMIC_t *var, INT_t value);
+
+/**
+ * Atomic Variable Function.
+ * Substracts a value from the current value of the atomic variable.
+ * @param   var    pointer to the atomic variable.
+ * @param   value  value that shall be substracted from the atomic variable.
+ * @note    ::POSCFG_FEATURE_ATOMICVAR must be defined to 1 
+ *          to have atomic variable support compiled in.
+ * @return  the content of the atomic variable before it was decremented.
+ * @sa      posAtomicSet, posAtomicGet, posAtomicAdd
+ */
+INT_t       posAtomicSub(POSATOMIC_t *var, INT_t value);
+
+#endif /* POSCFG_FEATURE_ATOMICVAR */
+
 
 /* ==== END OF USER API ==== */
 
@@ -2181,6 +2282,9 @@ struct POSTASK_s {
     UINT_t         ticks;
 #if SYS_TASKSTATE != 0
     UVAR_t         state;
+#endif
+#if POSCFG_FEATURE_ERRNO != 0
+    VAR_t          error;
 #endif
 #if POSCFG_FEATURE_MSGBOXES != 0
     UVAR_t         msgwait;
