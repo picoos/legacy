@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.2 2004/03/13 19:33:26 dkuschel Exp $
+#  $Id: port.mak,v 1.1 2005/01/10 22:39:26 dkuschel Exp $
 
 
 # Set default compiler.
@@ -102,8 +102,7 @@ ADEFINES =
 
 # Distinguish between build modes
 ifeq '$(BUILD)' 'DEBUG'
-  CFLAGS   += /nologo /Od /W3 /c /MT
-#  CFLAGS   += /nologo /Od /W3 /ZI /c /MT
+  CFLAGS   += /nologo /Od /W3 /ZI /c /MT
   CDEFINES += _DBG
   ADEFINES += _DBG
 else
