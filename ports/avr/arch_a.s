@@ -119,7 +119,7 @@
         pop    r3
         pop    r2
         pop    r1
-        pop    r0
+  		pop    r0
         out    _SFR_IO_ADDR(SREG), r0
         pop    r0
 .endm
@@ -248,7 +248,7 @@ correctOffset:
  *
  *   7. restore General Purpose Register and SREG
  */
- 
+ /*
 .global SIG_OUTPUT_COMPARE1A
 SIG_OUTPUT_COMPARE1A:
 
@@ -269,4 +269,4 @@ interruptRun:
         call   c_pos_intExit
         
         rjmp   interruptReturn
-        
+   */     
