@@ -33,7 +33,7 @@ void secondtask(void *arg);
  */
 void firsttask(void *arg)
 {
-  POSTASK_t  t;
+  NOSTASK_t  t;
 
   /* Avoid compiler warning. "arg" is the "NULL" in the nosInit()-call */
   (void) arg;
@@ -58,7 +58,7 @@ void firsttask(void *arg)
     nosPrint("Task 1\n");
 
     /* sleep (=do nothing) for one second */
-    posTaskSleep(MS(1000));
+    nosTaskSleep(MS(1000));
   }
 }
 
@@ -77,7 +77,7 @@ void secondtask(void *arg)
     nosPrintf1("%s\n", name);
 
     /* sleep (=do nothing) for two seconds */
-    posTaskSleep(MS(2000));
+    nosTaskSleep(MS(2000));
   }
 }
 
