@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id:$
+#  $Id: out.mak,v 1.1.1.1 2004/02/16 20:11:22 smocz Exp $
 
 
 # Build target: generate executable
@@ -105,5 +105,6 @@ all: $(TARGETOUT)
 clean: $(CLEAN_USER)
 	-$(REMOVE) $(TARGETOUT)
 	-$(REMOVE) $(OBJ)
+	-$(MAKE) -C $(RELROOT) --no-print-directory clean
 
 endif
