@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.4 2004/02/23 21:11:55 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.5 2004/03/07 15:07:48 dkuschel Exp $
  *
  */
 
@@ -202,7 +202,7 @@
 #error  POSCFG_CTXSW_COMBINE not defined
 #endif
 #ifndef POSCFG_REALTIME_PRIO
-#error POSCFG_REALTIME_PRIO not defined
+#error  POSCFG_REALTIME_PRIO not defined
 #endif
 #ifndef POSCFG_ISR_INTERRUPTABLE
 #error  POSCFG_ISR_INTERRUPTABLE not defined
@@ -243,7 +243,7 @@
 #endif
 #endif
 #ifndef POSCFG_CALLINITARCH
-#error POSCFG_CALLINITARCH not defined
+#error  POSCFG_CALLINITARCH not defined
 #endif
 #ifndef POSCFG_LOCK_USEFLAGS
 #error  POSCFG_LOCK_USEFLAGS not defined
@@ -338,26 +338,33 @@
 #error  POSCFG_FEATURE_FLAGWAIT not defined
 #endif
 #ifndef POSCFG_FEATURE_SOFTINTS
-#error POSCFG_FEATURE_SOFTINTS not defined
+#error  POSCFG_FEATURE_SOFTINTS not defined
 #else
 #ifndef POSCFG_FEATURE_SOFTINTDEL
-#error POSCFG_FEATURE_SOFTINTDEL not defined
+#error  POSCFG_FEATURE_SOFTINTDEL not defined
 #endif
 #ifndef POSCFG_SOFTINTERRUPTS
-#error POSCFG_SOFTINTERRUPTS not defined
+#error  POSCFG_SOFTINTERRUPTS not defined
 #endif
 #ifndef POSCFG_SOFTINTQUEUELEN
-#error POSCFG_SOFTINTQUEUELEN not defined
+#error  POSCFG_SOFTINTQUEUELEN not defined
 #endif
 #endif
 #ifndef POSCFG_FEATURE_IDLETASKHOOK
-#error POSCFG_FEATURE_IDLETASKHOOK not defined
+#error  POSCFG_FEATURE_IDLETASKHOOK not defined
 #endif
 #ifndef POSCFG_FEATURE_ERRNO
-#error POSCFG_FEATURE_ERRNO not defined
+#error  POSCFG_FEATURE_ERRNO not defined
 #endif
 #ifndef POSCFG_FEATURE_ATOMICVAR
-#error POSCFG_FEATURE_ATOMICVAR not defined
+#error  POSCFG_FEATURE_ATOMICVAR not defined
+#endif
+#ifndef POSCFG_FEATURE_LISTS
+#error  POSCFG_FEATURE_LISTS not defined
+#else
+#ifndef POSCFG_FEATURE_LISTJOIN
+#error  POSCFG_FEATURE_LISTJOIN not defined
+#endif
 #endif
 
 
@@ -460,7 +467,8 @@
 #define SYS_TASKDOUBLELINK  0
 #endif
 #define SYS_EVENTS_USED  \
-      (POSCFG_FEATURE_MUTEXES | POSCFG_FEATURE_MSGBOXES | POSCFG_FEATURE_FLAGS)
+      (POSCFG_FEATURE_MUTEXES | POSCFG_FEATURE_MSGBOXES | \
+       POSCFG_FEATURE_FLAGS | POSCFG_FEATURE_LISTS)
 #define SYS_FEATURE_EVENTS  (POSCFG_FEATURE_SEMAPHORES | SYS_EVENTS_USED)
 #define SYS_FEATURE_EVENTFREE  (POSCFG_FEATURE_SEMADESTROY | \
           POSCFG_FEATURE_MUTEXDESTROY | POSCFG_FEATURE_FLAGDESTROY)
@@ -654,6 +662,30 @@ typedef void*  POSTIMER_t;
 
 /** Atomic variable. */
 typedef volatile INT_t  POSATOMIC_t;
+
+#if (DOX!=0) || (POSCFG_FEATURE_LISTS != 0)
+struct POSLIST;
+struct POSLISTHEAD {
+  struct POSLIST        *prev;
+  struct POSLIST        *next;
+  UINT_t                length;
+  POSSEMA_t             sema;
+  UVAR_t                flag;
+};
+struct POSLIST {
+  struct POSLIST        *prev;
+  struct POSLIST        *next;
+  struct POSLISTHEAD    *head;
+};
+/** List variable. This variable type is used as
+ * running variable of a list or as list link.
+ */
+typedef struct POSLIST POSLIST_t;
+/** List variable. This variable defines the head
+ * of a list.
+ */
+typedef struct POSLISTHEAD POSLISTHEAD_t;
+#endif
 
 
 /** 
@@ -2167,9 +2199,9 @@ void        posAtomicSet(POSATOMIC_t *var, INT_t value);
  * Returns the current value of an atomic variable.
  * @param   var    pointer to the atomic variable which value
  *                 shall be read and returned.
+ * @return  the value of the atomic variable.
  * @note    ::POSCFG_FEATURE_ATOMICVAR must be defined to 1 
  *          to have atomic variable support compiled in.
- * @return  the value of the atomic variable.
  * @sa      posAtomicSet, posAtomicAdd, posAtomicSub
  */
 INT_t       posAtomicGet(POSATOMIC_t *var);
@@ -2179,9 +2211,9 @@ INT_t       posAtomicGet(POSATOMIC_t *var);
  * Adds a value onto the current value of the atomic variable.
  * @param   var    pointer to the atomic variable.
  * @param   value  value that shall be added to the atomic variable.
+ * @return  the content of the atomic variable before it was incremented.
  * @note    ::POSCFG_FEATURE_ATOMICVAR must be defined to 1 
  *          to have atomic variable support compiled in.
- * @return  the content of the atomic variable before it was incremented.
  * @sa      posAtomicSet, posAtomicGet, posAtomicSub
  */
 INT_t       posAtomicAdd(POSATOMIC_t *var, INT_t value);
@@ -2191,14 +2223,286 @@ INT_t       posAtomicAdd(POSATOMIC_t *var, INT_t value);
  * Substracts a value from the current value of the atomic variable.
  * @param   var    pointer to the atomic variable.
  * @param   value  value that shall be substracted from the atomic variable.
+ * @return  the content of the atomic variable before it was decremented.
  * @note    ::POSCFG_FEATURE_ATOMICVAR must be defined to 1 
  *          to have atomic variable support compiled in.
- * @return  the content of the atomic variable before it was decremented.
  * @sa      posAtomicSet, posAtomicGet, posAtomicAdd
  */
 INT_t       posAtomicSub(POSATOMIC_t *var, INT_t value);
 
 #endif /* POSCFG_FEATURE_ATOMICVAR */
+/** @} */
+
+
+/*-------------------------------------------------------------------------*/
+
+#if (DOX!=0) || (POSCFG_FEATURE_LISTS != 0)
+/** @defgroup lists User API: Lists
+ * Lists are multifunctional, often they are used for buffer queues or
+ * other elements that need to be listed. pico]OS provides a set of
+ * functions for managing nonblocking and blocking lists. <br>
+ * Nonblocking means that elements can be put to or taken from a list
+ * without blocking the active task while an other task is also attempting
+ * to access the list. This behaviour is very usefull for interrupt service
+ * routines that need to send buffers through a queue to the
+ * application task. <br>
+ * An example program that demonstrates the usage of lists is available
+ * in the examples directory: lists.c
+ * @{
+ */
+
+#define POSLIST_HEAD  0
+#define POSLIST_TAIL  1
+
+/**
+ * List Function.
+ * Adds an element to a list.
+ * @param   listhead  pointer to the head of the list.
+ * @param   pos       position where to add the element. Can be
+ *                    POSLIST_HEAD to add the element to the head of
+ *                    the list or POSLIST_TAIL to add the element to
+ *                    the tail of the list.
+ * @param   new       pointer to the list element to add.
+ * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
+ *          to have list support compiled in. <br>
+ *          Note that list heads must be initialized befor elements
+ *          can be added to the list.
+ * @sa      posListGet, posListLen, posListRemove, posListJoin, posListInit
+ */
+void        posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new);
+
+/**
+ * List Function.
+ * Takes an element from a list.
+ * @param   listhead  pointer to the head of the list.
+ * @param   pos       position where to take the element from. Can be
+ *                    POSLIST_HEAD to take the element from the head of
+ *                    the list or POSLIST_TAIL to take the element from
+ *                    the tail of the list.
+ * @param   timeout   If timeout is set to zero, the function does not
+ *                    wait for a new list element when the list is empty
+ *                    (poll mode).
+ *                    If timeout is set to INFINITE, the function waits
+ *                    infinite (without timeout) for a new list element
+ *                    to arrive. Any other value describes a timeout
+ *                    in timerticks (see ::HZ and ::MS ). If the list
+ *                    is still empty after the timeout ticks expired,
+ *                    the function returns a NULL pointer.
+ * @return  On success, this function returns the pointer to the
+ *          element and the element is removed from the list. The
+ *          function returns a NULL pointer when the list is empty
+ *          (timeout == 0) or the timeout has expired (timeout != 0).
+ * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
+ *          to have list support compiled in. <br>
+ *          To be able to wait with timeout (timeout is set to nonzero and
+ *          is not equal to INFINITE), the feature ::POSCFG_FEATURE_SEMAWAIT
+ *          must be enabled. Note that only one task per time can wait
+ *          for a new list element (timeout != 0). If multiple tasks attempt
+ *          to wait with or without timeout for the same list, the behaviour
+ *          of this function is undefined.
+ * @sa      posListAdd, posListLen, posListRemove, posListJoin, posListInit
+ */
+POSLIST_t*  posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
+                       UINT_t timeout);
+
+/**
+ * List Function.
+ * Removes an element from a list.
+ * @param   listelem  pointer to the element to remove.
+ * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
+ *          to have list support compiled in.
+ * @sa      posListAdd, posListGet, posListLen, posListJoin, posListInit
+ */
+void        posListRemove(POSLIST_t *listelem);
+
+/**
+ * List Function.
+ * Joins two lists together. The elements contained in the joinlist 
+ * are moved to the baselist. After this operation the joinlist is empty.
+ * @param   baselisthead  pointer to the head of the list that shall
+ *                        receive the elements of the second list.
+ * @param   pos           position where the elements of the other list
+ *                        shall be inserted. Can be POSLIST_HEAD to
+ *                        insert the elements at the head of the
+ *                        baselist or POSLIST_TAIL to insert the
+ *                        elements at the tail of the baselist.
+ * @param   joinlisthead  pointer to the list which contents shall be
+ *                        moved to the baselist.
+ * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
+ *          to have list support compiled in. <br>
+ *          ::POSCFG_FEATURE_LISTJOIN must be defined to 1
+ *          to have this function compiled in.
+ * @sa      posListAdd, posListGet, posListJoin, posListInit
+ */
+void        posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
+                        POSLISTHEAD_t *joinlisthead);
+
+/**
+ * List Function.
+ * Returns the length of a list.
+ * @param   listhead  pointer to the head of the list.
+ * @return  the length of the list
+ * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
+ *          to have list support compiled in.
+ * @sa      posListAdd, posListGet, posListRemove
+ */
+UINT_t      posListLen(POSLISTHEAD_t *listhead);
+
+/**
+ * List Function.
+ * Initializes the head of a list. This function must be called first
+ * befor elements can be added to the list.
+ * @param   listhead    pointer to the listhead to initialize.
+ * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
+ *          to have list support compiled in. <br>
+ *          If a list is no more used, the function ::posListTerm
+ *          should be called to free operating system resources.
+ * @sa      posListTerm, posListAdd, posListGet
+ */
+void        posListInit(POSLISTHEAD_t *listhead);
+
+/**
+ * List Function.
+ * Frees operating system resources when a list is no more needed.
+ * @param   listhead    pointer to the head of the list.
+ * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
+ *          to have list support compiled in.
+ */
+void        posListTerm(POSLISTHEAD_t *listhead);
+
+#if (DOX!=0)
+/**
+ * List Macro.
+ * This macro enables the access to the data structure that is
+ * linked with a list element.
+ * @param   elem    pointer to the list element of type ::POSLIST_t
+ * @param   type    type of the data structure where ::POSLIST_t is
+ *                  an element from.
+ * @param   member  the member name of the list element ::POSLIST_t
+ *                  in the structure <i>type</i>.
+ * @returns a pointer to the data structure where the list element
+ *          is a member from.
+ */
+#define POSLIST_ELEMENT(elem, type, member)
+#else
+#define POSLIST_ELEMENT(elem, type, member) \
+        ((type*)((char*)(elem)-(char*)(&((type*)NULL)->member)))
+#endif
+
+/** List Macro. Tests if a list is empty.
+ * Pay attention to task synchronization when using this macro.
+ */
+#define POSLIST_IS_EMPTY(plisthead) \
+          ((plisthead)->next == (POSLIST_t*)(plisthead))
+
+/** List Macro. Returns a pointer to the next element in a list.
+ * Pay attention to task synchronization when using this macro.
+ */
+#define POSLIST_NEXT_ENTRY(plist)               (plist)->next
+
+/** List Macro. Returns a pointer to the previous element in a list.
+ * Pay attention to task synchronization when using this macro.
+ */
+#define POSLIST_PREV_ENTRY(plist)               (plist)->prev
+
+/** List Macro. Returns a pointer to the first entry of a list.
+ * Pay attention to task synchronization when using this macro.
+ */
+#define POSLIST_FIRST_ENTRY(plisthead)          (plisthead)->next
+
+/** List Macro. Returns a pointer to the last element of a list.
+ * Pay attention to task synchronization when using this macro.
+ */
+#define POSLIST_LAST_ENTRY(plisthead)           (plisthead)->prev
+
+/** List Macro. Tests if an element is the first one in a list.
+ * Pay attention to task synchronization when using this macro.
+ */
+#define POSLIST_IS_FIRST_ENTRY(element) ((element)->prev==(element)->head)
+
+/** List Macro. Tests if an element is the last one in a list.
+ * Pay attention to task synchronization when using this macro.
+ */
+#define POSLIST_IS_LAST_ENTRY(element)  ((element)->next==(element)->head)
+
+/** List Macro. Tests if the end of a list is reached when using a for-loop.
+ */
+#define POSLIST_IS_END(plisthead, element) \
+          ((element)==(POSLIST_t*)(plisthead))
+
+
+#if (DOX!=0)
+/**
+ * List Macro.
+ * This macro expands to a for-loop that walks over all list entries
+ * in the specified list. The body of the for-loop must be enclosured
+ * in braces { }.
+ * @param   plisthead   pointer to the head of the list
+ * @param   runvar      run variable of type ::POSLIST_t. This variable
+ *                      is the index variable in the for-loop.
+ * @note    When using this macro you must pay attention about task
+ *          synchronization. You may need to protect all list operations by
+ *          a semaphore to ensure list integrity while executing this loop.
+ * @note    It is not allowed to take an element from the list while
+ *          being in the loop. But if you plan such an operation,
+ *          please see the defintion of the macros
+ *          ::POSLIST_FOREACH_BEGIN and ::POSLIST_FOREACH_END.
+ */
+#define POSLIST_FOR_EACH_ENTRY(plisthead, runvar)
+#else
+#define POSLIST_FOR_EACH_ENTRY(plisthead, runvar) \
+  for (runvar = POSLIST_FIRST_ENTRY(plisthead);   \
+       !POSLIST_IS_END(plisthead, runvar);        \
+       runvar = POSLIST_NEXT_ENTRY(runvar))
+#endif
+
+#if (DOX!=0)
+/**
+ * List Macro.
+ * This macro expands to a complex for-loop that walks over all list entries
+ * in the specified list. This macro allows complex operations on the list
+ * while being in the loop, and it simplifies the access to the data
+ * structures that are linked to the list elements.
+ * @param   plisthead   pointer to the head of the list
+ * @param   runvar      run variable of the type your data structure is.
+ *                      Note that this variable must be a structure pointer.
+ *                      This variable is the index variable in the for-loop.
+ * @param   type        type of your data structure where ::POSLIST_t is
+ *                      an element from.
+ * @param   listmember  the member name of the list element ::POSLIST_t
+ *                      in your data structure <i>type</i>.
+ * @note    When using this macro you must pay attention about task
+ *          synchronization. You may need to protect all list operations by
+ *          a semaphore to ensure list integrity while executing this loop.
+ * @note    The end of the loop must be marked by the macro
+ *          ::POSLIST_FOREACH_END.
+ * @sa      POSLIST_FOREACH_END
+ */
+#define POSLIST_FOREACH_BEGIN(plisthead, runvar, type, listmember)
+#else
+#define POSLIST_FOREACH_BEGIN(plisthead, runvar, type, listmember) \
+  do { POSLIST_t *r, *n; \
+    for (r = POSLIST_FIRST_ENTRY(plisthead); \
+         !POSLIST_IS_END(plisthead, r); r = n) { \
+         n = POSLIST_NEXT_ENTRY(r); \
+      runvar = POSLIST_ELEMENT(r, type, listmember);
+#endif
+
+#if (DOX!=0)
+/**
+ * List Macro.
+ * This macro is the counterpart to ::POSLIST_FOREACH_BEGIN and must
+ * be placed at the end of a for-loop that was initiated with
+ * ::POSLIST_FOREACH_BEGIN.
+ */
+#define POSLIST_FOREACH_END
+#else
+#define POSLIST_FOREACH_END \
+  } } while(0)
+#endif
+
+#endif /* POSCFG_FEATURE_LISTS */
+/** @} */
 
 
 /* ==== END OF USER API ==== */

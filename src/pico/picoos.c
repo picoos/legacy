@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.3 2004/02/22 20:11:47 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.4 2004/03/07 15:07:48 dkuschel Exp $
  */
 
 
@@ -292,6 +292,13 @@ static void      pos_msgFree(MSGBUF_t *mbuf);
 #if POSCFG_FEATURE_SOFTINTS != 0
 static void      pos_execSoftIntQueue(void);
 #endif
+#if POSCFG_FEATURE_LISTS != 0
+#if POSCFG_FEATURE_LISTJOIN != 0
+static void      pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
+                              POSLIST_t *newlist);
+#endif
+static void      pos_listRemove(POSLIST_t *listelem);
+#endif
 
 
 
@@ -408,7 +415,7 @@ static void pos_eventRemoveTask(EVENT_t ev, POSTASK_t task)
           pos_addToList(posSleepingTasks_g, task)
 #define pos_removeFromSleepList(task) \
           pos_removeFromList(posSleepingTasks_g, task)
-#endif
+#endif  /* SYS_TASKDOUBLELINK */
 
 #if POSCFG_FEATURE_TIMER != 0
 #define pos_addToTimerList(timer) \
@@ -416,7 +423,7 @@ static void pos_eventRemoveTask(EVENT_t ev, POSTASK_t task)
 #define pos_removeFromTimerList(timer) do { \
           pos_removeFromList(posActiveTimers_g, timer); \
           timer->prev = timer; } while (0)
-#endif
+#endif  /* POSCFG_FEATURE_TIMER */
 
 #else /* POSCFG_FASTCODE */
 
@@ -444,7 +451,7 @@ static void pos_removeFromSleepList(POSTASK_t task)
 {
   pos_removeFromList(posSleepingTasks_g, task);
 }
-#endif
+#endif  /* SYS_TASKDOUBLELINK */
 
 #if POSCFG_FEATURE_TIMER != 0
 static void pos_addToTimerList(TIMER_t *timer);
@@ -459,15 +466,37 @@ static void pos_removeFromTimerList(TIMER_t *timer)
   pos_removeFromList(posActiveTimers_g, timer);
   timer->prev = timer;
 }
-#endif
+#endif  /* POSCFG_FEATURE_TIMER */
 
-#endif /* POSCFG_FASTCODE */
+#endif  /* POSCFG_FASTCODE */
 
 
 
 /*---------------------------------------------------------------------------
  * PRIVATE FUNCTIONS
  *-------------------------------------------------------------------------*/
+
+#if POSCFG_FEATURE_LISTS != 0
+#if POSCFG_FEATURE_LISTJOIN != 0
+static void pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
+                         POSLIST_t *newlist)
+{
+  next->prev          = newlist->prev;
+  newlist->prev->next = next;
+  newlist->prev       = prev;
+  prev->next          = newlist;
+}
+#endif
+
+static void pos_listRemove(POSLIST_t *listelem)
+{
+  register POSLIST_t *prev, *next;
+  prev = listelem->prev;
+  next = listelem->next;  
+  next->prev = prev;
+  prev->next = next;
+}
+#endif /* POSCFG_FEATURE_LISTS */
 
 static void pos_idletask(void *arg)
 {
@@ -616,7 +645,7 @@ static VAR_t pos_sched_event(EVENT_t ev)
   return 0;
 }
 
-#endif
+#endif  /* SYS_FEATURE_EVENTS */
 
 
 
@@ -631,7 +660,7 @@ VAR_t* _errno_p(void)
   return &posCurrentTask_g->error;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_ERRNO */
 
 
 
@@ -874,7 +903,7 @@ void posTaskYield(void)
 #endif
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_YIELD */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1019,7 +1048,7 @@ void posTaskExit(void)
   for(;;);
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_EXIT */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1030,7 +1059,7 @@ POSTASK_t posTaskGetCurrent(void)
   return posCurrentTask_g;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_GETTASK */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1042,7 +1071,7 @@ VAR_t posTaskUnused(POSTASK_t taskhandle)
   return (taskhandle->state == POSTASKSTATE_UNUSED) ? 1 : 0;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_TASKUNUSED */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1090,10 +1119,10 @@ VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
   pos_setTableBit(&posAllocatedTasks_g, taskhandle);
   pos_enableTask(taskhandle);
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_SETPRIORITY */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1118,7 +1147,7 @@ VAR_t posTaskGetPriority(POSTASK_t taskhandle)
   return p;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_GETPRIORITY */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1146,7 +1175,7 @@ void posTaskSleep(UINT_t ticks)
   POS_SCHED_UNLOCK;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_SLEEP */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1276,7 +1305,7 @@ void posSemaDestroy(POSSEMA_t sema)
   }
 }
 
-#endif
+#endif  /* SYS_FEATURE_EVENTFREE */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1304,7 +1333,7 @@ VAR_t posSemaGet(POSSEMA_t sema)
     pos_schedule();
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 #endif
 
@@ -1364,7 +1393,7 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
     }
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 #endif  /* POSCFG_FEATURE_SEMAWAIT */
@@ -1394,7 +1423,7 @@ VAR_t posSemaSignal(POSSEMA_t sema)
     }
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 #endif  /* SYS_FEATURE_EVENTS */
@@ -1421,7 +1450,7 @@ void posMutexDestroy(POSMUTEX_t mutex)
   posSemaDestroy((POSSEMA_t) mutex);
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_MUTEXDESTROY */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1454,7 +1483,7 @@ VAR_t posMutexTryLock(POSMUTEX_t mutex)
   return 0;  /* have lock */
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_MUTEXTRYLOCK */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1486,7 +1515,7 @@ VAR_t posMutexLock(POSMUTEX_t mutex)
     ev->e.task = task;
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1512,7 +1541,7 @@ VAR_t posMutexUnlock(POSMUTEX_t mutex)
     ++(ev->e.d.counter);
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 #endif  /* POSCFG_FEATURE_MUTEXES */
@@ -1709,7 +1738,7 @@ VAR_t posMessageSend(void *buf, POSTASK_t taskhandle)
 #endif
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1956,7 +1985,7 @@ void posTimerDestroy(POSTIMER_t tmr)
   POS_SCHED_UNLOCK;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_TIMERDESTROY */
 
 /*-------------------------------------------------------------------------*/
 
@@ -1980,7 +2009,7 @@ VAR_t posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
   t->wait   = waitticks;
   t->reload = periodticks;
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -2001,7 +2030,7 @@ VAR_t posTimerStart(POSTIMER_t tmr)
     pos_addToTimerList(t);
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -2018,7 +2047,7 @@ VAR_t posTimerStop(POSTIMER_t tmr)
     pos_removeFromTimerList(t);
   }
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -2039,7 +2068,7 @@ VAR_t posTimerFired(POSTIMER_t tmr)
   return f;
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_TIMERFIRED */
 
 #endif  /* POSCFG_FEATURE_TIMER */
 
@@ -2072,7 +2101,7 @@ void posFlagDestroy(POSFLAG_t flg)
   posSemaDestroy((POSSEMA_t) flg);
 }
 
-#endif
+#endif  /* POSCFG_FEATURE_FLAGDESTROY */
 
 /*-------------------------------------------------------------------------*/
 
@@ -2090,7 +2119,7 @@ VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
   ev->e.d.flags |= pos_shift1l(flgnum);
   pos_sched_event(ev);
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -2228,7 +2257,7 @@ VAR_t posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler)
   }
   softIntHandlers_g[intno] = inthandler;
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -2244,30 +2273,12 @@ VAR_t posSoftIntDelHandler(UVAR_t intno)
   POS_SCHED_LOCK;
   softIntHandlers_g[intno] = NULL;
   POS_SCHED_UNLOCK;
-  return 0;
+  return E_OK;
 }
 
 #endif /* POSCFG_FEATURE_SOFTINTDEL */
 
 #endif /* POSCFG_FEATURE_SOFTINTS */
-
-/*-------------------------------------------------------------------------*/
-
-#if POSCFG_FEATURE_IDLETASKHOOK != 0
-
-POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc)
-{
-  POSIDLEFUNC_t  prevhook;
-  POS_LOCKFLAGS;
-
-  POS_SCHED_LOCK;
-  prevhook = posIdleTaskFuncHook_g;
-  posIdleTaskFuncHook_g = idlefunc;
-  POS_SCHED_UNLOCK;
-  return prevhook;
-}
-
-#endif
 
 
 
@@ -2340,6 +2351,252 @@ INT_t posAtomicSub(POSATOMIC_t *var, INT_t value)
 }
 
 #endif /* POSCFG_FEATURE_ATOMICVAR */
+
+
+
+/*---------------------------------------------------------------------------
+ * EXPORTED FUNCTIONS:  LISTS
+ *-------------------------------------------------------------------------*/
+
+#if POSCFG_FEATURE_LISTS != 0
+
+void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
+{
+  register POSLIST_t *next, *prev;
+  POS_LOCKFLAGS;
+
+  POS_SCHED_LOCK;
+  if (pos == POSLIST_HEAD)
+  {
+    next = listhead->next;
+    prev = (POSLIST_t*) listhead;
+  }
+  else
+  {
+    next = (POSLIST_t*) listhead;
+    prev = listhead->prev;
+  }
+  next->prev = new;
+  new->next  = next;
+  new->prev  = prev;
+  prev->next = new;
+  listhead->length++;
+  if (listhead->flag != 0)
+  {
+    listhead->flag = 0;
+    POS_SCHED_UNLOCK;
+    posSemaSignal(listhead->sema);
+  }
+  else
+  {
+    POS_SCHED_UNLOCK;
+  }
+}
+
+/*-------------------------------------------------------------------------*/
+
+POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
+                      UINT_t timeout)
+{
+  register POSLIST_t *elem;
+#if POSCFG_FEATURE_SEMAWAIT != 0
+  register VAR_t status;
+  POS_LOCKFLAGS;
+
+  POS_SCHED_LOCK;
+  for (;;)
+  {  
+#else
+  POS_LOCKFLAGS;
+
+  for (;;)
+  {  
+    POS_SCHED_LOCK;
+#endif
+    if (pos == POSLIST_HEAD)
+    {
+      elem = listhead->next;
+    }
+    else
+    {
+      elem = listhead->prev;
+    }
+    if (elem == (POSLIST_t*) listhead)
+    {
+      if ((timeout == 0) || (posInInterrupt_g != 0))
+      {
+        POS_SCHED_UNLOCK;
+        return NULL;
+      }
+      if (listhead->sema == NULL)
+      {
+        POS_SCHED_UNLOCK;
+        listhead->sema = posSemaCreate(0);
+        if (listhead->sema == NULL)
+          return NULL;
+#if POSCFG_FEATURE_SEMAWAIT != 0
+        POS_SCHED_LOCK;
+#endif
+        continue;
+      }
+      listhead->flag = 1;
+      POS_SCHED_UNLOCK;
+#if POSCFG_FEATURE_SEMAWAIT != 0
+      status = posSemaWait(listhead->sema, timeout);
+      POS_SCHED_LOCK;
+      listhead->flag = 0;
+      if (status != E_OK)
+      {
+        POS_SCHED_UNLOCK;
+        return NULL;
+      }
+#else
+      if (posSemaGet(listhead->sema) != E_OK)
+        return NULL;
+#endif
+    }
+    else
+    {
+      pos_listRemove(elem);
+      listhead->length--;
+      POS_SCHED_UNLOCK;
+      return elem;
+    }
+  }
+}
+
+/*-------------------------------------------------------------------------*/
+
+void posListRemove(POSLIST_t *listelem)
+{
+  POS_LOCKFLAGS;
+  POS_SCHED_LOCK;
+  if (listelem != NULL)
+  {
+    pos_listRemove(listelem);
+    listelem->head->length--;
+  }
+  POS_SCHED_UNLOCK;
+}
+
+/*-------------------------------------------------------------------------*/
+
+#if POSCFG_FEATURE_LISTJOIN != 0
+
+void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
+                 POSLISTHEAD_t *joinlisthead)
+{
+  register POSLIST_t *elem;
+  POS_LOCKFLAGS;
+
+  POS_SCHED_LOCK;
+  if (POSLIST_IS_EMPTY(joinlisthead))
+  {
+    POS_SCHED_UNLOCK;
+  }
+  else
+  {
+    POSLIST_FOR_EACH_ENTRY(joinlisthead, elem)
+    {
+      elem->head = baselisthead;
+    }
+    elem = joinlisthead->next;
+    pos_listRemove((POSLIST_t*)joinlisthead);
+    if (pos == POSLIST_HEAD)
+    {
+      pos_listJoin((POSLIST_t*)baselisthead, baselisthead->next, elem);
+    }
+    else
+    {
+      pos_listJoin(baselisthead->prev, (POSLIST_t*)baselisthead, elem);
+    }
+    baselisthead->length += joinlisthead->length;
+    joinlisthead->prev = (POSLIST_t*) joinlisthead;
+    joinlisthead->next = (POSLIST_t*) joinlisthead;
+    joinlisthead->length = 0;
+    if (baselisthead->flag != 0)
+    {
+      baselisthead->flag = 0;
+      POS_SCHED_UNLOCK;
+      posSemaSignal(baselisthead->sema);
+    }
+    else
+    {
+      POS_SCHED_UNLOCK;
+    }
+  }
+}
+
+#endif /* POSCFG_FEATURE_LISTJOIN */
+
+/*-------------------------------------------------------------------------*/
+
+UINT_t posListLen(POSLISTHEAD_t *listhead)
+{
+  UINT_t len;
+  POS_LOCKFLAGS;
+
+  if (listhead == NULL)
+    return 0;
+
+  POS_SCHED_LOCK;
+  len = listhead->length;
+  POS_SCHED_UNLOCK;
+  return len;
+}
+
+/*-------------------------------------------------------------------------*/
+
+void posListInit(POSLISTHEAD_t *listhead)
+{
+  if (listhead != NULL)
+  {
+    listhead->prev = (POSLIST_t*) listhead;
+    listhead->next = (POSLIST_t*) listhead;
+    listhead->length = 0;
+    listhead->sema = NULL;
+    listhead->flag = 0;
+  }
+}
+
+/*-------------------------------------------------------------------------*/
+
+void posListTerm(POSLISTHEAD_t *listhead)
+{
+  if (listhead != NULL)
+  {
+    if (listhead->sema != NULL)
+    {
+      posSemaDestroy(listhead->sema);
+      listhead->flag = 0;
+      listhead->sema = NULL;
+    }
+  }
+}
+
+#endif /* POSCFG_FEATURE_LISTS */
+
+
+
+/*---------------------------------------------------------------------------
+ * EXPORTED FUNCTION:  SET IDLE TASK HOOK
+ *-------------------------------------------------------------------------*/
+
+#if POSCFG_FEATURE_IDLETASKHOOK != 0
+
+POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc)
+{
+  POSIDLEFUNC_t  prevhook;
+  POS_LOCKFLAGS;
+
+  POS_SCHED_LOCK;
+  prevhook = posIdleTaskFuncHook_g;
+  posIdleTaskFuncHook_g = idlefunc;
+  POS_SCHED_UNLOCK;
+  return prevhook;
+}
+
+#endif /* POSCFG_FEATURE_IDLETASKHOOK */
 
 
 
