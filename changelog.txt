@@ -1,3 +1,9 @@
+Version ? (CVS Head):
+  o  AVR-Port: 
+       - Bugfix: Set R0 in the frame for the ISR to Zero(0)
+       - New Feature: Add a dedicated stack for the interrups.
+       - New Feature: Add a macro for generating a picoos compatible interrupt 
+         frame (PICOOS_SIGNAL).
 
 Version 0.8.0:
   o  nano layer introduced. New features are:
