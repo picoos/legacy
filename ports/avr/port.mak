@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.1.1.1 2004/02/16 20:11:29 smocz Exp $
+#  $Id: port.mak,v 1.2 2004/03/13 19:33:26 dkuschel Exp $
 
 
 # Set default compiler.
@@ -114,8 +114,11 @@ ASFLAGS += -x assembler-with-cpp -o
 
 
 # Define Linker Flags
+#  -Wl   : pass arguments to the linker
+#  -Map  : create a map file
+#  --cref: add cross reference to the map file
 LDFLAGS  = -mmcu=atmega32
-LDFLAGS += -Wl,-Map,$(DIR_OUT)/$(TARGET).map -Wl,--cref -o 
+LDFLAGS += -Wl,-Map,$(DIR_OUT)/$(TARGET).map,--cref -o 
 
 # Define archiver flags
 ARFLAGS = r 
