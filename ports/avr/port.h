@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: port.h,v 1.1.1.1 2004/02/16 20:11:29 smocz Exp $
  */
 
 
@@ -297,6 +297,33 @@
  * zero to prevent findbit of doing excessive bitshifts.
  */
 #define POSCFG_FBIT_BITSHIFT         1
+
+/** @} */
+
+
+
+/*---------------------------------------------------------------------------
+ *  PORT DEPENDENT NANO LAYER CONFIGURATION
+ *-------------------------------------------------------------------------*/
+
+/** @defgroup portnlcfg Configuration: Nano Layer Port
+ * This section is used to configure port dependent
+ * settings for the nano layer. (file port.h)
+ * @{
+ */
+
+/** Set the direction the stack grows.
+ * When the processor stack grows from bottom to top, this define
+ * must be set to 1. On platforms where the stack grows from
+ * top to bottom, this define must be set to 0.
+ */
+#define NOSCFG_STACK_GROWS_UP    0
+
+/** Set the default stack size.
+ * If the functions ::nosTaskCreate or ::nosInit are called with
+ * a stack size of zero, this value is taken as the default stack size.
+ */
+#define NOSCFG_DEFAULT_STACKSIZE 128
 
 /** @} */
 
