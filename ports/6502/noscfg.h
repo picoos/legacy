@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: noscfg.h,v 1.1 2004/03/21 18:40:28 dkuschel Exp $
  */
 
 #ifndef _NOSCFG_H
@@ -278,10 +278,58 @@ extern void *__heap_end;
  * within the idle task, and the function ::nosCpuUsage is added to
  * the user API.
  */
-#define NOS_FEATURE_CPUUSAGE         1
+#define NOSCFG_FEATURE_CPUUSAGE      1
 
 /** @} */
 
+
+
+/*---------------------------------------------------------------------------
+ *  KEY STRINGS
+ *-------------------------------------------------------------------------*/
+
+/** @defgroup cfgnoskey Key Strings
+ * @ingroup confign
+ * @{
+ */
+
+/** Enable key string support.
+ * If this definition is set to 1, the key string functions are
+ * added to the user API.
+ */
+#define NOSCFG_FEATURE_REGISTRY    1
+
+/** Enable the query for key strings.
+ * If this definition is set to 1, the functions ::nos_keyQueryBegin,
+ * ::nos_keyQueryElem and ::nos_keyQueryEnd will be added to the user API.
+ */
+#define NOSCFG_FEATURE_REGQUERY      1
+
+/** Enable user keys. User keys behave something like a 'registry'
+ * for binary values. A binary value can be assigned to a text-string, and
+ * the string is stored into the system keylist. An application can now
+ * ask the system for a keystring and will get the belonging binary value.
+ * If this definition is set to 1, the functions ::nos_keyGet,
+ * ::nos_keySet and ::nos_keyDel will be added to the user API.
+ */
+#define NOSCFG_FEATURE_USERREG      1
+
+/** Maximum length a key string can have.
+ * This define sets the maximum length (characters) a key string can have.
+ * If key strings are enabled, this define must be set to at least 4.
+ */
+#define NOS_MAX_REGKEYLEN               8
+
+/** Key string housekeeping.
+ * When ever a new key is created, the nano layer needs to call malloc().
+ * If this define is set to a number greater than 1, one malloc-call is
+ * used to allocate memory for a bunch of keys (the count of keys is
+ * defined here). This reduces overhead in the memory manager, but
+ * increases the code-memory usage a bit.
+ */
+#define NOS_REGKEY_PREALLOC             4
+
+/** @} */
 
 
 #endif /* _NOSCFG_H */

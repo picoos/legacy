@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: noscfg.h,v 1.1 2004/03/21 18:40:28 dkuschel Exp $
  */
 
 #ifndef _NOSCFG_H
@@ -157,7 +157,7 @@ extern void *__heap_end;
  */
 
 /*---------------------------------------------------------------------------
- *  TASK CREATION
+ *  ABSTRACTED PICO]OS FUNCTIONS
  *-------------------------------------------------------------------------*/
 
 /** Enable nano task create function.
@@ -177,6 +177,40 @@ extern void *__heap_end;
  *         run with ::POSCFG_TASKSTACKTYPE = 0.
  */
 #define NOSCFG_FEATURE_TASKCREATE    1
+
+/** Include nano layer semaphore functions.
+ * If this definition is set to 1, the nano layer semaphore functions
+ * are added to the user API. The nano layer supports named semaphores
+ * and other extended semaphore features.
+ */
+#define NOSCFG_FEATURE_SEMAPHORES    POSCFG_FEATURE_SEMAPHORES
+
+/** Include nano layer mutex functions.
+ * If this definition is set to 1, the nano layer mutex functions
+ * are added to the user API. The nano layer supports named mutexes
+ * and other extended mutex features.
+ */
+#define NOSCFG_FEATURE_MUTEXES       POSCFG_FEATURE_MUTEXES
+
+/** Include nano layer message box functions.
+ * If this definition is set to 1, the message box functions are
+ * added to the user API.
+ */
+#define NOSCFG_FEATURE_MSGBOXES      POSCFG_FEATURE_MSGBOXES
+
+/** Include flags functions.
+ * If this definition is set to 1, the nano layer flag functions
+ * are added to the user API. The nano layer supports named flags
+ * and other extended flag features.
+ */
+#define NOSCFG_FEATURE_FLAGS         POSCFG_FEATURE_FLAGS
+
+/** Include timer functions.
+ * If this definition is set to 1, the nano layer timer functions
+ * are added to the user API. The nano layer supports named timers
+ * and other extended timer features.
+ */
+#define NOSCFG_FEATURE_TIMER         POSCFG_FEATURE_TIMER
 
 /** @} */
 
@@ -278,7 +312,58 @@ extern void *__heap_end;
  * within the idle task, and the function ::nosCpuUsage is added to
  * the user API.
  */
-#define NOS_FEATURE_CPUUSAGE         1
+#define NOSCFG_FEATURE_CPUUSAGE      1
+
+/** @} */
+
+
+
+/*---------------------------------------------------------------------------
+ *  REGISTRY
+ *-------------------------------------------------------------------------*/
+
+/** @defgroup cfgnosreg Registry
+ * @ingroup confign
+ * @{
+ */
+
+/** Enable registry support.
+ * If this definition is set to 1, the registry functions are
+ * added to the user API.
+ */
+#define NOSCFG_FEATURE_REGISTRY      1
+
+/** Enable the query for registry keys.
+ * If this definition is set to 1, the functions ::nosRegQueryBegin,
+ * ::nosRegQueryElem and ::nosRegQueryEnd will be added to the user API.
+ */
+#define NOSCFG_FEATURE_REGQUERY      1
+
+/** Enable the user registry. The user has access to its own branch in
+ * the registry. He can store there pairs of strings and binary
+ * values. (A text string is also called a "registry key" that is assigned
+ * to a binary value, such as a memory pointer or integer number).
+ * An application can now ask the system for a registry key and will get
+ * the belonging binary value, or vice versa.
+ * If this definition is set to 1, the functions ::nosRegGet,
+ * ::nosRegSet and ::nosRegDel will be added to the user API.
+ */
+#define NOSCFG_FEATURE_USERREG       1
+
+/** Maximum length a registry key can have.
+ * This define sets the maximum length (characters) a registry key can have.
+ * If the registry is enabled, this define must be set to at least 4.
+ */
+#define NOS_MAX_REGKEYLEN            8
+
+/** Registry key housekeeping.
+ * When ever a new key is created, the nano layer needs to call malloc().
+ * If this define is set to a number greater than 1, one malloc-call is
+ * used to allocate memory for a bunch of keys (the count of keys is
+ * defined here). This reduces overhead in the memory manager, but
+ * increases the code-memory usage a bit.
+ */
+#define NOS_REGKEY_PREALLOC          4
 
 /** @} */
 
