@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.2 2004/03/21 18:34:38 dkuschel Exp $
  */
 
 #define _N_CORE_C
@@ -51,6 +51,9 @@
 #endif
 #if POSCFG_FEATURE_IDLETASKHOOK == 0
 #error POSCFG_FEATURE_IDLETASKHOOK not enabled
+#endif
+#if POSCFG_FEATURE_JIFFIES == 0
+#error POSCFG_FEATURE_JIFFIES not enabled
 #endif
 #endif
 #if POSCFG_TASKSTACKTYPE == 0
@@ -80,7 +83,19 @@ static JIF_t          idle_jiffies_g = 0;
 
 #define IDLE_MULBITS     11  /* = 2048;  2048 / 20 = 102.4 ~ 100% */
 #define IDLE_PREDIVIDER  (1<<IDLE_MULBITS)
+
+#define IDLE_MIN_TICKS  200
+#define IDLE_FAST_DIV   4
+
+#if HZ >= (IDLE_MIN_TICKS * IDLE_FAST_DIV)
+#define IDLE_PERIOD     (HZ / IDLE_FAST_DIV)
+#define IDLE_INIT_MULT  IDLE_FAST_DIV
+#else 
+#define IDLE_PERIOD     HZ
+#define IDLE_INIT_MULT  1
 #endif
+
+#endif /* NOS_FEATURE_CPUUSAGE */
 
 struct {
   POSTASKFUNC_t  func;
@@ -121,9 +136,12 @@ static void nano_initCpuUsage(void)
 {
   (void) posInstallIdleTaskHook(nano_idlehook);
   posTaskSleep(1);
-  idle_jiffies_g = jiffies + HZ;
+  idle_jiffies_g = jiffies + IDLE_PERIOD;
   idle_counter_g = 0;
-  posTaskSleep(HZ + 2);
+  posTaskSleep(IDLE_PERIOD + 2);
+#if IDLE_INIT_MULT > 1
+  idle_loops_g *= IDLE_INIT_MULT;
+#endif
   idle_loops_100p_g = idle_loops_g;
   if (idle_loops_100p_g == 0)
     idle_loops_100p_g = 1;
