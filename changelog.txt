@@ -1,3 +1,12 @@
+
+Version 0.5.1:
+  o  added lookup-table for better bit-shift performance on 8bit CPUs
+  o  several functions renamed, postfix alloc->create, free->destroy  
+  o  feature names have changed accordingly to the function names
+  o  added macro MS() that converts milliseconds into timer ticks
+  o  added defined error codes, e.g. -EOK, -EFAIL, -ENOMEM and so on.
+
+
 Version 0.5.0:
   o this is the first public version
   o Atmel AVR port added
