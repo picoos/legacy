@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.5 2004/03/07 15:07:48 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.6 2004/03/13 19:12:30 dkuschel Exp $
  *
  */
 
@@ -56,6 +56,7 @@
  *
  * <b>Miscellaneous:</b>
  *  - atomic variables
+ *  - blocking and nonblocking lists
  *
  * <br><br>
  * @subsection ports Available Ports
@@ -369,6 +370,11 @@
 
 
 /* parameter range checking */
+#if (POSCFG_DYNAMIC_MEMORY != 0) && (POSCFG_DYNAMIC_REFILL != 0)
+#define SYS_POSTALLOCATE    1
+#else
+#define SYS_POSTALLOCATE    0
+#endif
 #if (MVAR_BITS != 8) && (MVAR_BITS != 16) && (MVAR_BITS != 32)
 #error MVAR_BITS must be 8, 16 or 32
 #endif
@@ -384,7 +390,7 @@
 #if (POSCFG_MAX_TASKS < 3) || (POSCFG_MAX_TASKS > (POSCFG_TASKS_PER_PRIO * POSCFG_MAX_PRIO_LEVEL))
 #error POSCFG_MAX_TASKS is less than 3 or much to big
 #endif
-#if POSCFG_MAX_EVENTS < 1
+#if (POSCFG_MAX_EVENTS < 1) && (SYS_POSTALLOCATE == 0)
 #error POSCFG_MAX_EVENTS must be at least 1
 #endif
 #if POSCFG_TASKS_PER_PRIO > MVAR_BITS
@@ -403,15 +409,17 @@
 #error POSCFG_REALTIME_PRIO must be less than POSCFG_MAX_PRIO_LEVEL
 #endif
 #if POSCFG_FEATURE_MSGBOXES != 0
-#if POSCFG_MAX_MESSAGES < 2
+#if (POSCFG_MAX_MESSAGES < 2) && (SYS_POSTALLOCATE == 0)
 #error POSCFG_MAX_MESSAGES must be at least 2
 #endif
 #if POSCFG_MSG_BUFSIZE < 1
 #error POSCFG_MSG_BUFSIZE must be at least 1
 #endif
 #endif
-#if (POSCFG_FEATURE_TIMER != 0) && (POSCFG_MAX_TIMER == 0)
+#if (POSCFG_FEATURE_TIMER != 0)
+#if (POSCFG_MAX_TIMER == 0) && (SYS_POSTALLOCATE == 0)
 #error POSCFG_MAX_TIMER must be at least 1
+#endif
 #endif
 #if (POSCFG_TASKSTACKTYPE < 0) || (POSCFG_TASKSTACKTYPE > 2)
 #error POSCFG_TASKSTACKTYPE must be 0, 1 or 2
@@ -435,6 +443,9 @@
 
 
 /* parameter reconfiguration */
+#ifndef POSCFG_TASKCB_USERSPACE
+#define POSCFG_TASKCB_USERSPACE     0
+#endif
 #if POSCFG_FEATURE_SEMAPHORES == 0
 #undef POSCFG_FEATURE_SEMADESTROY
 #define POSCFG_FEATURE_SEMADESTROY  0
@@ -453,9 +464,9 @@
 #endif
 #endif
 #if POSCFG_FEATURE_MSGBOXES != 0
-#define MSGBOXEVENTS  2
+#define SYS_MSGBOXEVENTS  2
 #else
-#define MSGBOXEVENTS  0
+#define SYS_MSGBOXEVENTS  0
 #endif
 #if (POSCFG_FEATURE_MSGBOXES != 0) && (POSCFG_FEATURE_GETTASK == 0)
 #undef POSCFG_FEATURE_GETTASK
@@ -1474,6 +1485,18 @@ void        posTaskSchedLock(void);
  * @sa      posTaskSchedLock
  */
 void        posTaskSchedUnlock(void);
+#endif
+
+#if (DOX!=0) || (POSCFG_TASKCB_USERSPACE > 0)
+/**
+ * Task function.
+ * Returns a pointer to the user memory in the current task control block.
+ * @note    ::POSCFG_TASKCB_USERSPACE must be defined to a nonzero value
+ *          to have this function compiled in. ::POSCFG_TASKCB_USERSPACE
+ *          is also used to set the size of the user memory (in bytes).
+ * @return  pointer to user memory space.
+ */
+void*       posTaskGetUserspace(void);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_IDLETASKHOOK != 0)
@@ -2567,34 +2590,38 @@ typedef void (*POSSTKFREEFUNC_t)(POSTASK_t task);
 struct POSTASK_s {
     POS_USERTASKDATA
     NOS_TASKDATA
+#if POSCFG_TASKCB_USERSPACE > 0
+    UVAR_t      usrspace[(POSCFG_TASKCB_USERSPACE + POSCFG_ALIGNMENT +
+                         sizeof(UVAR_t)-2) / sizeof(UVAR_t)];
+#endif
 #if POSCFG_STKFREE_HOOK != 0
     POSSTKFREEFUNC_t  stkfree;
 #endif
 #if DOX==0
 #if POSCFG_ARGCHECK > 1
-    UVAR_t         magic;
+    UVAR_t      magic;
 #endif
 #if SYS_TASKDOUBLELINK != 0
     struct POSTASK_s *prev;
 #endif
     struct POSTASK_s *next;
-    UVAR_t         bit_x;
+    UVAR_t      bit_x;
 #if SYS_TASKTABSIZE_Y > 1
-    UVAR_t         bit_y;
-    UVAR_t         idx_y;
+    UVAR_t      bit_y;
+    UVAR_t      idx_y;
 #endif
-    UINT_t         ticks;
+    UINT_t      ticks;
 #if SYS_TASKSTATE != 0
-    UVAR_t         state;
+    UVAR_t      state;
 #endif
 #if POSCFG_FEATURE_ERRNO != 0
-    VAR_t          error;
+    VAR_t       error;
 #endif
 #if POSCFG_FEATURE_MSGBOXES != 0
-    UVAR_t         msgwait;
-    POSSEMA_t      msgsem;
-    void           *firstmsg;
-    void           *lastmsg;
+    UVAR_t      msgwait;
+    POSSEMA_t   msgsem;
+    void        *firstmsg;
+    void        *lastmsg;
 #endif
 #endif /* !DOX */
 };

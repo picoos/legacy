@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.4 2004/03/07 15:07:48 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.5 2004/03/13 19:12:30 dkuschel Exp $
  */
 
 
@@ -53,16 +53,20 @@
  *-------------------------------------------------------------------------*/
 
 #if POSCFG_ALIGNMENT < 2
-#define ALIGNEDSIZE(size)       (size)
-#define MEMALIGN(type, var)     (type)((void*)(var))
-#define NEXTALIGNED(type, var)  (((type)((void*)(var))) + 1)
+#define ALIGNEDSIZE(size)               (size)
+#define ALIGNEDBUFSIZE(elemsize, count) ((elemsize)*(count))
+#define MEMALIGN(type, var)             (type)((void*)(var))
+#define NEXTALIGNED(type, var)          (((type)((void*)(var))) + 1)
 #else
-#define ALIGNEDSIZE(size) (((size)+POSCFG_ALIGNMENT-1)&~(POSCFG_ALIGNMENT-1))
+#define ALIGNEDSIZE(size) \
+  (((size) + (POSCFG_ALIGNMENT - 1)) & ~(POSCFG_ALIGNMENT - 1))
+#define ALIGNEDBUFSIZE(elemsize, count) \
+  (ALIGNEDSIZE(elemsize)*(count) + (POSCFG_ALIGNMENT - 1))
 #define MEMALIGN(type, var)  (type)((void*) \
   ((((MEMPTR_t)(var))+POSCFG_ALIGNMENT-1)&~(POSCFG_ALIGNMENT-1)))
 #define NEXTALIGNED(type, var) \
   (type)((void*)(((MEMPTR_t)(var)) + ALIGNEDSIZE(sizeof(*(var)))))
-#endif
+#endif  /* POSCFG_ALIGNMENT */
 
 #define STATICBUFFER(glblvar, size, count)  static UVAR_t \
   glblvar[((ALIGNEDSIZE(size)*count) + POSCFG_ALIGNMENT + sizeof(UVAR_t)-2) \
@@ -108,6 +112,15 @@ typedef union EVENT_s {
   } e;
 } *EVENT_t;
 
+
+static EVENT_t   posFreeEvents_g;
+
+#if (POSCFG_DYNAMIC_MEMORY == 0) && \
+    ((POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) != 0)
+STATICBUFFER(posStaticEventMem_g, sizeof(union EVENT_s), \
+             (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS));
+#endif
+
 #endif  /* SYS_FEATURE_EVENTS */
 
 
@@ -130,7 +143,7 @@ static POSSEMA_t msgAllocWaitSem_g;
 static UVAR_t    msgAllocWaitReq_g;
 static MSGBUF_t  *posFreeMessagebuf_g;
 
-#if POSCFG_DYNAMIC_MEMORY == 0
+#if (POSCFG_DYNAMIC_MEMORY == 0) && (POSCFG_MAX_MESSAGES != 0)
 STATICBUFFER(posStaticMessageMem_g, sizeof(MSGBUF_t), POSCFG_MAX_MESSAGES);
 #endif
 
@@ -157,11 +170,20 @@ typedef struct TIMER_s {
 static TIMER_t   *posFreeTimer_g;
 static TIMER_t   *posActiveTimers_g;
 
-#if POSCFG_DYNAMIC_MEMORY == 0
+#if (POSCFG_DYNAMIC_MEMORY == 0) && (POSCFG_MAX_TIMER != 0)
 STATICBUFFER(posStaticTmrMem_g, sizeof(TIMER_t), POSCFG_MAX_TIMER);
 #endif
 
 #endif /* POSCFG_FEATURE_TIMER */
+
+
+#if POSCFG_FEATURE_JIFFIES != 0
+#if POSCFG_FEATURE_LARGEJIFFIES == 0
+JIF_t  jiffies;
+#else
+static JIF_t     pos_jiffies_g;
+#endif
+#endif /* POSCFG_FEATURE_JIFFIES */
 
 
 static UVAR_t    posMustSchedule_g;
@@ -171,14 +193,6 @@ static POSTASK_t posSleepingTasks_g;
 static POSTASK_t posFreeTasks_g;
 static POSTASK_t posTaskTable_g[SYS_TASKTABSIZE_X * SYS_TASKTABSIZE_Y];
 
-#if POSCFG_FEATURE_JIFFIES != 0
-#if POSCFG_FEATURE_LARGEJIFFIES == 0
-JIF_t  jiffies;
-#else
-static JIF_t     pos_jiffies_g;
-#endif
-#endif
-
 #if POSCFG_CTXSW_COMBINE > 1
 static UVAR_t    posCtxCombineCtr_g;
 #endif
@@ -187,19 +201,17 @@ static UVAR_t    posCtxCombineCtr_g;
 static UVAR_t    posInhibitSched_g;
 #endif
 
-#if SYS_FEATURE_EVENTS != 0
-static EVENT_t   posFreeEvents_g;
+#if POSCFG_FEATURE_IDLETASKHOOK != 0
+static POSIDLEFUNC_t  posIdleTaskFuncHook_g;
 #endif
 
-#if POSCFG_DYNAMIC_MEMORY == 0
+#if (POSCFG_DYNAMIC_MEMORY == 0) && (POSCFG_MAX_TASKS != 0)
 STATICBUFFER(posStaticTaskMem_g, sizeof(struct POSTASK_s), POSCFG_MAX_TASKS);
-#if SYS_FEATURE_EVENTS != 0
-STATICBUFFER(posStaticEventMem_g, sizeof(union EVENT_s), \
-             (POSCFG_MAX_EVENTS + MSGBOXEVENTS));
 #endif
-#endif
+
 
 #if POSCFG_FEATURE_SOFTINTS != 0
+
 static struct {
   UVAR_t         intno;
   UVAR_t         param;
@@ -207,11 +219,9 @@ static struct {
 static POSINTFUNC_t softIntHandlers_g[POSCFG_SOFTINTERRUPTS];
 static UVAR_t    sintIdxIn_g;
 static UVAR_t    sintIdxOut_g;
-#endif
 
-#if POSCFG_FEATURE_IDLETASKHOOK != 0
-static POSIDLEFUNC_t  posIdleTaskFuncHook_g;
-#endif
+#endif /* POSCFG_FEATURE_SOFTINTS */
+
 
 #if MVAR_BITS == 8
 UVAR_t posShift1lTab_g[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
@@ -929,6 +939,21 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 
   POS_SCHED_LOCK;
   task = posFreeTasks_g;
+#if SYS_POSTALLOCATE != 0
+  if (task == NULL)
+  {
+    POS_SCHED_UNLOCK;
+    task = (POSTASK_t) POS_MEM_ALLOC(sizeof(struct POSTASK_s) +
+                                     (POSCFG_ALIGNMENT - 1));
+    if (task == NULL)
+      return NULL;
+
+    task = MEMALIGN(POSTASK_t, task);
+    POS_SCHED_LOCK;
+    task->next = posFreeTasks_g;
+    posFreeTasks_g = task;
+  }
+#endif /* SYS_POSTALLOCATE */
 
 #if POSCFG_ROUNDROBIN == 0
   p = (SYS_TASKTABSIZE_Y - 1) - (priority / MVAR_BITS);
@@ -1208,6 +1233,17 @@ void posTaskSchedUnlock(void)
 
 #endif  /* POSCFG_FEATURE_INHIBITSCHED */
 
+/*-------------------------------------------------------------------------*/
+
+#if POSCFG_TASKCB_USERSPACE > 0
+
+void*  posTaskGetUserspace(void)
+{
+  return (void*) &posCurrentTask_g->usrspace[0];
+}
+
+#endif  /* POSCFG_TASKCB_USERSPACE */
+
 
 
 /*---------------------------------------------------------------------------
@@ -1225,7 +1261,7 @@ POSSEMA_t posSemaCreate(INT_t initcount)
   POS_SCHED_LOCK;
   ev = posFreeEvents_g;
 
-#if (POSCFG_DYNAMIC_MEMORY != 0) && (POSCFG_DYNAMIC_REFILL != 0)
+#if SYS_POSTALLOCATE != 0
   if (ev == NULL)
   {
     POS_SCHED_UNLOCK;
@@ -1235,7 +1271,9 @@ POSSEMA_t posSemaCreate(INT_t initcount)
       return NULL;
 
     ev = MEMALIGN(EVENT_t, ev);
+#if POSCFG_ARGCHECK > 1
     ev->e.magic = POSMAGIC_EVENT;
+#endif
     POS_SCHED_LOCK;
   }
   else
@@ -1249,9 +1287,8 @@ POSSEMA_t posSemaCreate(INT_t initcount)
 #endif
     posFreeEvents_g = ev->l.next;
   }
-#endif
+#else  /* SYS_POSTALLOCATE */
 
-#if (POSCFG_DYNAMIC_MEMORY == 0) || (POSCFG_DYNAMIC_REFILL == 0)
   if (ev != NULL)
   {
 #if POSCFG_ARGCHECK > 1
@@ -1262,7 +1299,7 @@ POSSEMA_t posSemaCreate(INT_t initcount)
     }
 #endif
     posFreeEvents_g = ev->l.next;
-#endif
+#endif /* SYS_POSTALLOCATE */
 
     ev->e.d.counter = initcount;
 #if POSCFG_FEATURE_MUTEXES != 0
@@ -1275,7 +1312,7 @@ POSSEMA_t posSemaCreate(INT_t initcount)
 #if SYS_TASKTABSIZE_Y > 1
     ev->e.pend.ymask = 0;
 #endif
-#if (POSCFG_DYNAMIC_MEMORY == 0) || (POSCFG_DYNAMIC_REFILL == 0)
+#if SYS_POSTALLOCATE == 0
   }
 #endif
   POS_SCHED_UNLOCK;
@@ -1587,7 +1624,7 @@ void* posMessageAlloc(void)
 #endif
   }
 
-#if (POSCFG_DYNAMIC_MEMORY != 0) && (POSCFG_DYNAMIC_REFILL != 0)
+#if SYS_POSTALLOCATE != 0
   POS_SCHED_LOCK;
   mbuf = posFreeMessagebuf_g;
   if (mbuf != NULL)
@@ -1605,6 +1642,7 @@ void* posMessageAlloc(void)
                                    (POSCFG_ALIGNMENT - 1));
   if (mbuf != NULL)
   {
+    mbuf = MEMALIGN(MSGBUF_t*, mbuf);
 #if POSCFG_ARGCHECK > 1
     mbuf->magic = POSMAGIC_MSGBUF;
 #endif
@@ -1614,7 +1652,7 @@ void* posMessageAlloc(void)
     return (void*) mbuf;
 #endif
   }
-#endif
+#endif /* SYS_POSTALLOCATE */
 
   posSemaGet(msgAllocSyncSem_g);
   POS_SCHED_LOCK;
@@ -1925,7 +1963,7 @@ POSTIMER_t posTimerCreate(void)
   POS_SCHED_LOCK;
   t = posFreeTimer_g;
 
-#if (POSCFG_DYNAMIC_MEMORY != 0) && (POSCFG_DYNAMIC_REFILL != 0)
+#if SYS_POSTALLOCATE != 0
   if (t == NULL)
   {
     POS_SCHED_UNLOCK;
@@ -1934,14 +1972,17 @@ POSTIMER_t posTimerCreate(void)
     if (t == NULL)
       return NULL;
 
-    t->magic == POSMAGIC_TIMER;
+    t = MEMALIGN(TIMER_t*, t);
+#if POSCFG_ARGCHECK > 1
+    t->magic = POSMAGIC_TIMER;
+#endif
   }
   else
   {
     posFreeTimer_g = t->next;
     POS_SCHED_UNLOCK;
   }
-#else
+#else /* SYS_POSTALLOCATE */
   if ((t == NULL)
 #if POSCFG_ARGCHECK > 1
       || (t->magic != POSMAGIC_TIMER)
@@ -1953,7 +1994,7 @@ POSTIMER_t posTimerCreate(void)
   }
   posFreeTimer_g = t->next;
   POS_SCHED_UNLOCK;
-#endif
+#endif /* SYS_POSTALLOCATE */
   t->prev   = t;
 #if POSCFG_ARGCHECK > 1
   t->wait   = 0;
@@ -2579,7 +2620,7 @@ void posListTerm(POSLISTHEAD_t *listhead)
 
 
 /*---------------------------------------------------------------------------
- * EXPORTED FUNCTION:  SET IDLE TASK HOOK
+ * EXPORTED FUNCTION:  INSTALL IDLE HOOK FUNCTION
  *-------------------------------------------------------------------------*/
 
 #if POSCFG_FEATURE_IDLETASKHOOK != 0
@@ -2618,10 +2659,10 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #if SYS_FEATURE_EVENTS != 0
   EVENT_t   ev;
 #endif
-#if POSCFG_FEATURE_MSGBOXES != 0
+#if (POSCFG_FEATURE_MSGBOXES != 0) && (POSCFG_MAX_MESSAGES != 0)
   MSGBUF_t  *mbuf;
 #endif
-#if POSCFG_FEATURE_TIMER != 0
+#if (POSCFG_FEATURE_TIMER != 0) && (POSCFG_MAX_TIMER != 0)
   TIMER_t   *tmr;
 #endif
 #if POSCFG_DYNAMIC_MEMORY != 0
@@ -2635,56 +2676,96 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #endif
 
 #if POSCFG_DYNAMIC_MEMORY != 0
-  m = POS_MEM_ALLOC(sizeof(struct POSTASK_s) * POSCFG_MAX_TASKS +
-                    (POSCFG_ALIGNMENT - 1));
+  (void) m;
+  (void) task;
+
+#if POSCFG_MAX_TASKS != 0
+  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(struct POSTASK_s),
+                    POSCFG_MAX_TASKS));
 #if POSCFG_ARGCHECK > 1
   if (m == NULL)
     return;
 #endif
   posFreeTasks_g = MEMALIGN(POSTASK_t, m);
+#else
+  posFreeTasks_g = NULL;
+#endif
+
 #if SYS_FEATURE_EVENTS != 0
-  m = POS_MEM_ALLOC(sizeof(union EVENT_s) * 
-                    (POSCFG_MAX_EVENTS + MSGBOXEVENTS) +
-                    (POSCFG_ALIGNMENT - 1));
+#if (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) != 0
+  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(union EVENT_s), 
+                    (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS)));
 #if POSCFG_ARGCHECK > 1
   if (m == NULL)
     return;
 #endif
   posFreeEvents_g = MEMALIGN(EVENT_t, m);
+#else
+  posFreeEvents_g = NULL;
 #endif
+#endif
+
 #if POSCFG_FEATURE_MSGBOXES != 0
-  m = POS_MEM_ALLOC(sizeof(MSGBUF_t) * POSCFG_MAX_MESSAGES +
-                    (POSCFG_ALIGNMENT - 1));
+#if POSCFG_MAX_MESSAGES != 0
+  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(MSGBUF_t), POSCFG_MAX_MESSAGES));
 #if POSCFG_ARGCHECK > 1
   if (m == NULL)
     return;
 #endif
   posFreeMessagebuf_g = MEMALIGN(MSGBUF_t*, m);
+#else
+  posFreeMessagebuf_g = NULL;
 #endif
+#endif
+
 #if POSCFG_FEATURE_TIMER != 0
-  m = POS_MEM_ALLOC(sizeof(TIMER_t) * POSCFG_MAX_TIMER +
-                    (POSCFG_ALIGNMENT - 1));
+#if POSCFG_MAX_TIMER != 0
+  m = POS_MEM_ALLOC(ALIGNEDBUFSIZE(sizeof(TIMER_t), POSCFG_MAX_TIMER));
 #if POSCFG_ARGCHECK > 1
   if (m == NULL)
     return;
 #endif
   posFreeTimer_g = MEMALIGN(TIMER_t*, m);
+#else
+  posFreeTimer_g = NULL;
+#endif
 #endif
 
 #else /* POSCFG_DYNAMIC_MEMORY */
 
+#if POSCFG_MAX_TASKS != 0
   posFreeTasks_g = MEMALIGN(POSTASK_t, posStaticTaskMem_g);
+#else
+  posFreeTasks_g = NULL;
+#endif
+
 #if SYS_FEATURE_EVENTS != 0
+#if (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) != 0
   posFreeEvents_g = MEMALIGN(EVENT_t, posStaticEventMem_g);
+#else
+  posFreeEvents_g = NULL;
 #endif
+#endif
+
 #if POSCFG_FEATURE_MSGBOXES != 0
+#if POSCFG_MAX_MESSAGES != 0
   posFreeMessagebuf_g = MEMALIGN(MSGBUF_t*, posStaticMessageMem_g);
+#else
+  posFreeMessagebuf_g = NULL;
 #endif
+#endif
+
 #if POSCFG_FEATURE_TIMER != 0
-  posFreeTimer_g =  MEMALIGN(TIMER_t*, posStaticTmrMem_g);
+#if POSCFG_MAX_TIMER != 0
+  posFreeTimer_g = MEMALIGN(TIMER_t*, posStaticTmrMem_g);
+#else
+  posFreeTimer_g = NULL;
 #endif
+#endif
+
 #endif /* POSCFG_DYNAMIC_MEMORY */
 
+#if POSCFG_MAX_TASKS != 0
   task = posFreeTasks_g;
   for (i=0; i<POSCFG_MAX_TASKS-1; ++i)
   {
@@ -2698,8 +2779,10 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
   task->state = POSTASKSTATE_UNUSED;
 #endif
   task->next = NULL;
+#endif
   
 #if SYS_FEATURE_EVENTS != 0
+#if (POSCFG_MAX_EVENTS + SYS_MSGBOXEVENTS) != 0
   ev = posFreeEvents_g;
 #if POSCFG_MAX_EVENTS > 1
   for (i=0; i<POSCFG_MAX_EVENTS-1; ++i)
@@ -2716,8 +2799,13 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #endif
   ev->l.next = NULL;
 #endif
+#endif
 
 #if POSCFG_FEATURE_MSGBOXES != 0
+  msgAllocSyncSem_g = posSemaCreate(1);
+  msgAllocWaitSem_g = posSemaCreate(0);
+  msgAllocWaitReq_g = 0;
+#if POSCFG_MAX_MESSAGES != 0
   mbuf = posFreeMessagebuf_g;
   for (i=0; i<POSCFG_MAX_MESSAGES-1; ++i)
   {
@@ -2731,13 +2819,12 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
   mbuf->magic = POSMAGIC_MSGBUF;
 #endif
   mbuf->next = NULL;
-  msgAllocSyncSem_g = posSemaCreate(1);
-  msgAllocWaitSem_g = posSemaCreate(0);
-  msgAllocWaitReq_g = 0;
+#endif
 #endif
 
 #if POSCFG_FEATURE_TIMER != 0
   posActiveTimers_g = NULL;
+#if POSCFG_MAX_TIMER != 0
   tmr = posFreeTimer_g;
 #if POSCFG_MAX_TIMER > 1
   for (i=0; i<POSCFG_MAX_TIMER-1; ++i)
@@ -2753,6 +2840,7 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
   tmr->magic = POSMAGIC_TIMER;
 #endif
   tmr->next = NULL;
+#endif
 #endif
 
   for (i=0; i<SYS_TASKTABSIZE_Y; ++i)
