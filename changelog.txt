@@ -1,4 +1,11 @@
 
+Version 0.6.0:
+  o  atomic variables added
+  o  posInstallIdleTaskHook returns now the ptr to the previous hook function
+  o  error code names changed to resolve a conflict with Unix stile error codes
+  o  bug fixed in dynamic memory management, memory management improved
+
+
 Version 0.5.1:
   o  added lookup-table for better bit-shift performance on 8bit CPUs
   o  several functions renamed, postfix alloc->create, free->destroy  
@@ -98,14 +105,15 @@ Version 0.1:
   Initial version
 
 
-----------------------------------
- Contact Information:
+--------------------------------------------
+  Contact Information:
 
- Dennis Kuschel
- Emanuel-Backhaus-Str. 20
- 28277 Bremen
- GERMANY
+  Dennis Kuschel
+  Emanuel-Backhaus-Str. 20
+  28277 Bremen
+  GERMANY
 
- email: dennis_k@freenet.de
- http : mycpu.mikrocontroller.net
-----------------------------------
+  email: dennis_k@freenet.de
+  web  : http://mycpu.mikrocontroller.net
+         http://picoos.sourceforge.net
+--------------------------------------------

@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id:$
+; CVS-ID $Id: arch_a.s,v 1.1.1.1 2004/02/16 20:11:24 smocz Exp $
 ;
 
 
@@ -109,21 +109,20 @@ C64IRQVECT      := $0314
 
 .segment  "BSS"
 
-_saved_sp:
-    .res    2,$00
-_tmrdiv:
-    .res    1,$00
-_doorgirq:
-    .res    1,$00
 _orgC64irqvect:
-    .res    2,$00
+    .res    2
+_saved_sp:
+    .res    2
+_tmrdiv:
+    .res    1
+_doorgirq:
+    .res    1
 _isrstack:
-    .res    256,$00
+    .res    256
 .IF NOS_DISPOUT
 _savedchars:
-    .res    2,$00
+    .res    2
 .ENDIF
-
 
 ; start of source code
 .segment  "CODE"
