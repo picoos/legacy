@@ -33,7 +33,7 @@ specifies the destination port. For example, a valid make call would look
 like this (at the DOS prompt): @n
 
 @code
-C:\picoos-0.9.1> gmake all PORT=6502
+C:\picoos-0.9.1> make all PORT=6502
 @endcode
 
 This will build pico]OS for the 6502 processor family. After the successful
@@ -42,8 +42,8 @@ directory contains all generated object files, and the @c lib directory
 the final library. @n
 
 There is a second option available on the command line: @c BUILD=DEBUG
-would build a debug version of the operating system, and a @c BUILD=RELEASE
-would build a release version. Note that the debug version is the default
+will build a debug version of the operating system, and a @c BUILD=RELEASE
+will build a release version. Note that the debug version is the default
 when this option is not given. @n
 
 @b Note:  The name of the port is the name of its subdirectory
@@ -61,79 +61,268 @@ need to perform the following steps: @n
 
  - create a subdirectory somewhere in the @c picoos directory tree
  - place your file @c hello.c in this directory
- - generate and place a makefile in the same directory. The makefile
+ - generate and place a makefile (or copy and rename the file @c outfile.mak
+   from the examples directory) in the same directory. The makefile
    should look like this:
 
 @code
-01  #
-02  # This makefile compiles hello.c and generates an executable
-03  #
+01 # ---------------------------------------------------------------------------
+02 # PRECONDITION SETUP
+03 # ---------------------------------------------------------------------------
 04
-05  # This test program shall be compiled for the 6502 port
-06  PORT = 6502
+05 # Set relative path to the picoos root directory  -> YOU NEED TO CHANGE THIS!
+06 RELROOT = ../../../picoos/
 07
-08  # Set build mode (DEBUG or RELEASE)
-09  BUILD = DEBUG
+08 # Set fixed target platform                       -> YOU MAY CHANGE THIS!
+09 #PORT = x86w32  (->need to be specified at the command line)
 10
-11  # To include the pico]OS nano layer, set this define to 1
-12  NANO = 0
+11 # Set fixed build mode (DEBUG or RELEASE)         -> YOU MAY CHANGE THIS!
+12 #BUILD = DEBUG  (->need to be specified at the command line)
 13
-14  # Set relative path to the picoos root directory and include base make file
-15  RELROOT = ../../../
-16  include $(RELROOT)make/common.mak
-17
-18  # --------------------------------------------------------------------------
-19
-20  # Set target file name
-21  TARGET = hello
+14 # Get pico]OS path from environment (if it is set)
+15 ifneq '$(strip $(PICOOS))' ''
+16 RELROOT := $(PICOOS)/
+17 endif
+18
+19 # Include common makefile
+20 include $(RELROOT)make/common.mak
+21
 22
-23  # Set source files
-24  SRC_TXT = hello.c
-25  SRC_OBJ =
-26  SRC_LIB =
+23
+24 # ---------------------------------------------------------------------------
+25 # PROJECT SETTINGS
+26 # ---------------------------------------------------------------------------
 27
-28  # Set the directory that contains the configuration header files.
-29  # If this variable is not set, the default configuration files will be
-30  # taken from the port/default directory.
-31  DIR_CONFIG = $(CURRENTDIR)
-32
-33  # Set the output directory for the generated binaries
-34  DIR_OUTPUT = $(CURRENTDIR)/bin
-35
-36  # ---------------------------------------------------------------------------
-37
-38  # Build an executable
-39  include $(MAKE_OUT)
-
+28 # To include the pico]OS nano layer, set this define to 1
+29 NANO = 0
+30
+31 # Set target filename (the name of the executable, without extension)
+32 TARGET = hello
+33
+34
+35 ### Set up lists of source files ###
+36
+37 # Set list of C source files / assembler files
+38 SRC_TXT = hello.c
+39
+40 # Set list of header files used by the C source files
+41 SRC_HDR = 
+42
+43 # You may add some already compiled object files here
+44 SRC_OBJ =
+45
+46 # Add the libraries you are using in your program here
+47 SRC_LIB =
+48
+49
+50 # Set additional C-defines
+51 CDEFINES +=
+52
+53 # Set additional include paths
+54 DIR_USRINC +=
+55
+56 # Set the directory that contains the configuration header files.
+57 # If this variable is not set, the default configuration files will be
+58 # taken from the port/default directory.
+59 # If you wish to use your own configuration files, you can place them
+60 # in the current directory. Then, set  DIR_CONFIG = $(CURRENTDIR)
+61 DIR_CONFIG =
+62
+63 # Set the output directory for the generated binaries. If you do not
+64 # set this variable, the files will be stored in the pico]OS root
+65 # root directory structure (pioos/out, picoos/lib, picoos/obj)
+66 DIR_OUTPUT = $(CURRENTDIR)/bin
+67
+68 # Include pico]OS based modules. Set here the list of modules
+69 # (libraries) you want to use in your project. Note that the module
+70 # name is the name of the directory where the sources and the makefile
+71 # is stored. The makefile must be named "makefile" or "makefile.pico"
+72 # Example:  MODULES += $(RELROOT)../lcdinterface
+73 MODULES +=
+74
+75 # Execute external makefiles to build other libraries. Add here
+76 # the filenames (with path) of other makefiles you wish to execute.
+77 EXEC_MAKEFILES +=
+78
+79
+80
+81 # ---------------------------------------------------------------------------
+82 # BUILD THE EXECUTABLE
+83 # ---------------------------------------------------------------------------
+84
+85 include $(MAKE_OUT)
+86
 @endcode
 
-The lines 15, 16, 21, 24 and 39 are mandatory. The @c PORT variable may also
+The lines 6, 20, 32, 38 and 85 are mandatory. The @c PORT variable may also
 be set at the command line when make is invoked, even like the @c BUILD mode.
 @c RELROOT sets the relative way to the pico]OS root directory.
-In line 12 you can enable the nano layer of pico]OS that is available with
-pico]OS 0.8.0.  Line 16 includes the main makefile of the make environment.
-Line 18 sets the name of the executable to generate. Note that only the
-basename must be specified, in our example the executable @c hello.c64
-will be generated.
-Lines 24 to 26 set the source files that shall be linked to the pico]OS
+Line 20 includes the main makefile of the make environment. In line 29 you
+can enable the nano layer of pico]OS that is available with pico]OS 0.8.0.
+Line 32 sets the name of the executable to generate. Note that only the
+basename must be specified, the file extension is added automatically.
+Lines 37 to 47 set the source files that shall be linked to the pico]OS
 library. @c SRC_TXT specifies a list of sourcecode files (in textual form).
 @c SRC_OBJ and @c SRC_LIB specify a list of existing object files and
-libraries that shall be linked to the executable. If your application uses
+libraries that shall be linked to the executable. @c SRC_HDR is a list of
+the header files that are used by your project.
+In line 51 you can set preprocessor defines to control the compilation
+of your software. The defines are passed to the compiler and can be checked
+with the #if / #endif preprocessor command in the C source files.
+Additional include paths for header files can be set in line 54. Please
+use the preprocessor command @c #include @c <header.h> to include a header
+file that is located in the global include path. If your application uses
 an other configuration than the default, you can place your own configuration
 files @c poscfg.h and @c noscfg.h into your project directory. You must then
-set @c DIR_CONFIG (line 31) to the place where the configuration files are
+set @c DIR_CONFIG (line 61) to the place where the configuration files are
 located. Note that this path is absolute to the pico]OS root, so if your
 project directory is <tt>picoos-0.9.1/myproject</tt>, you would set
 <tt>DIR_CONFIG = myproject</tt>. To make things easier, the pre-defined
 variable @c CURRENTDIR points always to the current directory.
-In line 34 you may specify your own output directory for the generated
+In line 66 you may specify your own output directory for the generated
 binaries. If you do not set this variable, the binaries will be saved in
 the directory <tt>picoos-0.9.1/out/portname/rel_or_deb/</tt>.
-Finally, the line 39 includes the makefile that starts the
+Finally, the line 85 includes the makefile that starts the
 build process. @n
+
+There is something special you should notice: You can tell the
+makefile to execute other, external makefiles. For example, this is useful
+to start a makefile that shall compile a library that is used by your
+program. Usually, you would add the library to the @c SRC_LIB variable in
+line 47. The corresponding library makefile can be added to the variable
+@c EXEC_MAKEFILES in line 77. Every time this makefile is executed, also the
+library makefile will be executed, ensuring the library is up to date. @n
+
+And there is another special thing: You can divide your project into smaller
+modules. The modules are compiled to libraries and the libraries are then
+linked to the main program. For your own libraries, you should use the 
+template makefile 'library.mak' in the examples directory. A description of
+this file you will find in the next section, see below. If you are using this
+modularized architecture, you can simply add the modules you wish to link
+to your main program to the variable @c MODULES in line 73. You do not need
+to set also the library name in line 47, this does the pico]OS make for you. @n
+
+
+
 To build your application, simply invoke make with the target @c all to
 generate the executable. The makefile supports also the target @c clean
-that cleans your last build again. @n
+that cleans your last build again. Note: If you do not have set the @c PORT
+and the @c BUILD mode in the makefile, you need to specify them on the
+make command line. In this case, a valid make call would look like this:
+<code> " make all PORT=x86w32 BUILD=DEBUG " </code> @n
+
+
+
+
+
+
+@n             <h3> Building A Library or Module </h3>
+
+As described above, sometimes it is useful (or maybe necessary) to divide
+a project into some smaller modules or so called libraries. For this purpose
+pico]OS provides an example makefile (see examples directory,
+file @c library.mak) that looks like this:
+
+@code
+01 # ---------------------------------------------------------------------------
+02 # PRECONDITION SETUP
+03 # ---------------------------------------------------------------------------
+04
+05 # Set relative path to the picoos root directory  -> YOU NEED TO CHANGE THIS!
+06 RELROOT = ../../../picoos/
+07
+08 # Get pico]OS path from environment (if it is set)
+09 ifneq '$(strip $(PICOOS))' ''
+10 RELROOT := $(PICOOS)/
+11 endif
+12
+13 # Include common makefile
+14 include $(RELROOT)make/common.mak
+15
+16
+17
+18 # ---------------------------------------------------------------------------
+19 # LIBRARY SETTINGS
+20 # ---------------------------------------------------------------------------
+21
+22 # Set target file name (library filename without extension)
+23 TARGET =
+24
+25
+26 ### Set up lists of source files ###
+27
+28 # Set list of C source files / assembler files
+29 SRC_TXT =
+30
+31 # Set list of header files used by the C source files
+32 SRC_HDR = 
+33
+34 # You may add some already compiled object files here
+35 SRC_OBJ =
+36
+37
+38 # Set additional C-defines
+39 CDEFINES +=
+40
+41 # Set additional include paths
+42 DIR_USRINC +=
+43
+44 # Set the output directory for the generated binaries. If you do not
+45 # set this variable, the files will be stored in the pico]OS root
+46 # root directory structure (pioos/out, picoos/lib, picoos/obj)
+47 # Note: Please keep the ifeq/endif pair. This allows to set the
+48 # output directory from outsite (may be by a project makefile).
+49 ifeq '$(strip $(DIR_OUTPUT))' ''
+50 DIR_OUTPUT = $(CURRENTDIR)/bin
+51 endif
+52
+53
+54
+55 # ---------------------------------------------------------------------------
+56 # BUILD THE LIBRARY
+57 # ---------------------------------------------------------------------------
+58
+59 include $(MAKE_LIB)
+60
+@endcode
+
+Like above, the lines 6, 14, 23, 29 and 59 are mandatory.
+@c RELROOT sets the relative way to the pico]OS root directory.
+Line 14 includes the main makefile of the make environment.
+Line 23 sets the name of the generated library. Note that only the
+basename must be specified, the file extension is added automatically.
+Lines 28 to 35 set the source files that shall be added to the library.
+@c SRC_TXT specifies a list of sourcecode files (in textual form), and
+@c SRC_HDR is set to a list of C header files that are referenced
+by the C source files. The variable @c SRC_OBJ can be filled with some
+precompiled object files (but this feature you won't realy use).
+In line 39 you can set preprocessor defines to control the compilation
+of your software. The defines are passed to the compiler and can be checked
+with the #if / #endif preprocessor command in the C source files.
+Additional include paths for header files can be set in line 42. Please
+use the preprocessor command @c #include @c <header.h> to include a header
+file that is located in the global include path.
+In line 50 you may specify your own output directory for the generated
+binaries. If you do not set this variable, the binaries will be saved in
+the directory <tt>picoos-0.9.1/out/portname/rel_or_deb/</tt>.
+Finally, the line 59 includes the makefile that starts the
+build process. @n@n
+To generate the library manually, you can call the makefile with the
+port and build mode parameter: 
+<code> " make all PORT=x86w32 BUILD=DEBUG " </code>. As an option, you
+may also set the NANO flag to 1 (@c NANO=1) if the library uses the
+nano layer of pico]OS. @n@n
+But in most cases you will start the makefile from within a main makefile
+that is used to compile the whole project. Take the file @c outfile.mak
+from the examples directory as a template for such a main makefile. When
+you add this library makefile (that means, the name and path of the directory
+where this library makefile is located) to the @c MODULES= variable in the
+main makefile, the library makefile will be automatically executed when
+the project is built. All command line parameters that are set to execute
+the main makefile will also be passed to the library makefiles.@n@n
+
+
+
 
 
 
