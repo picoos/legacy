@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_mem.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
+ * CVS-ID $Id: n_mem.c,v 1.2 2004/03/21 18:34:38 dkuschel Exp $
  */
 
 #define _N_MEM_C
@@ -58,6 +58,9 @@
 #endif
 #include <stdlib.h>
 #endif
+
+/* function prototypes */
+void nos_initMem(void);
 
 
 
