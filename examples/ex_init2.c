@@ -25,7 +25,7 @@ void firsttask(void *arg);
 /* Program main function.
  * This function starts pico]OS by initializing the pico layer.
  */
-void main(void)
+int main(void)
 {
   /* initialize pico]OS (pico layer only) */
   posInit(firsttask, /* ptr to function: first task that is executed */
@@ -35,4 +35,6 @@ void main(void)
           0x0800);   /* stack size for the idle task                 */
 
   /* Note: The call to posInit() will never return */
+
+  return 0;
 }

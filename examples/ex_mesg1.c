@@ -192,6 +192,8 @@ void firsttask(void *arg)
   VAR_t     status;
   MSG_t     *msg;
 
+  (void) arg;
+
   /* start the printer task */
   printt = nosTaskCreate(
                 printerTask,    /* pointer to new task-function            */

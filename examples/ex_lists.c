@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: lists.c,v 1.2 2004/03/21 18:42:44 dkuschel Exp $
+ * CVS-ID $Id: ex_lists.c,v 1.1 2004/04/18 17:59:21 dkuschel Exp $
  */
 
 
@@ -145,7 +145,7 @@ static char membuf_g[HEAPSIZE];
 void *__heap_start  = (void*) &membuf_g[0];
 void *__heap_end    = (void*) &membuf_g[HEAPSIZE-1];
 void task1(void *arg);
-void main(void) { nosInit(task1, NULL, 2, 0, 0); }
+int main(void) { nosInit(task1, NULL, 2, 0, 0); return 0; }
 
 
 

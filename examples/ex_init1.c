@@ -34,7 +34,7 @@ static char stack_idletask[STACKSIZE_IDLETASK];
 /* Program main function.
  * This function starts pico]OS by initializing the pico layer.
  */
-void main(void)
+int main(void)
 {
   char *sp1, *sp2;
 
@@ -50,4 +50,6 @@ void main(void)
           sp2);      /* ptr to top of stack for the idle task        */
 
   /* Note: The call to posInit() will never return */
+
+  return 0;
 }

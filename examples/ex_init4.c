@@ -28,7 +28,7 @@ void firsttask(void *arg);
 /* Program main function.
  * This function starts pico]OS by initializing the nano layer.
  */
-void main(void)
+int main(void)
 {
   nosInit(firsttask, /* ptr to function: first task that is executed */
           NULL,      /* optional argument, not used here             */
@@ -37,5 +37,7 @@ void main(void)
           0);        /* stack size for the idle task, 0 = default    */
 
   /* Note: The call to nosInit() will never return */
+
+  return 0;
 }
 

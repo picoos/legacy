@@ -108,6 +108,8 @@ void firsttask(void *arg)
   POSTASK_t  t;
   VAR_t      status;
 
+  (void) arg;
+
   /* create a semaphore, initialize to 0 */
   event = posSemaCreate(0);
 
