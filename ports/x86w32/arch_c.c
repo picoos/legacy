@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.3 2004/03/21 18:30:57 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.1 2005/01/10 22:39:26 dkuschel Exp $
  */
 
 
@@ -69,8 +69,8 @@
 #include <mmsystem.h>
 #endif
 
-#if HZ < 100
-#error  HZ is not allowed to be smaller than 100 !
+#if HZ > 100
+#error  HZ is not allowed to be greater than 100 !
 #endif
 
 
@@ -96,15 +96,15 @@ typedef enum {
 } TSTATE_t;
 
 typedef struct TASKPRIV_s {
-  HANDLE        suspendEvent;
-  HANDLE        ownTaskHandle;
-  DWORD         ownTaskID;
-  TSTATE_t      state;
-  POSTASKFUNC_t firstfunc;
-  void*         taskarg;
-  UINT_t        stacksize;
-  int           priority;
-  int           blockIntFlag;
+            HANDLE        suspendSema;
+            HANDLE        ownTaskHandle;
+            DWORD         ownTaskID;
+  volatile  TSTATE_t      state;
+            POSTASKFUNC_t firstfunc;
+            void*         taskarg;
+            UINT_t        stacksize;
+            int           priority;
+  volatile  int           blockIntFlag;
 } *TASKPRIV_t;
 
 
@@ -141,7 +141,6 @@ void p_pos_globalUnlock(int flags);
 
 /* local functions */
 static DWORD WINAPI a_newThread(LPVOID param);
-static DWORD WINAPI a_masterThread(LPVOID param);
 static void a_quitThisTask(TASKPRIV_t thistask);
 static void a_createThisTask(TASKPRIV_t thistask);
 static void a_timerTask(void);
@@ -164,7 +163,7 @@ static void CALLBACK a_timerCallback(UINT uTimerID, UINT uMsg,
 #define GETTASKPRIV(taskhandle)  ((TASKPRIV_t)((taskhandle)->portmem))
 #define assert(x)     if (!(x)) do_assert(__FILE__, __LINE__)
 #define SemaWait(s)   assert(WaitForSingleObject(s,INFINITE)==WAIT_OBJECT_0)
-#define SemaSignal(s) assert(SetEvent(s))
+#define SemaSignal(s) ReleaseSemaphore(s, 1, NULL)
 
 
 
@@ -175,7 +174,40 @@ static void CALLBACK a_timerCallback(UINT uTimerID, UINT uMsg,
 
 static void do_assert(const char* file, int line)
 {
-  fprintf(stderr, "\n\nASSERTION FAILED:  %s, line %i\n", file, line);
+  TASKPRIV_t  thistask = GETTASKPRIV(posCurrentTask_g);
+  TASKPRIV_t  nexttask = GETTASKPRIV(posNextTask_g);
+
+  fprintf(stderr, "\n\nASSERTION FAILED:  %s, line %i\n\n", file, line);
+
+  fprintf(stderr, "taskLockCnt_g        = %i\n", taskLockCnt_g);
+  fprintf(stderr, "blockInterrupt_g     = %i\n", blockInterrupt_g);
+  fprintf(stderr, "interruptWaiting_g   = %i\n", interruptWaiting_g);
+  fprintf(stderr, "interruptActive_g    = %i\n", interruptActive_g);
+  fprintf(stderr, "interruptExecuting_g = %i\n\n", interruptExecuting_g);
+
+#ifdef POS_DEBUGHELP
+  fprintf(stderr, "thistask: name       = %s\n", posCurrentTask_g->deb.name);
+  fprintf(stderr, "thistask: deb_state  = %i\n", posCurrentTask_g->deb.state);
+#else
+  fprintf(stderr, "thistask: handle     = %08x\n", (unsigned long)posCurrentTask_g);
+#endif
+  fprintf(stderr, "thistask: pico_state = %i\n", posCurrentTask_g->state);
+  fprintf(stderr, "thistask: arch_state = %i\n", thistask->state);
+  fprintf(stderr, "thistask: blockIntFl = %i\n", thistask->blockIntFlag);
+
+  if (thistask != nexttask)
+  {
+#ifdef POS_DEBUGHELP
+    fprintf(stderr, "\nnexttask: name       = %s\n", posNextTask_g->deb.name);
+    fprintf(stderr, "nexttask: deb_state  = %i\n", posNextTask_g->deb.state);
+#else
+    fprintf(stderr, "\nnexttask: handle     = %08x\n", (unsigned long)posNextTask_g);
+#endif
+    fprintf(stderr, "nexttask: pico_state = %i\n", posNextTask_g->state);
+    fprintf(stderr, "nexttask: arch_state = %i\n", nexttask->state);
+    fprintf(stderr, "nexttask: blockIntFl = %i\n", nexttask->blockIntFlag);
+  }
+
   for(;;) { SemaWait(globalSyncSem_g); }
 }
 
@@ -195,7 +227,7 @@ static void a_initTimer(void)
   TIMECAPS timecaps;
   BOOL tok;
 
-  timerEvent_g = CreateEvent(NULL, FALSE, FALSE, NULL);
+  timerEvent_g = CreateSemaphore(NULL, 0, 2*HZ, NULL);
   tok = (timerEvent_g != NULL);
 
   if (tok)
@@ -246,8 +278,8 @@ static DWORD WINAPI a_newThread(LPVOID param)
 
 static void a_createThisTask(TASKPRIV_t thistask)
 {
-  thistask->suspendEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-  assert(thistask->suspendEvent != NULL);
+  thistask->suspendSema = CreateSemaphore(NULL, 0, 1, NULL);
+  assert(thistask->suspendSema != NULL);
 
   thistask->state = task_exist;
 
@@ -261,10 +293,10 @@ static void a_createThisTask(TASKPRIV_t thistask)
 
 static void a_quitThisTask(TASKPRIV_t thistask)
 {
-  if (thistask->suspendEvent != NULL)
+  if (thistask->suspendSema != NULL)
   {
-    CloseHandle(thistask->suspendEvent);
-    thistask->suspendEvent = NULL;
+    CloseHandle(thistask->suspendSema);
+    thistask->suspendSema = NULL;
   }
   thistask->state = task_terminated;
   ExitThread(0);
@@ -285,6 +317,7 @@ static void a_timerTask(void)
     /* wait for the timer event */
     if (timerEvent_g != NULL)
     {
+      Sleep(500/HZ);
       SemaWait(timerEvent_g);
     }
     else
@@ -350,10 +383,10 @@ void p_pos_initArch(void)
   {
     assert(TASK_RESERVED_PORT_MEM >= sizeof(struct TASKPRIV_s));
 
-    interruptWaitSem_g = CreateEvent(NULL, FALSE, FALSE, NULL);
+    interruptWaitSem_g = CreateSemaphore(NULL, 0, 1, NULL);
     assert(interruptWaitSem_g != NULL);
 
-    globalSyncSem_g = CreateEvent(NULL, FALSE, TRUE, NULL);
+    globalSyncSem_g = CreateSemaphore(NULL, 1, 1, NULL);
     assert(globalSyncSem_g != NULL);
 
     timerEvent_g         = NULL;
@@ -381,7 +414,7 @@ VAR_t p_pos_initTask(POSTASK_t task, UINT_t stacksize,
   newtask->state        = task_mustcreate;
   newtask->ownTaskID    = 0;
   newtask->ownTaskHandle= NULL;
-  newtask->suspendEvent = NULL;
+  newtask->suspendSema = NULL;
 
   newtask->stacksize    = (stacksize>MIN_STACKSIZE)? stacksize:MIN_STACKSIZE;
   newtask->firstfunc    = funcptr;
@@ -434,7 +467,7 @@ void p_pos_softContextSwitch(void)
   /* start next task */
   if (nexttask->state == task_exist)
   {
-    SemaSignal(nexttask->suspendEvent);
+    SemaSignal(nexttask->suspendSema);
   }
   else
   if (nexttask->state == task_interrupted)
@@ -451,16 +484,18 @@ void p_pos_softContextSwitch(void)
   else
   if (nexttask->state == task_mustcreate)
   {
+    SemaWait(globalSyncSem_g);
     assert(taskLockCnt_g == 1);
     p_pos_globalUnlock(-1);
     a_createThisTask(nexttask);
+    SemaSignal(globalSyncSem_g);
   }
   else assert(0);
 
   /* suspend current task */
   if (state == task_exist)
   {
-    SemaWait(thistask->suspendEvent);
+    SemaWait(thistask->suspendSema);
   }
   else
   if (state == task_mustquit)
@@ -503,7 +538,7 @@ void p_pos_intContextSwitch(void)
     taskLockCnt_g = 1;
     interruptActive_g = 0;
     interruptExecuting_g = 0;
-    SemaSignal(nexttask->suspendEvent);
+    SemaSignal(nexttask->suspendSema);
   }
   else
   if (nexttask->state == task_interrupted)
@@ -532,7 +567,7 @@ void p_pos_startFirstContext(void)
   TASKPRIV_t firsttask;
 
   /* Set this thread to high priority. This thread will do the timer IRQ. */
-  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+  SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 
   /* Start the first pico]OS task (=first context). */
   SemaWait(globalSyncSem_g);
