@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.6 2004/03/13 19:10:28 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.7 2004/03/14 18:55:38 dkuschel Exp $
  */
 
 
@@ -78,8 +78,12 @@
  * with ::POSCFG_TASKS_PER_PRIO more tasks, the maximum count of usable tasks
  * is limmited by this define. The value of this define can be in the
  * range 3..(::POSCFG_TASKS_PER_PRIO * ::POSCFG_MAX_PRIO_LEVEL). This define
- * should be set as small as possible to decrease memory usage.
- * Note that the OS has a built in idle task that also needs a task structure.
+ * should be set as small as possible to decrease memory usage. Remember
+ * that the OS has a built in idle task that also needs a task structure.
+ * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
+ * set to 1, ::POSCFG_MAX_TASKS can be set to 0 since the system will
+ * dynamically allocate memory for additional task structures if the volume
+ * of tasks defined by ::POSCFG_MAX_TASKS is exhausted.
  */
 #define POSCFG_MAX_TASKS        6
 
@@ -90,22 +94,24 @@
  * to decrease memory usage. Note that there is no maximum value this define
  * can have, the pico]OS supports an unlimmit count of events.
  * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
- * set to 1, the system will allocate memory for additional events if the
- * volume of events defined by ::POSCFG_MAX_EVENTS is exhausted.
+ * set to 1, ::POSCFG_MAX_EVENTS can be set to 0 since the system will
+ * dynamically allocate memory for additional events if the volume of events
+ * defined by ::POSCFG_MAX_EVENTS is exhausted.
  */
 #define POSCFG_MAX_EVENTS       4
 
 /** Maximum count of message buffers.
  * This definition sets the maximum count of message buffers that can be
- * allocated with ::posMsgAlloc. Note that even if only pointers are posted
- * with ::posMsgSend (POSCFG_MSG_MEMORY == 0), this define sets the count of
- * internal buffers (=messages) that can be pending in the messaging system.
- * To get maximum performance, the value should be set to twice the count
- * of tasks that are sending messages.
+ * allocated with ::posMessageAlloc. Note that if only pointers are posted
+ * with ::posMessageSend (::POSCFG_MSG_MEMORY == 0), this define sets the
+ * count of internal buffers (=messages) that can be pending in the messaging
+ * system. To get maximum performance, the value should be set to twice the
+ * count of tasks that are sending messages.
  * If ::POSCFG_FEATURE_MSGBOXES is set to 0, this define has no effect.
  * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
- * set to 1, the system will allocate additional message buffers if the
- * volume of buffers defined by ::POSCFG_MAX_MESSAGES is exhausted.
+ * set to 1, ::POSCFG_MAX_MESSAGES can be set to 0 since the system will
+ * dynamically allocate additional message buffers if the volume of buffers
+ * defined by ::POSCFG_MAX_MESSAGES is exhausted.
  */
 #define POSCFG_MAX_MESSAGES      8
 
@@ -115,8 +121,9 @@
  * define has no effect. Note that the value for this define
  * must be at least 1 if timers are enabled.
  * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
- * set to 1, the system will allocate memory for additional timers if the
- * volume of timers defined by ::POSCFG_MAX_TIMER is exhausted.
+ * set to 1, ::POSCFG_MAX_TIMER can be set to 0 since the system will
+ * dynamically allocate memory for additional timers if the volume of timers
+ * defined by ::POSCFG_MAX_TIMER is exhausted.
  */
 #define POSCFG_MAX_TIMER         4 
 
