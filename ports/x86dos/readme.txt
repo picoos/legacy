@@ -1,7 +1,7 @@
 
-In this directory are two files missing:
+In this directory are three files missing:
 
-   port.mak   and   poscfg.h
+   port.mak,  port.h  and  poscfg.h
 
 For an example how this files may look like, please see the 6502 port.
 
@@ -18,7 +18,7 @@ To build the DOS port, a DOS batch file is provided that is able to
 compile the port with the Borland compiler:  ports/x86dos/test/build.bat
 
 
-missing poscfg.h:
+missing port.h and poscfg.h:
 
 I am using the DOS port as reference. The DOS port includes the
 configuration file directly from the examples directory.
