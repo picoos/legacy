@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.3 2004/04/18 18:04:51 dkuschel Exp $
+ * CVS-ID $Id: n_reg.c,v 1.1 2005/01/03 16:23:22 dkuschel Exp $
  */
 
 
@@ -194,6 +194,9 @@ static REGELEM_t n_regAlloc(void)
   RESET_REFCOUNT(re);
   MARK_INVISIBLE(re);
   re->handle.generic = NULL;
+#ifdef POS_DEBUGHELP
+  re->name[NOS_MAX_REGKEYLEN] = 0;
+#endif
   return re;
 }
 
@@ -709,6 +712,7 @@ void nos_initRegistry(void)
   reglist_free_g = NULL;
   reglist_sema_g = posSemaCreate(1);
   while (reglist_sema_g == NULL);
+  POS_SETEVENTNAME(reglist_sema_g, "registry sync");
 
   for (rt = MIN_REGTYPE; rt <= MAX_REGTYPE; ++rt)
     reglist_syselem_g[rt] = NULL;
