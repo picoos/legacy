@@ -30,13 +30,17 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: lib.mak,v 1.1.1.1 2004/02/16 20:11:22 smocz Exp $
+#  $Id: lib.mak,v 1.2 2005/01/10 21:43:53 dkuschel Exp $
 
 
 # Build target: generate library
 
 ifeq '$(strip $(MAKE_LIB))' ''
 ($error common.mak not included)
+endif
+
+ifneq '$(strip $(OLIBNAME))' ''
+TARGET := $(OLIBNAME)
 endif
 
 ifeq '$(strip $(TARGET))' ''
@@ -47,6 +51,9 @@ endif
 
 # Set source files
 SRC := $(SRC_TXT)
+
+# Set common dependencies
+COMMONDEP += $(SRC_HDR)
 
 # Clear object file list
 OBJ :=
