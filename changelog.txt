@@ -1,4 +1,11 @@
 
+Version 0.9.4:
+  o  fixed a NULL pointer write in function posListRemove()
+  o  fixed a bug in nano layer initialization
+  o  picoos core: assertion macros added for better debugging
+  o  x86w32 port: new functions for simulated hardware interrupts added
+
+
 Version 0.9.3:
   o  bug fix in nosTaskCreate(): fixed a possible configuration problem
   o  makefiles changed, output directory structure is now selfexplaining
