@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.3 2004/02/23 19:39:17 smocz Exp $
+ * CVS-ID $Id: poscfg.h,v 1.4 2004/03/06 20:29:51 dkuschel Exp $
  */
 
 
@@ -89,6 +89,9 @@
  * event data structures. Keep the value of this define as small as possible
  * to decrease memory usage. Note that there is no maximum value this define
  * can have, the pico]OS supports an unlimmit count of events.
+ * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
+ * set to 1, the system will allocate memory for additional events if the
+ * volume of events defined by ::POSCFG_MAX_EVENTS is exhausted.
  */
 #define POSCFG_MAX_EVENTS       4
 
@@ -100,6 +103,9 @@
  * To get maximum performance, the value should be set to twice the count
  * of tasks that are sending messages.
  * If ::POSCFG_FEATURE_MSGBOXES is set to 0, this define has no effect.
+ * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
+ * set to 1, the system will allocate additional message buffers if the
+ * volume of buffers defined by ::POSCFG_MAX_MESSAGES is exhausted.
  */
 #define POSCFG_MAX_MESSAGES      8
 
@@ -108,6 +114,9 @@
  * with ::posTimerCreate. If ::POSCFG_FEATURE_TIMER is set to 0, this
  * define has no effect. Note that the value for this define
  * must be at least 1 if timers are enabled.
+ * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
+ * set to 1, the system will allocate memory for additional timers if the
+ * volume of timers defined by ::POSCFG_MAX_TIMER is exhausted.
  */
 #define POSCFG_MAX_TIMER         4 
 
