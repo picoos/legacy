@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.8 2004/03/16 21:36:08 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.9 2004/03/21 18:36:29 dkuschel Exp $
  */
 
 
@@ -158,7 +158,7 @@
 /** Set soft multitasking.
  * By setting this define to 1, it is possible to soften the hard real time
  * scheduler. That means, a context switch is no more done every time an
- * event (such as semaphores or flags) is triggered, even if the signaled
+ * event (such as semaphores or flags) is triggered, even if the signalled
  * task has a higher priority.
  * The signaled task will first start to run if the time slice of the
  * current task has expired or the task gives of processing time by itself
