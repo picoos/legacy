@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,9 +38,10 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.2 2004/03/21 18:35:06 dkuschel Exp $
  */
 
+#define _N_CONIO_C
 #include "../src/nano/privnano.h"
 
 /* check features */
@@ -73,9 +74,13 @@ extern UVAR_t p_putchar(char c);
 
 
 /*---------------------------------------------------------------------------
- * PROTOTYPES OF PRIVATE FUNCTIONS
+ * FUNCTION PROTOTYPES
  *-------------------------------------------------------------------------*/
 
+/* exported */
+void nos_initConIO(void);
+
+/* private */
 #if FEAT_XPRINTF != 0
 static void n_printf(const char *fmt, NOSARG_t *args);
 #endif
