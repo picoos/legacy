@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.10 2005/01/17 21:24:38 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.11 2005/02/01 21:10:38 dkuschel Exp $
  */
 
 
@@ -238,20 +238,21 @@ UVAR_t posShift1lTab_g[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 
 #if MVAR_BITS == 8
 #define POSMAGIC_TASK   0x4E
-#define POSMAGIC_EVENT  0x53
+#define POSMAGIC_EVENTU 0x53
 #define POSMAGIC_MSGBUF 0x7F
 #define POSMAGIC_TIMER  0x14
 #elif MVAR_BITS == 16
 #define POSMAGIC_TASK   0x4E56
-#define POSMAGIC_EVENT  0x538E
+#define POSMAGIC_EVENTU 0x538E
 #define POSMAGIC_MSGBUF 0x7FC4
 #define POSMAGIC_TIMER  0x1455
 #else
 #define POSMAGIC_TASK   0x4E56A3FC
-#define POSMAGIC_EVENT  0x538EC75B
+#define POSMAGIC_EVENTU 0x538EC75B
 #define POSMAGIC_MSGBUF 0x7FC45AA2
 #define POSMAGIC_TIMER  0x14552384
 #endif
+#define POSMAGIC_EVENTF  (~POSMAGIC_EVENTU)
 
 #if POSCFG_ARGCHECK == 0
 #define POS_ARGCHECK_RET(ptr, pmagic, magic, ret) \
@@ -396,6 +397,16 @@ static UVAR_t posZeroMask_g[7] = {0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80};
 #define HOOK_IDLETASK
 #endif
 
+#ifdef POS_DEBUGHELP
+#define pos_taskHistory(debtask) do { \
+    picodeb_taskhistory[2] = picodeb_taskhistory[1]; \
+    picodeb_taskhistory[1] = picodeb_taskhistory[0]; \
+    picodeb_taskhistory[0] = debtask; \
+  } while(0)
+#else
+#define pos_taskHistory(debtask) do { } while(0);
+#endif
+
 
 
 /*---------------------------------------------------------------------------
@@ -537,6 +548,11 @@ static void pos_listRemove(POSLIST_t *listelem)
   next = listelem->next;  
   next->prev = prev;
   prev->next = next;
+#ifdef _DBG
+#if POSCFG_FEATURE_LISTLEN != 0
+  listelem->head = NULL;
+#endif
+#endif
 }
 #endif /* POSCFG_FEATURE_LISTS */
 
@@ -641,6 +657,7 @@ static void pos_schedule(void)
       {
 #ifdef POS_DEBUGHELP
         posNextTask_g->deb.state = task_running;
+        pos_taskHistory(&posNextTask_g->deb);
 #endif
         p_pos_softContextSwitch();
       }
@@ -747,9 +764,11 @@ void c_pos_intEnter(void)
   POS_LOCKFLAGS;
   POS_SCHED_LOCK;
   ++posInInterrupt_g;
+  pos_taskHistory(NULL);
   POS_SCHED_UNLOCK;
 #else
   ++posInInterrupt_g;
+  pos_taskHistory(NULL);
 #endif
 }
 
@@ -801,18 +820,26 @@ void c_pos_intExit(void)
 #ifdef POS_DEBUGHELP
           posCurrentTask_g->deb.state = task_suspended;
           posNextTask_g->deb.state = task_running;
+          pos_taskHistory(&posNextTask_g->deb);
 #endif
           /* Note:
            * The processor does not return from this function call. When
            * this function returns anyway, the architecture port is buggy.
            */
           p_pos_intContextSwitch();
+#if POSCFG_ISR_INTERRUPTABLE != 0
+          POS_SCHED_UNLOCK;
+#endif
+          return; /* needed for the thread based ports, eg. x86w32 */
         }
       }
 #if POSCFG_FEATURE_INHIBITSCHED != 0
     }
 #endif
   }
+#ifdef POS_DEBUGHELP
+  pos_taskHistory(&posCurrentTask_g->deb);
+#endif
 #if POSCFG_ISR_INTERRUPTABLE != 0
   POS_SCHED_UNLOCK;
 #endif
@@ -976,6 +1003,10 @@ void posTaskYield(void)
 
       if (posCurrentTask_g != posNextTask_g)
       {
+#ifdef POS_DEBUGHELP
+        posNextTask_g->deb.state = task_running;
+        pos_taskHistory(&posNextTask_g->deb);
+#endif
         p_pos_softContextSwitch();
       }
 #if POSCFG_FEATURE_INHIBITSCHED != 0
@@ -1381,18 +1412,19 @@ POSSEMA_t posSemaCreate(INT_t initcount)
 
     ev = MEMALIGN(EVENT_t, ev);
 #if POSCFG_ARGCHECK > 1
-    ev->e.magic = POSMAGIC_EVENT;
+    ev->e.magic = POSMAGIC_EVENTU;
 #endif
     POS_SCHED_LOCK;
   }
   else
   {
 #if POSCFG_ARGCHECK > 1
-    if (ev->e.magic != POSMAGIC_EVENT)
+    if (ev->e.magic != POSMAGIC_EVENTF)
     {
       POS_SCHED_UNLOCK;
       return NULL;
     }
+    ev->e.magic = POSMAGIC_EVENTU;
 #endif
     posFreeEvents_g = ev->l.next;
   }
@@ -1401,11 +1433,12 @@ POSSEMA_t posSemaCreate(INT_t initcount)
   if (ev != NULL)
   {
 #if POSCFG_ARGCHECK > 1
-    if (ev->e.magic != POSMAGIC_EVENT)
+    if (ev->e.magic != POSMAGIC_EVENTF)
     {
       POS_SCHED_UNLOCK;
       return NULL;
     }
+    ev->e.magic = POSMAGIC_EVENTU;
 #endif
     posFreeEvents_g = ev->l.next;
 #endif /* SYS_POSTALLOCATE */
@@ -1448,7 +1481,7 @@ void posSemaDestroy(POSSEMA_t sema)
   register EVENT_t ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK(ev, ev->e.magic, POSMAGIC_EVENT); 
+  POS_ARGCHECK(ev, ev->e.magic, POSMAGIC_EVENTU); 
 #if SYS_TASKTABSIZE_Y > 1
   if (ev->e.pend.ymask == 0)
 #else
@@ -1464,6 +1497,9 @@ void posSemaDestroy(POSSEMA_t sema)
     } else {
       ev->e.deb.prev->next = ev->e.deb.next;
     }
+#endif
+#if POSCFG_ARGCHECK > 1
+    ev->e.magic = POSMAGIC_EVENTF;
 #endif
     ev->l.next = posFreeEvents_g;
     posFreeEvents_g = ev;
@@ -1482,7 +1518,7 @@ VAR_t posSemaGet(POSSEMA_t sema)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
     return -E_FORB;
@@ -1519,7 +1555,7 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
     return -E_FORB;
@@ -1588,7 +1624,7 @@ VAR_t posSemaSignal(POSSEMA_t sema)
   register EVENT_t  ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.d.counter == 0)
@@ -1657,7 +1693,7 @@ VAR_t posMutexTryLock(POSMUTEX_t mutex)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.task == task)
@@ -1694,7 +1730,7 @@ VAR_t posMutexLock(POSMUTEX_t mutex)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.task == task)
@@ -1735,7 +1771,7 @@ VAR_t posMutexUnlock(POSMUTEX_t mutex)
   register EVENT_t  ev = (EVENT_t) mutex;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.d.counter == 0)
@@ -2236,7 +2272,7 @@ VAR_t posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
   POS_LOCKFLAGS;
 
   POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -E_ARG); 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
   if (waitticks == 0)
      return -E_ARG;
@@ -2352,7 +2388,7 @@ VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
   register EVENT_t  ev = (EVENT_t) flg;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK != 0
   if (flgnum >= (MVAR_BITS-1))
     return -E_ARG;
@@ -2373,7 +2409,7 @@ VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode)
   register UVAR_t  f;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
   if ((mode != POSFLAG_MODE_GETSINGLE) && 
       (mode != POSFLAG_MODE_GETMASK))
@@ -2418,7 +2454,7 @@ VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
   register UVAR_t  f;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -E_ARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
   if ((timeoutticks != 0) && (ev->e.d.flags == 0))
@@ -2635,8 +2671,8 @@ void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
   prev->next = new;
 #if POSCFG_FEATURE_LISTLEN != 0
   new->head  = listhead;
-#endif
   listhead->length++;
+#endif
   if (listhead->flag != 0)
   {
     listhead->flag = 0;
@@ -2715,7 +2751,9 @@ POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
     else
     {
       pos_listRemove(elem);
+#if POSCFG_FEATURE_LISTLEN != 0
       listhead->length--;
+#endif
       POS_SCHED_UNLOCK;
       return elem;
     }
@@ -2771,10 +2809,12 @@ void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
     {
       pos_listJoin(baselisthead->prev, (POSLIST_t*)baselisthead, elem);
     }
+#if POSCFG_FEATURE_LISTLEN != 0
     baselisthead->length += joinlisthead->length;
+    joinlisthead->length = 0;
+#endif
     joinlisthead->prev = (POSLIST_t*) joinlisthead;
     joinlisthead->next = (POSLIST_t*) joinlisthead;
-    joinlisthead->length = 0;
     if (baselisthead->flag != 0)
     {
       baselisthead->flag = 0;
@@ -2818,7 +2858,9 @@ void posListInit(POSLISTHEAD_t *listhead)
   {
     listhead->prev = (POSLIST_t*) listhead;
     listhead->next = (POSLIST_t*) listhead;
+#if POSCFG_FEATURE_LISTLEN != 0
     listhead->length = 0;
+#endif
     listhead->sema = NULL;
     listhead->flag = 0;
   }
@@ -2828,13 +2870,20 @@ void posListInit(POSLISTHEAD_t *listhead)
 
 void posListTerm(POSLISTHEAD_t *listhead)
 {
+  POSSEMA_t sema;
+  POS_LOCKFLAGS;
+
   if (listhead != NULL)
   {
-    if (listhead->sema != NULL)
+    POS_SCHED_LOCK;
+    sema = listhead->sema;
+    listhead->sema = NULL;
+    listhead->flag = 0;
+    POS_SCHED_UNLOCK;
+
+    if (sema != NULL)
     {
-      posSemaDestroy(listhead->sema);
-      listhead->flag = 0;
-      listhead->sema = NULL;
+      posSemaDestroy(sema);
     }
   }
 }
@@ -3013,14 +3062,14 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
   for (i=0; i<POSCFG_MAX_EVENTS-1; ++i)
   {
 #if POSCFG_ARGCHECK > 1
-    ev->l.magic = POSMAGIC_EVENT;
+    ev->l.magic = POSMAGIC_EVENTF;
 #endif
     ev->l.next = NEXTALIGNED(EVENT_t, ev);
     ev = ev->l.next;
   }
 #endif
 #if POSCFG_ARGCHECK > 1
-  ev->l.magic = POSMAGIC_EVENT;
+  ev->l.magic = POSMAGIC_EVENTF;
 #endif
   ev->l.next = NULL;
 #endif
