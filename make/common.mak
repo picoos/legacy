@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: common.mak,v 1.1.1.1 2004/02/16 20:11:21 smocz Exp $
+#  $Id: common.mak,v 1.2 2004/03/14 18:52:59 dkuschel Exp $
 
 
 # Include configuration
@@ -71,11 +71,15 @@ ifeq '$(strip $(DOS))' ''
 SHCMDPATH =
 # Generate macro for Unix style paths
 adjpath = $(subst \,/,$(1))
+# Get current path
+CURRENTDIR = $(shell pwd)
 else
 # Set path to tools
 SHCMDPATH = $(RELROOT)make/tools/
 # Generate macro for DOS style paths
 adjpath = $(subst /,\,$(1))
+# Get current path
+CURRENTDIR = $(subst \,/,$(shell cd))
 endif
 
 # Define commands. DOS users will use the commands in the tools/ directory.
