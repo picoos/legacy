@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.6 2005/01/17 21:26:12 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.7 2005/02/01 21:13:11 dkuschel Exp $
  */
 
 #define _N_CORE_C
@@ -614,14 +614,14 @@ static void nano_init(void *arg)
 #if NOSCFG_FEATURE_CPUUSAGE != 0
   nano_initCpuUsage();
 #endif
+#if NOSCFG_FEATURE_REGISTRY != 0
+  nos_initRegistry();
+#endif
 #if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0)
   nos_initConIO();
 #endif
 #if NOSCFG_FEATURE_BOTTOMHALF != 0
   nos_initBottomHalfs();
-#endif
-#if NOSCFG_FEATURE_REGISTRY != 0
-  nos_initRegistry();
 #endif
 
 #if NOSCFG_FEATURE_REGISTRY != 0
