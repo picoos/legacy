@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: arch_c.c,v 1.1.1.1 2004/02/16 20:11:28 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -242,8 +242,9 @@ void  p_pos_freeStack(POSTASK_t task) {
  *   stackPtr(begin) -> [ funcarc      ] [-0 ]
  *                      [ exitFunction ] [-2 ] Note: posTaskExit or exitFeatureDisabeldAlert
  *                      [ funcptr      ] [-4 ]
- *                      [ SREG         ] [-6 ]
- *                      [ R0 .. R31    ] [-7 ]
+ *                      [ R0           ] [-6 ]
+ *                      [ SREG         ] [-7 ]
+ *                      [ R1 .. R31    ] [-8 ]
  *   stackPtr(end)   -> [ undefine     ] [-39]
  */
 void constructStackFrame(POSTASK_t task, uint8_t* stackPtr, 
@@ -263,13 +264,25 @@ void constructStackFrame(POSTASK_t task, uint8_t* stackPtr,
     // Initialize the register from R0 to the register, 
     // that pass the argument with 0x00
 
-    uint8_t* registerStartPtr;
-
-    for (registerStartPtr = stackPtr; 
-         stackPtr > (registerStartPtr - ARGUMENT_REGISTER_NUM); 
-         stackPtr--) {
-            
+    //uint8_t* registerStartPtr = stackPtr;
+    
+    *stackPtr = 0;                  // initialize R0
+    stackPtr--;
+    *stackPtr = INITIAL_SREG;       // initialize SREG
+    stackPtr--;
+    
+    // initialize R1 .. R[ARGUMENT_REGISTER_NUM]
+    /*
+    for (; stackPtr > (registerStartPtr - ARGUMENT_REGISTER_NUM); stackPtr--) {
         *stackPtr = 0;
+    }*/
+    
+    uint8_t i;
+    // ARGUMENT_REGISTER_NUM - 2
+    // We have alredy initialize R0, therefor sub 1!
+    for (i = 0; i < (ARGUMENT_REGISTER_NUM - 1); i++) {
+        *stackPtr = 0;
+        stackPtr--;
     }
     // Put funcarg of the stack. If the context will be start the 
     // first time, the argument will be loaded in apropriated
@@ -277,13 +290,16 @@ void constructStackFrame(POSTASK_t task, uint8_t* stackPtr,
     stackPtr = putPointerOnStack(stackPtr, funcarg);
     
     // Now fill the remaining gp-registers with 0.
-    for (; stackPtr > (registerStartPtr - GP_REGISTER_AMOUNT); stackPtr--) {
+    /*for (; stackPtr > (registerStartPtr - GP_REGISTER_AMOUNT); stackPtr--) {
         *stackPtr = 0;
+    }*/
+    for (i = 0; i < (GP_REGISTER_AMOUNT - (ARGUMENT_REGISTER_NUM + 2)); i++) {
+        *stackPtr = 0;
+        stackPtr--;
     }
-
     // setup the stack 
-    *stackPtr = INITIAL_SREG;
-    stackPtr--;
+    //*stackPtr = INITIAL_SREG;
+    //stackPtr--;
     
     task->stackptr = (void*) stackPtr;
 }
@@ -320,3 +336,8 @@ uint8_t* putPointerOnStack(uint8_t* stackPtr, void* pointer) {
     
     return stackPtr;
 }
+
+
+
+PICOOS_SIGNAL(SIG_OUTPUT_COMPARE1A, c_pos_timerInterrupt)
+
