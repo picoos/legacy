@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.1.1.1 2004/02/16 20:11:45 smocz Exp $
+ * CVS-ID $Id: picoos.c,v 1.2 2004/02/21 14:39:47 dkuschel Exp $
  */
 
 
@@ -1023,7 +1023,7 @@ POSTASK_t posTaskGetCurrent(void)
 
 VAR_t posTaskUnused(POSTASK_t taskhandle)
 {
-  POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -1); 
+  POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -EARG); 
   return (taskhandle->state == POSTASKSTATE_UNUSED) ? 1 : 0;
 }
 
@@ -1038,9 +1038,9 @@ VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
   register UVAR_t  b, p;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -1); 
+  POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -EARG); 
   if ((UVAR_t)priority >= POSCFG_MAX_PRIO_LEVEL)
-    return -1;
+    return -EARG;
 
   POS_SCHED_LOCK;
 #if POSCFG_ROUNDROBIN == 0
@@ -1054,14 +1054,14 @@ VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
   if (b == 0)
   {
     POS_SCHED_UNLOCK;
-    return -1;
+    return -EFAIL;
   }
   b = POS_FINDBIT(b);
 #if (POSCFG_ROUNDROBIN != 0) && (SYS_TASKTABSIZE_X < MVAR_BITS)
   if (b >= SYS_TASKTABSIZE_X)
   {
     POS_SCHED_UNLOCK;
-    return -1;
+    return -EFAIL;
   }
 #endif
   pos_disableTask(taskhandle);
@@ -1089,7 +1089,7 @@ VAR_t posTaskGetPriority(POSTASK_t taskhandle)
   register VAR_t p;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -1); 
+  POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -EARG); 
   POS_SCHED_LOCK;
 #if SYS_TASKTABSIZE_Y == 1
   p = 0;
@@ -1241,10 +1241,10 @@ VAR_t posSemaGet(POSSEMA_t sema)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
-    return -1;
+    return -EFORB;
 #endif
   POS_SCHED_LOCK;
   if (ev->e.d.counter > 0)
@@ -1272,10 +1272,10 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
-    return -1;
+    return -EFORB;
 #endif
   POS_SCHED_LOCK;
 
@@ -1330,7 +1330,7 @@ VAR_t posSemaSignal(POSSEMA_t sema)
   register EVENT_t  ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.d.counter == 0)
@@ -1387,7 +1387,7 @@ VAR_t posMutexTryLock(POSMUTEX_t mutex)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.task == task)
@@ -1418,7 +1418,7 @@ VAR_t posMutexLock(POSMUTEX_t mutex)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.task == task)
@@ -1450,7 +1450,7 @@ VAR_t posMutexUnlock(POSMUTEX_t mutex)
   register EVENT_t  ev = (EVENT_t) mutex;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
   POS_SCHED_LOCK;
 
   if (ev->e.d.counter == 0)
@@ -1488,7 +1488,11 @@ void* posMessageAlloc(void)
   register MSGBUF_t *mbuf;
   POS_LOCKFLAGS;
 
-  if (posInInterrupt_g != 0)
+  if ((posInInterrupt_g != 0)
+#if POSCFG_FEATURE_INHIBITSCHED != 0
+      || (posInhibitSched_g != 0)
+#endif
+    )
   {
 #if POSCFG_ISR_INTERRUPTABLE != 0
     POS_SCHED_LOCK;
@@ -1575,18 +1579,18 @@ VAR_t posMessageSend(void *buf, POSTASK_t taskhandle)
 #if POSCFG_MSG_MEMORY != 0
     posMessageFree(buf);
 #endif
-    return -1;
+    return -EARG;
   }
 #endif
 
 #if POSCFG_MSG_MEMORY == 0
   mbuf = pos_msgAlloc();
   if (mbuf == NULL)
-    return -1;
+    return -ENOMEM;
   mbuf->bufptr = buf;
 #else
   mbuf = (MSGBUF_t*) buf;
-  POS_ARGCHECK_RET(mbuf, mbuf->magic, POSMAGIC_MSGBUF, -1); 
+  POS_ARGCHECK_RET(mbuf, mbuf->magic, POSMAGIC_MSGBUF, -EARG); 
 #endif
 
   POS_SCHED_LOCK;
@@ -1599,7 +1603,7 @@ VAR_t posMessageSend(void *buf, POSTASK_t taskhandle)
 #else
     pos_msgFree(mbuf);
 #endif
-    return -1;
+    return -EFAIL;
   }
 #endif
   mbuf->next = NULL;
@@ -1868,11 +1872,11 @@ VAR_t posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
   register EVENT_t  ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -1); 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -EARG); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
 #if POSCFG_ARGCHECK > 1
   if (waitticks == 0)
-     return -1;
+     return -EARG;
 #endif
 
   posTimerStop(tmr);
@@ -1891,7 +1895,7 @@ VAR_t posTimerStart(POSTIMER_t tmr)
   register TIMER_t *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -1); 
+  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -EARG); 
   POS_SCHED_LOCK;
   t->counter = t->wait;
   if (t->prev == t)
@@ -1912,7 +1916,7 @@ VAR_t posTimerStop(POSTIMER_t tmr)
   register TIMER_t *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -1); 
+  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -EARG); 
   POS_SCHED_LOCK;
   if (t->prev != t)
   {
@@ -1932,7 +1936,7 @@ VAR_t posTimerFired(POSTIMER_t tmr)
   register VAR_t  f;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -1); 
+  POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -EARG); 
   POS_SCHED_LOCK;
   f = t->fired;
   t->fired = 0;
@@ -1982,10 +1986,10 @@ VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
   register EVENT_t  ev = (EVENT_t) flg;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
 #if POSCFG_ARGCHECK != 0
   if (flgnum >= (MVAR_BITS-1))
-    return -1;
+    return -EARG;
 #endif
   POS_SCHED_LOCK;
   ev->e.d.flags |= pos_shift1l(flgnum);
@@ -2003,11 +2007,11 @@ VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode)
   register UVAR_t  f;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
 #if POSCFG_ARGCHECK > 1
   if ((mode != POSFLAG_MODE_GETSINGLE) && 
       (mode != POSFLAG_MODE_GETMASK))
-    return -1;
+    return -EARG;
 #endif
   POS_SCHED_LOCK;
   if (ev->e.d.flags == 0)
@@ -2045,7 +2049,7 @@ VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
   register UVAR_t  f;
   POS_LOCKFLAGS;
 
-  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -1); 
+  POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENT, -EARG); 
   POS_SCHED_LOCK;
 
   if ((timeoutticks != 0) && (ev->e.d.flags == 0))
@@ -2120,12 +2124,12 @@ VAR_t posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler)
   POS_LOCKFLAGS;
 
   if (intno >= POSCFG_SOFTINTERRUPTS)
-    return -1;
+    return -EARG;
   POS_SCHED_LOCK;
   if (softIntHandlers_g[intno] != NULL)
   {
     POS_SCHED_UNLOCK;
-    return -1;
+    return -EFAIL;
   }
   softIntHandlers_g[intno] = inthandler;
   POS_SCHED_UNLOCK;
@@ -2141,7 +2145,7 @@ VAR_t posSoftIntDelHandler(UVAR_t intno)
   POS_LOCKFLAGS;
 
   if (intno >= POSCFG_SOFTINTERRUPTS)
-    return -1;
+    return -EARG;
   POS_SCHED_LOCK;
   softIntHandlers_g[intno] = NULL;
   POS_SCHED_UNLOCK;

@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.1.1.1 2004/02/16 20:11:21 smocz Exp $
+ * CVS-ID $Id: picoos.h,v 1.2 2004/02/21 14:38:59 dkuschel Exp $
  *
  */
 
@@ -499,6 +499,47 @@
 
 #define INFINITE   ((UINT_t)~0)
 
+
+
+/*---------------------------------------------------------------------------
+ *  ERROR CODES
+ *-------------------------------------------------------------------------*/
+
+/** @defgroup errcodes Error Codes
+ * Most pico]OS functions return a signed integer value describing the
+ * execution status of the function. Generally, a negative value denotes
+ * an error, zero means success (no error), and a positive value may
+ * be returned as result of a successful operation.
+ * To check if an operation was successful, you need only to test if the
+ * returned value is positiv ( status >= 0 ).  For example, if you would
+ * like to test if a function failed because the system ran out of memory,
+ * you may test the status against the (negativ) value -ENOMEM.
+ * @{
+ */
+
+/** Error Code: No Error (the operation was successful) */
+#define EOK         0
+
+/** Error Code: The operation failed. */
+#define EFAIL       1
+
+/** Error Code: The System ran out of memory. */
+#define ENOMEM      2
+
+/** Error Code: The given argument is wrong or inacceptable. */
+#define EARG        3
+
+/** Error Code: The operation is forbidden at the current operation stage. */
+#define EFORB       4
+
+/** @} */
+
+
+
+/*---------------------------------------------------------------------------
+ *  MACROS
+ *-------------------------------------------------------------------------*/
+
 /** Convert milliseconds into HZ timer ticks.
  * This macro is used to convert milliseconds into the timer tick
  * rate (see ::HZ define).
@@ -510,6 +551,7 @@
 #else
 #define MS(msec)  ((UINT_t)((1L*HZ*(UINT_t)(msec))/1000))
 #endif
+
 
 
 /*---------------------------------------------------------------------------
