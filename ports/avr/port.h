@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.5 2004/03/21 18:37:45 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.6 2004/05/08 19:52:38 smocz Exp $
  */
 
 
@@ -276,6 +276,15 @@
  *  INTERRUPT SERVICE ROUTINE FRAME 
  *-------------------------------------------------------------------------*/
 
+// Interrupt service routine stack size (in bytes) 
+#define ISR_STACK_SIZE     80
+
+// The variable is declared in the file arch_c.c
+extern uint8_t isrStackMem_g[];
+
+/**
+ * Macro for saving the context during an interrupt service.
+ */
 #define SAVE_CONTEXT(void) \
     __asm__ __volatile__ ( \
         "push   r0"     "\n\t" \
@@ -318,7 +327,9 @@
     )
     
 
-    
+/**
+ * Macro for restoring the context during an interrupt service.
+ */ 
 #define RESTORE_CONTEXT(void) \
     __asm__ __volatile__ ( \
         "pop    r31"    "\n\t" \
@@ -358,29 +369,77 @@
     ::  \
     )
 
-
+/**
+ * Save the stack pointer (SP) in posCurrentTask_g->stackptr
+ */
 #define STORE_STACK_POINTER(void) \
     __asm__ __volatile__ ( \
-        "in     __tmp_reg__, __SP_L__"  "\n\t" \
-        "st     %a0+, __tmp_reg__"      "\n\t" \
-        "in     __tmp_reg__, __SP_H__"  "\n\t" \
-        "st     %a0, __tmp_reg__"       "\n\t" \
-        : \
-        : "e" (posCurrentTask_g) \
+        "in     %A0, __SP_L__"      "\n\t" \
+        "in     %B0, __SP_H__"      "\n\t" \
+        : "=&r" (posCurrentTask_g->stackptr) \
+        :  \
         : "memory" \
     )
 
+/**
+ * Put the stack pointer to the end of the dedicated memory arry.
+ * Note: The stack will grow down.
+ */
+#define SP_TO_DEDICATED_STACK(void) \
+    __asm__ __volatile__ ( \
+        "out    __SP_L__, %A0"      "\n\t" \
+        "out    __SP_H__, %B0"      "\n\t" \
+        : \
+        : "r" (isrStackMem_g + ISR_STACK_SIZE -1 ) \
+    )
 
+/**
+ * Restore the stack pointer (SP) = posCurrentTask_g->stackptr
+ */
+#define RESTORE_STACK_POINTER(void) \
+    __asm__ __volatile__ ( \
+        "out    __SP_L__, %A0"      "\n\t" \
+        "out    __SP_H__, %B0"      "\n\t" \
+        : \
+        : "r" (posCurrentTask_g->stackptr) \
+    )
+
+/**
+ * This macro is used to define an interrupt service routine for using
+ * API functions from picoos.
+ * The macro generate the apropriated frame for that and delegates
+ * to an handler.
+ * See an example for handle a interrupt from the UART:
+ * 
+ * @code
+ *      static void handleUartRecive( void );
+ *      static void handleUartRecive( void ) {
+ *          posSemaSignal(semaReceive);
+ *      }
+ * 
+ *      PICOOS_SIGNAL( SIG_UART_RECV, handleUartRecive )
+ * 
+ * @endcode
+ * 
+ * @param signalname The name of the signal for generate this frame.
+ * 
+ * @param handler The function to handle the interrupt.
+ * 
+ */
 #define PICOOS_SIGNAL(signame, handler)   \
 void signame (void) __attribute__ ((signal, naked));        \
 void signame (void) {                   \
     SAVE_CONTEXT();                     \
     if (posInInterrupt_g == 0) {        \
        STORE_STACK_POINTER();           \
+       SP_TO_DEDICATED_STACK();         \
     }                                   \
     c_pos_intEnter();                   \
     handler();                          \
     c_pos_intExit();                    \
+    if (posInInterrupt_g == 0) {        \
+        RESTORE_STACK_POINTER();        \
+    }                                   \
     RESTORE_CONTEXT();                  \
     __asm__ __volatile__("reti");       \
 }                                       \
