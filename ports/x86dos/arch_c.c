@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: arch_c.c,v 1.1.1.1 2004/02/16 20:11:40 smocz Exp $
  */
 
 
@@ -279,7 +279,8 @@ void p_pos_initTask(POSTASK_t task, void *user,
                    POSTASKFUNC_t funcptr, void *funcarg)
 {
   unsigned short var_ds, *st;
-  st = (unsigned short*) user;  /* get stack pointer */
+
+  st = (unsigned short*)(((char*)user)-1);  /* get stack pointer */
 
   /* get current DS */
 #ifdef WATCOM
@@ -292,8 +293,8 @@ void p_pos_initTask(POSTASK_t task, void *user,
   *st-- = FP_SEG(funcarg);      /* function call with one argument */
   *st-- = FP_OFF(funcarg);         
 #if (POSCFG_FEATURE_EXIT != 0)
-  *st-- = FP_SEG(posTaskExit);   /* ptr to task exit function */
-  *st-- = FP_OFF(posTaskExit);   /* (call posTaskExit when task func returns)*/
+  *st-- = FP_SEG(posTaskExit);  /* ptr to task exit function */
+  *st-- = FP_OFF(posTaskExit);  /* (call posTaskExit when task func returns)*/
 #else
   *st-- = FP_SEG(funcptr);      /* ptr to task entry function */
   *st-- = FP_OFF(funcptr);      /* (restart task when task func returns)*/
@@ -319,7 +320,7 @@ void p_pos_initTask(POSTASK_t task, void *user,
 
 
 VAR_t p_pos_initTask(POSTASK_t task, UINT_t stacksize,
-                    POSTASKFUNC_t funcptr, void *funcarg)
+                     POSTASKFUNC_t funcptr, void *funcarg)
 {
   unsigned short var_ds, *st;
 
@@ -342,8 +343,8 @@ VAR_t p_pos_initTask(POSTASK_t task, UINT_t stacksize,
   *st-- = FP_SEG(funcarg);      /* function call with one argument */
   *st-- = FP_OFF(funcarg);         
 #if (POSCFG_FEATURE_EXIT != 0)
-  *st-- = FP_SEG(posTaskExit);   /* ptr to task exit function */
-  *st-- = FP_OFF(posTaskExit);   /* (call posTaskExit when task func returns)*/
+  *st-- = FP_SEG(posTaskExit);  /* ptr to task exit function */
+  *st-- = FP_OFF(posTaskExit);  /* (call posTaskExit when task func returns)*/
 #else
   *st-- = FP_SEG(funcptr);      /* ptr to task entry function */
   *st-- = FP_OFF(funcptr);      /* (restart task when task func returns)*/
@@ -376,7 +377,7 @@ void  p_pos_freeStack(POSTASK_t task)
 
 
 VAR_t p_pos_initTask(POSTASK_t task,
-                    POSTASKFUNC_t funcptr, void *funcarg)
+                     POSTASKFUNC_t funcptr, void *funcarg)
 {
   unsigned short var_ds, *st;
 
@@ -397,8 +398,8 @@ VAR_t p_pos_initTask(POSTASK_t task,
   *st-- = FP_SEG(funcarg);      /* function call with one argument */
   *st-- = FP_OFF(funcarg);         
 #if (POSCFG_FEATURE_EXIT != 0)
-  *st-- = FP_SEG(posTaskExit);   /* ptr to task exit function */
-  *st-- = FP_OFF(posTaskExit);   /* (call posTaskExit when task func returns)*/
+  *st-- = FP_SEG(posTaskExit);  /* ptr to task exit function */
+  *st-- = FP_OFF(posTaskExit);  /* (call posTaskExit when task func returns)*/
 #else
   *st-- = FP_SEG(funcptr);      /* ptr to task entry function */
   *st-- = FP_OFF(funcptr);      /* (restart task when task func returns)*/
