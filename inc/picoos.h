@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.14 2005/01/03 16:38:54 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.15 2005/01/03 18:12:30 dkuschel Exp $
  *
  */
 
@@ -846,7 +846,7 @@ extern VAR_t const p_pos_fbittbl_rr[8][256];
  *        need to access this variable.
  * @sa posNextTask_g
  */
-POSEXTERN  POSTASK_t posCurrentTask_g;
+POSEXTERN volatile POSTASK_t posCurrentTask_g;
 
 /**
  * Global task variable.
@@ -857,7 +857,7 @@ POSEXTERN  POSTASK_t posCurrentTask_g;
  *        into the ::posCurrentTask_g variable.
  * @sa posCurrentTask_g
  */
-POSEXTERN  POSTASK_t posNextTask_g;
+POSEXTERN volatile POSTASK_t posNextTask_g;
 
 /**
  * Global flag variable.
@@ -867,9 +867,9 @@ POSEXTERN  POSTASK_t posNextTask_g;
  *        this variable.
  */
 #ifndef _POSCORE_C
-POSEXTERN  UVAR_t    posInInterrupt_g;
+POSEXTERN volatile UVAR_t    posInInterrupt_g;
 #else
-POSEXTERN  UVAR_t    posInInterrupt_g = 1;
+POSEXTERN volatile UVAR_t    posInInterrupt_g = 1;
 #endif
 
 /**
@@ -880,9 +880,9 @@ POSEXTERN  UVAR_t    posInInterrupt_g = 1;
  *        this variable.
  */
 #ifndef _POSCORE_C
-POSEXTERN  UVAR_t    posRunning_g;
+POSEXTERN volatile UVAR_t    posRunning_g;
 #else
-POSEXTERN  UVAR_t    posRunning_g = 0;
+POSEXTERN volatile UVAR_t    posRunning_g = 0;
 #endif
 
 
@@ -895,6 +895,9 @@ POSEXTERN  UVAR_t    posRunning_g = 0;
 VAR_t   errno;
 #endif
 #if POSCFG_FEATURE_ERRNO != 0
+#ifdef errno
+#undef errno
+#endif
 POSEXTERN VAR_t* _errno_p(void);
 #define errno (*_errno_p())
 #endif
@@ -2089,7 +2092,7 @@ POSEXTERN VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
  */
 #if (DOX!=0) || (POSCFG_FEATURE_JIFFIES != 0)
 #if (DOX!=0) || (POSCFG_FEATURE_LARGEJIFFIES == 0)
-POSEXTERN  JIF_t  jiffies;
+POSEXTERN  volatile JIF_t  jiffies;
 #else
 POSEXTERN  JIF_t  posGetJiffies(void);
 #define jiffies  posGetJiffies()
