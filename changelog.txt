@@ -2,7 +2,7 @@
 Version 0.6.0:
   o  atomic variables added
   o  posInstallIdleTaskHook returns now the ptr to the previous hook function
-  o  error code names changed to resolve a conflict with Unix stile error codes
+  o  error code names changed to resolve a conflict with Unix style error codes
   o  bug fixed in dynamic memory management, memory management improved
 
 
