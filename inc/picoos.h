@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.18 2005/01/17 21:24:49 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.19 2005/02/01 21:09:57 dkuschel Exp $
  *
  */
 
@@ -829,17 +829,19 @@ typedef volatile INT_t  POSATOMIC_t;
 #if (DOX!=0) || (POSCFG_FEATURE_LISTS != 0)
 struct POSLIST;
 struct POSLISTHEAD {
-  struct POSLIST        *prev;
-  struct POSLIST        *next;
-  UINT_t                length;
-  POSSEMA_t             sema;
-  UVAR_t                flag;
+  struct POSLIST* volatile  prev;
+  struct POSLIST* volatile  next;
+  POSSEMA_t       volatile  sema;
+  UVAR_t          volatile  flag;
+#if POSCFG_FEATURE_LISTLEN != 0
+  UINT_t          volatile  length;
+#endif
 };
 struct POSLIST {
-  struct POSLIST        *prev;
-  struct POSLIST        *next;
+  struct POSLIST* volatile  prev;
+  struct POSLIST* volatile  next;
 #if POSCFG_FEATURE_LISTLEN != 0
-  struct POSLISTHEAD    *head;
+  struct POSLISTHEAD* volatile head;
 #endif
 };
 /** @brief  List variable.
@@ -2730,6 +2732,7 @@ POSEXTERN void posListTerm(POSLISTHEAD_t *listhead);
  * - ::picodeb_tasklist   points to the list of all currently started tasks@n
  * - ::picodeb_eventlist  points to the list of all used events (semaphores,
  *                        mutexes, flag events etc.) @n
+ * - ::picodeb_taskhistory  is a history of the last 3 tasks that run @n
  * - ::posCurrentTask_g   contains the handle to the currently running task@n
  * - ::posInInterrupt_g   is nonzero when pico]OS executes an interupt @n
  *
@@ -2914,9 +2917,26 @@ POSEXTERN void posdeb_setEventName(void *event, const char *name);
 #endif
 
 #ifdef _POSCORE_C
+struct PICOTASK  *picodeb_taskhistory[3];
 struct PICOTASK  *picodeb_tasklist = NULL;
 struct PICOEVENT *picodeb_eventlist = NULL;
 #else
+
+/** @brief  This array contains the last 3 tasks that run.
+ *
+ * This array can be used for debugging. The array has 3 entries,
+ * each is pointing to a task debug structure. This array is a history
+ * of the last 3 tasks that has run, and array element 0 is the task
+ * that currently runs, element 1 points to the task before, and so on.
+ * @note  A NULL pointer in the task history means a hardware interrupt.
+ * @note  You can use the macro ::POS_SETTASKNAME to assign a name
+ *        to a task. @n
+ *        ::POSCFG_FEATURE_DEBUGHELP must be defined to 1 to enable
+ *        debug support
+ * @sa picodeb_tasklist, picodeb_eventlist
+ */
+extern struct PICOTASK  *picodeb_taskhistory[3];
+
 /** @brief  Pointer to the list of active tasks.
  *
  * This variable can be used for debugging. It points to a list of
@@ -2927,7 +2947,7 @@ struct PICOEVENT *picodeb_eventlist = NULL;
  *        to a task. @n
  *        ::POSCFG_FEATURE_DEBUGHELP must be defined to 1 to enable
  *        debug support
- * @sa picodeb_eventlist
+ * @sa picodeb_eventlist, picodeb_taskhistory
  */
 extern struct PICOTASK  *picodeb_tasklist;
 
@@ -2943,7 +2963,7 @@ extern struct PICOTASK  *picodeb_tasklist;
  *        to an event.
  * @note  ::POSCFG_FEATURE_DEBUGHELP must be defined to 1 to enable
  *        debug support
- * @sa picodeb_tasklist
+ * @sa picodeb_tasklist, picodeb_taskhistory
  */
 extern struct PICOEVENT *picodeb_eventlist;
 #endif
