@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  *
  *  This file is part of the pico]OS realtime operating system.
  *
- *  $Id:$
+ *  $Id: privnano.h,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
  *
  */
 
@@ -52,19 +52,48 @@
 
 /*-------------------------------------------------------------------------*/
 
-#if NOSCFG_FEATURE_MEMALLOC != 0
-void nos_initMem(void);
-#endif
+#if NOSCFG_FEATURE_REGISTRY != 0
 
-/*-------------------------------------------------------------------------*/
-
-#if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0)
-void nos_initConIO(void);
+union khandle {
+  NOSGENERICHANDLE_t  generic;
+  POSTASK_t   tsk;
+  POSSEMA_t   sem;
+#if POSCFG_FEATURE_MUTEXES != 0
+  POSMUTEX_t  mtx;
 #endif
-
-#if NOSCFG_FEATURE_BOTTOMHALF != 0
-void nos_initBottomHalfs(void);
+#if POSCFG_FEATURE_FLAGS != 0
+  POSFLAG_t   flg;
 #endif
+#if POSCFG_FEATURE_TIMER != 0
+  POSTIMER_t  tmr;
+#endif
+#if NOSCFG_FEATURE_USERREG != 0
+  KEYVALUE_t  ukv;
+#endif
+};
+
+struct regelem;
+struct regelem {
+  struct regelem  *next;
+  union khandle   handle;
+  volatile UVAR_t state;
+#if NOSCFG_FEATURE_REGQUERY
+  volatile UVAR_t refcount;
+#endif
+  char            name[NOS_MAX_REGKEYLEN];
+};
+typedef struct regelem* REGELEM_t;
+
+#ifndef _N_REG_C
+
+extern REGELEM_t nos_regNewSysKey(NOSREGTYPE_t type, const char* name);
+extern void nos_regDelSysKey(NOSREGTYPE_t type, NOSGENERICHANDLE_t handle,
+                             REGELEM_t delre);
+extern void  nos_regEnableSysKey(REGELEM_t re, NOSGENERICHANDLE_t handle);
+
+#endif /* _N_REG_C */
+
+#endif /* NOSCFG_FEATURE_REGISTRY */
 
 /*-------------------------------------------------------------------------*/
 
