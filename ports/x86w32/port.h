@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.1 2005/01/10 22:39:26 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.2 2005/01/15 21:26:02 dkuschel Exp $
  */
 
 
@@ -334,7 +334,7 @@ extern void p_pos_globalUnlock(int flags);
  * If the functions ::nosTaskCreate or ::nosInit are called with
  * a stack size of zero, this value is taken as the default stack size.
  */
-#define NOSCFG_DEFAULT_STACKSIZE     32768
+#define NOSCFG_DEFAULT_STACKSIZE     0  /* no stack needed for W32 */
 
 /** Enable generic console output handshake.
  * Please see description of function ::c_nos_putcharReady for details.
