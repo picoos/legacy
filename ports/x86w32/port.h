@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.6 2004/03/21 18:37:37 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.1 2005/01/10 22:39:26 dkuschel Exp $
  */
 
 
@@ -114,7 +114,7 @@
  * This define must be set to the tickrate of the timer
  * interrupt (= timer ticks per second).
  */
-#define HZ                       100 /* timer ticks per second */
+#define HZ                       40 /* timer ticks per second */
 
 /** Set the mechanism of stack memory handling.
  * There are three types of stack memory handling defined.<br>
