@@ -38,11 +38,12 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: picoos.c,v 1.1.1.1 2004/02/16 20:11:45 smocz Exp $
  */
 
 
 #define _POSCORE_C
+#define PICOS_PRIVINCL
 #include <picoos.h>
 
 
@@ -212,6 +213,10 @@ static UVAR_t    sintIdxOut_g;
 static POSIDLEFUNC_t  posIdleTaskFuncHook_g;
 #endif
 
+#if MVAR_BITS == 8
+UVAR_t posShift1lTab_g[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
+#endif
+
 
 
 /*-------------------------------------------------------------------------
@@ -294,6 +299,17 @@ static void      pos_execSoftIntQueue(void);
  * MACROS
  *-------------------------------------------------------------------------*/
 
+#if (POSCFG_FEATURE_YIELD != 0) && \
+    (POSCFG_ROUNDROBIN != 0) && (SYS_TASKTABSIZE_Y != 1)
+#if (MVAR_BITS == 8)
+static UVAR_t posZeroMask_g[7] = {0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80};
+#define pos_zmask(x)   posZeroMask_g[(UVAR_t)(x)]
+#else
+#define pos_zmask(x)   (~((pos_shift1l((x) + 1)) - 1))
+#endif
+#endif
+
+
 #if SYS_TASKTABSIZE_Y > 1
 
 #define pos_setTableBit(table, task) do { \
@@ -350,10 +366,6 @@ static void      pos_execSoftIntQueue(void);
 /*---------------------------------------------------------------------------
  * some HELPER FUNCTIONS  (can be inlined)
  *-------------------------------------------------------------------------*/
-
-#ifndef pos_bitshift
-#define pos_bitshift(bits)      (1<<(bits))
-#endif
 
 #if SYS_TASKDOUBLELINK == 0
 #define pos_addToSleepList(task) do { \
@@ -525,7 +537,7 @@ static void pos_schedule(void)
       ym = 0;
 #endif
       xt = POS_FINDBIT_EX(posReadyTasks_g.xtable[ym],
-                         POS_NEXTROUNDROBIN(ym));
+                          POS_NEXTROUNDROBIN(ym));
 
 #if (SYS_TASKTABSIZE_X > 1) && (POSCFG_ROUNDROBIN != 0)
       posNextRoundRobin_g[ym] = (xt + 1) & (SYS_TASKTABSIZE_X - 1);
@@ -564,7 +576,7 @@ static VAR_t pos_sched_event(EVENT_t ev)
   {
     ym = POS_FINDBIT(ev->e.pend.ymask);
     xt = POS_FINDBIT_EX(ev->e.pend.xtable[ym],
-                       POS_NEXTROUNDROBIN(ym));
+                        POS_NEXTROUNDROBIN(ym));
 #else
   if (ev->e.pend.xtable[0] != 0)
   {
@@ -655,7 +667,7 @@ void c_pos_intExit(void)
         ym = 0;
 #endif
         xt = POS_FINDBIT_EX(posReadyTasks_g.xtable[ym],
-                           POS_NEXTROUNDROBIN(ym));
+                            POS_NEXTROUNDROBIN(ym));
 
 #if (SYS_TASKTABSIZE_X > 1) && (POSCFG_ROUNDROBIN != 0)
         posNextRoundRobin_g[ym] = (xt + 1) & (SYS_TASKTABSIZE_X - 1);
@@ -819,16 +831,15 @@ void posTaskYield(void)
       ym = POS_FINDBIT(posReadyTasks_g.ymask);
       if (ym == p)
       {
-        if ((posReadyTasks_g.xtable[ym] &
-             ~posCurrentTask_g->bit_x) == 0)
+        if ((UVAR_t)(posReadyTasks_g.xtable[ym] &
+            ~posCurrentTask_g->bit_x) == 0)
         {
-          ym = POS_FINDBIT(posReadyTasks_g.ymask & 
-                          ~((pos_bitshift(ym + 1)) - 1));
+          ym = POS_FINDBIT(posReadyTasks_g.ymask & pos_zmask(ym));
         }
       }
 
       xt = POS_FINDBIT_EX(posReadyTasks_g.xtable[ym],
-                         POS_NEXTROUNDROBIN(ym));
+                          POS_NEXTROUNDROBIN(ym));
 
 #if SYS_TASKTABSIZE_X > 1
       posNextRoundRobin_g[ym] = (xt + 1) & (SYS_TASKTABSIZE_X - 1);
@@ -878,7 +889,7 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 #if POSCFG_ROUNDROBIN == 0
   p = (SYS_TASKTABSIZE_Y - 1) - (priority / MVAR_BITS);
   b = (~posAllocatedTasks_g.xtable[p]) &
-      pos_bitshift((MVAR_BITS-1) - (priority & (MVAR_BITS-1)));
+      pos_shift1l((MVAR_BITS-1) - (priority & (MVAR_BITS-1)));
 #else
   p = (SYS_TASKTABSIZE_Y - 1) - priority;
   b = ~posAllocatedTasks_g.xtable[p];
@@ -909,9 +920,9 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 #endif
 #if SYS_TASKTABSIZE_Y > 1
   task->idx_y = p;
-  task->bit_y = pos_bitshift(p);
+  task->bit_y = pos_shift1l(p);
 #endif
-  task->bit_x = pos_bitshift(b);
+  task->bit_x = pos_shift1l(b);
   posTaskTable_g[(p * SYS_TASKTABSIZE_X) + b] = task;
 
 #if POSCFG_TASKSTACKTYPE == 0
@@ -956,7 +967,7 @@ void posTaskExit(void)
 #if POSCFG_FEATURE_MSGBOXES != 0
   if (task->msgsem != NULL)
   {
-    posSemaFree(task->msgsem);
+    posSemaDestroy(task->msgsem);
   }
   POS_SCHED_LOCK;
   task->state = POSTASKSTATE_ZOMBIE;
@@ -1008,7 +1019,7 @@ POSTASK_t posTaskGetCurrent(void)
 
 /*-------------------------------------------------------------------------*/
 
-#if POSCFG_FEATURE_ISTASKUNUSED != 0
+#if POSCFG_FEATURE_TASKUNUSED != 0
 
 VAR_t posTaskUnused(POSTASK_t taskhandle)
 {
@@ -1035,7 +1046,7 @@ VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
 #if POSCFG_ROUNDROBIN == 0
   p = (SYS_TASKTABSIZE_Y - 1) - (priority / MVAR_BITS);
   b = (~posAllocatedTasks_g.xtable[p]) &
-      pos_bitshift((MVAR_BITS-1) - (priority & (MVAR_BITS-1)));
+      pos_shift1l((MVAR_BITS-1) - (priority & (MVAR_BITS-1)));
 #else
   p = (SYS_TASKTABSIZE_Y - 1) - priority;
   b = ~posAllocatedTasks_g.xtable[p];
@@ -1057,9 +1068,9 @@ VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
   pos_delTableBit(&posAllocatedTasks_g, taskhandle);
 #if SYS_TASKTABSIZE_Y > 1
   taskhandle->idx_y = p;
-  taskhandle->bit_y = pos_bitshift(p);
+  taskhandle->bit_y = pos_shift1l(p);
 #endif
-  taskhandle->bit_x = pos_bitshift(b);
+  taskhandle->bit_x = pos_shift1l(b);
   posTaskTable_g[(p * SYS_TASKTABSIZE_X) + b] = taskhandle;
   pos_setTableBit(&posAllocatedTasks_g, taskhandle);
   pos_enableTask(taskhandle);
@@ -1161,7 +1172,7 @@ void posTaskSchedUnlock(void)
 
 #if SYS_FEATURE_EVENTS != 0
 
-POSSEMA_t posSemaAlloc(INT_t initcount)
+POSSEMA_t posSemaCreate(INT_t initcount)
 {
   register EVENT_t ev;
   register UVAR_t i;
@@ -1200,7 +1211,7 @@ POSSEMA_t posSemaAlloc(INT_t initcount)
 
 #if SYS_FEATURE_EVENTFREE != 0
 
-void posSemaFree(POSSEMA_t sema)
+void posSemaDestroy(POSSEMA_t sema)
 {
   register EVENT_t ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
@@ -1350,18 +1361,18 @@ VAR_t posSemaSignal(POSSEMA_t sema)
 
 #if POSCFG_FEATURE_MUTEXES != 0
 
-POSMUTEX_t posMutexAlloc(void)
+POSMUTEX_t posMutexCreate(void)
 {
-  return (POSMUTEX_t) posSemaAlloc(1);
+  return (POSMUTEX_t) posSemaCreate(1);
 }
 
 /*-------------------------------------------------------------------------*/
 
-#if POSCFG_FEATURE_MUTEXFREE != 0
+#if POSCFG_FEATURE_MUTEXDESTROY != 0
 
-void posMutexFree(POSMUTEX_t mutex)
+void posMutexDestroy(POSMUTEX_t mutex)
 {
-  posSemaFree((POSSEMA_t) mutex);
+  posSemaDestroy((POSSEMA_t) mutex);
 }
 
 #endif
@@ -1641,7 +1652,7 @@ void* posMessageGet(void)
 
   if (task->msgsem == NULL)
   {
-    sem = posSemaAlloc(0);
+    sem = posSemaCreate(0);
     if (sem == NULL)
     {
       return NULL;
@@ -1701,7 +1712,7 @@ void* posMessageWait(UINT_t timeoutticks)
 
   if (task->msgsem == NULL)
   {
-    sem = posSemaAlloc(0);
+    sem = posSemaCreate(0);
     if (sem == NULL)
     {
       return NULL;
@@ -1797,7 +1808,7 @@ JIF_t posGetJiffies(void)
 
 #if POSCFG_FEATURE_TIMER != 0
 
-POSTIMER_t posTimerAlloc(void)
+POSTIMER_t posTimerCreate(void)
 {
   register TIMER_t  *t;
   POS_LOCKFLAGS;
@@ -1828,9 +1839,9 @@ POSTIMER_t posTimerAlloc(void)
 
 /*-------------------------------------------------------------------------*/
 
-#if POSCFG_FEATURE_TIMERFREE != 0
+#if POSCFG_FEATURE_TIMERDESTROY != 0
 
-void posTimerFree(POSTIMER_t tmr)
+void posTimerDestroy(POSTIMER_t tmr)
 {
   register TIMER_t  *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
@@ -1941,11 +1952,11 @@ VAR_t posTimerFired(POSTIMER_t tmr)
 
 #if POSCFG_FEATURE_FLAGS != 0
 
-POSFLAG_t posFlagAlloc(void)
+POSFLAG_t posFlagCreate(void)
 {
   register EVENT_t ev;
 
-  ev = (EVENT_t) posSemaAlloc(0);
+  ev = (EVENT_t) posSemaCreate(0);
   if (ev != NULL)
   {
     ev->e.d.flags = 0;
@@ -1955,11 +1966,11 @@ POSFLAG_t posFlagAlloc(void)
 
 /*-------------------------------------------------------------------------*/
 
-#if POSCFG_FEATURE_FLAGFREE != 0
+#if POSCFG_FEATURE_FLAGDESTROY != 0
 
-void posFlagFree(POSFLAG_t flg)
+void posFlagDestroy(POSFLAG_t flg)
 {
-  posSemaFree((POSSEMA_t) flg);
+  posSemaDestroy((POSSEMA_t) flg);
 }
 
 #endif
@@ -1977,7 +1988,7 @@ VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
     return -1;
 #endif
   POS_SCHED_LOCK;
-  ev->e.d.flags |= pos_bitshift(flgnum);
+  ev->e.d.flags |= pos_shift1l(flgnum);
   pos_sched_event(ev);
   POS_SCHED_UNLOCK;
   return 0;
@@ -2012,7 +2023,7 @@ VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode)
   if (mode == POSFLAG_MODE_GETSINGLE)
   {
     f = POS_FINDBIT(ev->e.d.flags);
-    ev->e.d.flags &= ~pos_bitshift(f);
+    ev->e.d.flags &= ~pos_shift1l(f);
   }
   else
   {
@@ -2282,8 +2293,8 @@ void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
   mbuf->magic = POSMAGIC_MSGBUF;
 #endif
   mbuf->next = NULL;
-  msgAllocSyncSem_g = posSemaAlloc(1);
-  msgAllocWaitSem_g = posSemaAlloc(0);
+  msgAllocSyncSem_g = posSemaCreate(1);
+  msgAllocWaitSem_g = posSemaCreate(0);
   msgAllocWaitReq_g = 0;
 #endif
 
