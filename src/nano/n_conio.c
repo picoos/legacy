@@ -38,10 +38,18 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: n_conio.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
  */
 
 #include "../src/nano/privnano.h"
+
+/* check features */
+#if (NOSCFG_FEATURE_CONOUT + NOSCFG_FEATURE_PRINTF + \
+     NOSCFG_FEATURE_SPRINTF + NOSCFG_FEATURE_CONIN) != 0
+#if POSCFG_FEATURE_SEMAPHORES == 0
+#error POSCFG_FEATURE_SEMAPHORES not enabled
+#endif
+#endif
 
 
 
@@ -59,7 +67,7 @@
  *-------------------------------------------------------------------------*/
 
 #if NOSCFG_FEATURE_CONOUT != 0
-extern void p_putchar(char c);
+extern UVAR_t p_putchar(char c);
 #endif
 
 
@@ -72,7 +80,10 @@ extern void p_putchar(char c);
 static void n_printf(const char *fmt, NOSARG_t *args);
 #endif
 #if NOSCFG_FEATURE_SPRINTF != 0
-static void n_updstr(char c);
+static UVAR_t n_updstr(char c);
+#endif
+#if NOSCFG_CONOUT_HANDSHAKE != 0
+static UVAR_t nos_putchar(char c);
 #endif
 
 
@@ -82,8 +93,27 @@ static void n_updstr(char c);
  *-------------------------------------------------------------------------*/
 
 #if FEAT_PRINTOUT != 0
-static POSSEMA_t    print_sema_g;
+static POSSEMA_t    printsema_g;
 #endif
+
+#if (NOSCFG_FEATURE_CONOUT != 0) && (NOSCFG_CONOUT_HANDSHAKE != 0)
+static POSSEMA_t    stdoutPollsema_g;
+static UVAR_t       stdoutWaiting_g;
+static char         deferedCharacter_g;
+static UVAR_t       deferedCharFlag_g;
+
+#if NOSCFG_CONOUT_FIFOSIZE > 0
+static char         cout_fifo_g[NOSCFG_CONOUT_FIFOSIZE + 1];
+static UINT_t       cout_inptr_g;
+static UINT_t       cout_outptr_g;
+#endif
+
+#define HAVEDEFCHAR_NO      0
+#define HAVEDEFCHAR_YES     1
+#define HAVEDEFCHAR_FLAG    2
+
+#endif
+
 
 #if FEAT_XPRINTF != 0
 static char         nbrbuf_g[(sizeof(INT_t)*5+1)/2];
@@ -104,7 +134,7 @@ static POSSEMA_t    cin_sema_g;
  *-------------------------------------------------------------------------*/
 
 #if (NOSCFG_FEATURE_PRINTF != 0) && (NOSCFG_FEATURE_SPRINTF != 0)
-typedef void (*NPRINTFUNC_t)(char c);
+typedef UVAR_t (*NPRINTFUNC_t)(char c);
 static NPRINTFUNC_t       prf_g;
 #define SET_PRFUNC(func)  prf_g = &(func)
 #define CALL_PRFUNC(c)    (prf_g)(c)
@@ -125,11 +155,134 @@ static NPRINTFUNC_t       prf_g;
 
 #if NOSCFG_FEATURE_CONOUT != 0
 
+#if NOSCFG_CONOUT_HANDSHAKE != 0
+
+void  c_nos_putcharReady(void)
+{
+  register UVAR_t f;
+  POS_LOCKFLAGS;
+
+  if (posRunning_g == 0)
+    return;
+
+  POS_SCHED_LOCK;
+  if (deferedCharFlag_g == HAVEDEFCHAR_YES)
+  {
+    POS_SCHED_UNLOCK;
+    if (p_putchar(deferedCharacter_g) == 0)
+    {
+      /* We got a wrong callback, stdout is not ready yet. */
+      return;
+    }
+    POS_SCHED_LOCK;
+#if NOSCFG_CONOUT_FIFOSIZE > 0
+    /* Try to clean the FIFO. The deferedCharFlag_g is set to NO
+       when the FIFO is empty again. */
+    f = 1;
+    while (cout_outptr_g != cout_inptr_g)
+    {
+      deferedCharacter_g = cout_fifo_g[cout_outptr_g];
+      if (++cout_outptr_g >= (NOSCFG_CONOUT_FIFOSIZE + 1))
+        cout_outptr_g = 0;
+      POS_SCHED_UNLOCK;
+      if (p_putchar(deferedCharacter_g) == 0)
+      {
+        f = 0;
+        POS_SCHED_LOCK;
+        break;
+      }
+      POS_SCHED_LOCK;
+    }
+    if ((cout_outptr_g == cout_inptr_g) && (f != 0))
+#endif
+      deferedCharFlag_g = HAVEDEFCHAR_NO;
+    f = stdoutWaiting_g;
+    stdoutWaiting_g = 0;
+    POS_SCHED_UNLOCK;
+    if (f)
+    {
+      posSemaSignal(stdoutPollsema_g);
+    }
+  }
+  else
+  {
+    /* change flag so we are able to detect a race condition */
+    deferedCharFlag_g = HAVEDEFCHAR_NO;
+    POS_SCHED_UNLOCK;
+  }
+}
+
+/*-------------------------------------------------------------------------*/
+
+static UVAR_t nos_putchar(char c)
+{
+  POS_LOCKFLAGS;
+
+  POS_SCHED_LOCK;
+  while (deferedCharFlag_g == HAVEDEFCHAR_YES)
+  {
+#if NOSCFG_CONOUT_FIFOSIZE > 0
+    /* try to put character into output FIFO */
+    UINT_t n = cout_inptr_g;
+    if (++n >= (NOSCFG_CONOUT_FIFOSIZE + 1))
+      n = 0;
+    if (n != cout_outptr_g)
+    {
+      cout_fifo_g[cout_inptr_g] = c;
+      cout_inptr_g = n;
+      POS_SCHED_UNLOCK;
+      return 1;
+    }
+#endif
+
+    /* FIFO full, we have to wait */
+    stdoutWaiting_g = 1;
+    POS_SCHED_UNLOCK;
+    posSemaGet(stdoutPollsema_g);
+    POS_SCHED_LOCK;
+  }
+
+  deferedCharFlag_g = HAVEDEFCHAR_FLAG; /* we will put a character */
+  POS_SCHED_UNLOCK;
+
+  /* try to put the character */
+  while (p_putchar(c) == 0)
+  {
+    POS_SCHED_LOCK;
+    if (deferedCharFlag_g != HAVEDEFCHAR_FLAG)
+    {
+      /* Got a race condition. Try again. */
+      deferedCharFlag_g = HAVEDEFCHAR_FLAG;
+      POS_SCHED_UNLOCK;
+      continue;
+    }
+
+    /* store character for later output */
+    deferedCharacter_g = c;
+    deferedCharFlag_g  = HAVEDEFCHAR_YES;
+    POS_SCHED_UNLOCK;
+    return 1;
+  }
+
+  POS_SCHED_LOCK;
+  deferedCharFlag_g = HAVEDEFCHAR_NO;
+  POS_SCHED_UNLOCK;
+  return 1;
+}
+
+#endif /* NOSCFG_CONOUT_HANDSHAKE */
+
+/*-------------------------------------------------------------------------*/
+
 void nosPrintChar(char c)
 {
-  posSemaGet(print_sema_g);
+  posSemaGet(printsema_g);
+#if NOSCFG_CONOUT_HANDSHAKE != 0
+  nos_putchar(c);
+#else
   p_putchar(c);
-  posSemaSignal(print_sema_g);
+#endif
+  posSemaSignal(printsema_g);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -137,22 +290,33 @@ void nosPrintChar(char c)
 void nosPrint(const char *str)
 {
 #if NOSCFG_FEATURE_PRINTF != 0
-  posSemaGet(print_sema_g);
+  NOSARG_t arg;
+  posSemaGet(printsema_g);
+#if NOSCFG_CONOUT_HANDSHAKE != 0
+  SET_PRFUNC(nos_putchar);
+#else
   SET_PRFUNC(p_putchar);
-  n_printf(str, NULL);
-  posSemaSignal(print_sema_g);
+#endif
+  arg = (NOSARG_t) str;
+  n_printf("%s", &arg);
+  posSemaSignal(printsema_g);
 #else
   char c;
-  posSemaGet(print_sema_g);
+  posSemaGet(printsema_g);
   c = *str;
   while (c != 0)
   {
     if (c == '\n')
-      p_putchar('\r');
-    p_putchar(c);
+#if NOSCFG_CONOUT_HANDSHAKE != 0
+      (void) nos_putchar('\r');
+    (void) nos_putchar(c);
+#else
+      (void) p_putchar('\r');
+    (void) p_putchar(c);
+#endif
     c = *++str;
   }
-  posSemaSignal(print_sema_g);
+  posSemaSignal(printsema_g);
 #endif
 }
 
@@ -325,10 +489,14 @@ void n_printf(const char *fmt, NOSARG_t *args)
 
 void n_printFormattedN(const char *fmt, NOSARG_t args)
 {
-  posSemaGet(print_sema_g);
+  posSemaGet(printsema_g);
+#if NOSCFG_CONOUT_HANDSHAKE != 0
+  SET_PRFUNC(nos_putchar);
+#else
   SET_PRFUNC(p_putchar);
+#endif
   n_printf(fmt, args);
-  posSemaSignal(print_sema_g);
+  posSemaSignal(printsema_g);
 }
 
 #endif /* NOSCFG_FEATURE_PRINTF */
@@ -339,19 +507,20 @@ void n_printFormattedN(const char *fmt, NOSARG_t args)
 
 static char *sprptr_g;
 
-static void n_updstr(char c)
+static UVAR_t n_updstr(char c)
 {
   *sprptr_g++ = c;
+  return 1;
 }
 
 void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args)
 {
-  posSemaGet(print_sema_g);
+  posSemaGet(printsema_g);
   SET_PRFUNC(n_updstr);
   sprptr_g = buf;
   n_printf(fmt, args);
   *sprptr_g = 0;
-  posSemaSignal(print_sema_g);
+  posSemaSignal(printsema_g);
 }
 
 #endif /* NOSCFG_FEATURE_SPRINTF */
@@ -441,7 +610,16 @@ void nos_initConIO(void)
 #endif
 
 #if FEAT_PRINTOUT != 0
-  print_sema_g = posSemaCreate(1);
+  printsema_g = posSemaCreate(1);
+#endif
+#if (NOSCFG_FEATURE_CONOUT != 0) && (NOSCFG_CONOUT_HANDSHAKE != 0)
+  deferedCharFlag_g = HAVEDEFCHAR_NO;
+  stdoutWaiting_g = 0;
+  stdoutPollsema_g = posSemaCreate(0);
+#if NOSCFG_CONOUT_FIFOSIZE > 0
+  cout_inptr_g  = 0;
+  cout_outptr_g = 0;
+#endif
 #endif
 }
 
