@@ -34,11 +34,42 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.4 2004/05/15 19:09:58 smocz Exp $
+ * CVS-ID $Id: timerdef.h,v 1.2 2004/06/15 16:25:12 smocz Exp $
  */
 
 #ifndef TIMERDEF_H
 #define TIMERDEF_H 1
+
+/**
+ * In this file, the configuration for the timer will be defined.
+ * 
+ * To support a easy way to adapt the pico]OS AVR Port on other
+ * cpu types, the configuration for the timer can be done with 
+ * some defines. 
+ * The timer will be used as counter.
+ * 
+ * TIMER_CONFIG_REG:
+ *      The configuraion register of the timer.
+ * TIMER_CONFIG_VALUE:
+ *      The value for the configuraion register.
+ * 
+ * TIMER_COUNTER_REG:
+ *      The register for the counter of the timer.
+ * TIMER_COUNTER_VALUE
+ *      The value, which will be reloaded in the counter register.
+ * 
+ * TIMER_INTERRUPT_REG
+ *      The interrupt configuration register for the timer.
+ * TIMER_INTERRUPT_ENABLE_BIT
+ *      The bit to enable the interrupt for the timer.
+ * 
+ * For calculating the value for TIMER_COUNTER_VALUE, two external 
+ * defines from "port.h" are needed:
+ *      HZ:             The scheduling rate 
+ *      CRYSTAL_CLOCK:  The clock of the crystal
+ * 
+ */     
+
 
 #if defined (__AVR_ATmega32__) || defined (__AVR_ATmega323__)
 
@@ -54,17 +85,14 @@
  * 
  * This value defines the possible range for the timer tick (HZ).
  */
+ 
 // set WGM12 for Clear Timer on Compare match (CTC) mode
-#  define TIMER_CONFIG_VALUE           _BV(WGM12) | 0x04
 #  define TIMER_CONFIG_REG             TCCR1B
+#  define TIMER_CONFIG_VALUE           _BV(WGM12) | 0x04
 
-/**
- * The resulting value for the presacler.
- */
-#  define TIMER_PRESCALER_VALUE        256
-
-#  define TIMER_COUNTER_VALUE          ((CRYSTAL_CLOCK / TIMER_PRESCALER_VALUE) / HZ)
+// the resulting value for the presacler is 256, see TIMER_CONFIG_VALUE
 #  define TIMER_COUNTER_REG            OCR1A
+#  define TIMER_COUNTER_VALUE          ((CRYSTAL_CLOCK / 256) / HZ)
 
 #  define TIMER_INTERRUPT_REG          TIMSK
 #  define TIMER_INTERRUPT_ENABLE_BIT   OCIE1A
