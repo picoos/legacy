@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,14 +38,14 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.2 2004/03/21 18:34:38 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.3 2004/04/18 18:04:51 dkuschel Exp $
  */
 
 #define _N_CORE_C
 #include "../src/nano/privnano.h"
 
 /* check features */
-#if NOS_FEATURE_CPUUSAGE != 0
+#if NOSCFG_FEATURE_CPUUSAGE != 0
 #if POSCFG_FEATURE_SLEEP == 0
 #error POSCFG_FEATURE_SLEEP not enabled
 #endif
@@ -68,9 +68,24 @@
  *  PROTOTYPES, TYPEDEFS AND VARIABLES
  *-------------------------------------------------------------------------*/
 
+/* imports */
+#if (NOSCFG_FEATURE_MEMALLOC != 0) && (NOSCFG_MEM_MANAGER_TYPE == 1)
+extern void nos_initMem(void);
+#endif
+#if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0)
+extern void nos_initConIO(void);
+#endif
+#if NOSCFG_FEATURE_BOTTOMHALF != 0
+extern void nos_initBottomHalfs(void);
+#endif
+#if NOSCFG_FEATURE_REGISTRY != 0
+extern void nos_initRegistry(void);
+#endif
+
+/* private */
 static void nano_init(void *arg);
 
-#if NOS_FEATURE_CPUUSAGE != 0
+#if NOSCFG_FEATURE_CPUUSAGE != 0
 
 static void nano_idlehook(void);
 static void nano_initCpuUsage(void);
@@ -95,7 +110,7 @@ static JIF_t          idle_jiffies_g = 0;
 #define IDLE_INIT_MULT  1
 #endif
 
-#endif /* NOS_FEATURE_CPUUSAGE */
+#endif /* NOSCFG_FEATURE_CPUUSAGE */
 
 struct {
   POSTASKFUNC_t  func;
@@ -108,7 +123,7 @@ struct {
  *  CPU USAGE MEASUREMENT
  *-------------------------------------------------------------------------*/
 
-#if NOS_FEATURE_CPUUSAGE != 0
+#if NOSCFG_FEATURE_CPUUSAGE != 0
 
 static void nano_idlehook(void)
 {
@@ -182,86 +197,382 @@ UVAR_t nosCpuUsage(void)
   return (UVAR_t) p;
 }
 
-#endif /* NOS_FEATURE_CPUUSAGE */
+#endif /* NOSCFG_FEATURE_CPUUSAGE */
 
 
 
 /*---------------------------------------------------------------------------
- *  NANO LAYER TASK CREATION
+ *  NANO LAYER SEMAPHORE FUNCTIONS
  *-------------------------------------------------------------------------*/
 
-#if POSCFG_TASKSTACKTYPE == 0
+#if NOSCFG_FEATURE_SEMAPHORES != 0
+#if NOSCFG_FEATURE_REGISTRY != 0
 
-void nos_taskMemFree(POSTASK_t task);
-void nos_taskMemFree(POSTASK_t task)
+NOSSEMA_t nosSemaCreate(INT_t initcount, UVAR_t options, const char *name)
 {
-  NOS_MEM_FREE(task->nosstkroot);
+  POSSEMA_t sem;
+  REGELEM_t re;
+
+  re = nos_regNewSysKey(REGTYPE_SEMAPHORE,
+                        name == NULL ? (const char*)"s*" : name);
+  if (re == NULL)
+    return NULL;
+
+  (void) options;
+  sem = posSemaCreate(initcount);
+
+  if (sem == NULL)
+  {
+    nos_regDelSysKey(REGTYPE_SEMAPHORE, NULL, re);
+  }
+  else
+  {
+    nos_regEnableSysKey(re, sem);
+  }
+  return (NOSSEMA_t) sem;
 }
 
-#endif /* POSCFG_TASKSTACKTYPE == 0 */
+#if POSCFG_FEATURE_SEMADESTROY != 0
+
+void nosSemaDestroy(NOSSEMA_t sema)
+{
+  if (sema != NULL)
+  {
+    nos_regDelSysKey(REGTYPE_SEMAPHORE, sema, NULL);
+    posSemaDestroy((POSSEMA_t) sema);
+  }
+}
+
+#endif /* POSCFG_FEATURE_SEMADESTROY */
+
+#endif /* NOSCFG_FEATURE_REGISTRY */
+#endif /* NOSCFG_FEATURE_SEMAPHORES */
+
+
+
+/*---------------------------------------------------------------------------
+ *  NANO LAYER MUTEX FUNCTIONS
+ *-------------------------------------------------------------------------*/
+
+#if NOSCFG_FEATURE_MUTEXES != 0
+#if NOSCFG_FEATURE_REGISTRY != 0
+
+NOSMUTEX_t nosMutexCreate(UVAR_t options, const char *name)
+{
+  POSMUTEX_t mtx;
+  REGELEM_t re;
+
+  re = nos_regNewSysKey(REGTYPE_MUTEX,
+                        name == NULL ? (const char*)"m*" : name);
+  if (re == NULL)
+    return NULL;
+
+  (void) options;
+  mtx = posMutexCreate();
+
+  if (mtx == NULL)
+  {
+    nos_regDelSysKey(REGTYPE_MUTEX, NULL, re);
+  }
+  else
+  {
+    nos_regEnableSysKey(re, mtx);
+  }
+  return (NOSMUTEX_t) mtx;
+}
+
+#if POSCFG_FEATURE_MUTEXDESTROY != 0
+
+void nosMutexDestroy(NOSMUTEX_t mutex)
+{
+  if (mutex != NULL)
+  {
+    nos_regDelSysKey(REGTYPE_MUTEX, mutex, NULL);
+    posMutexDestroy((POSMUTEX_t) mutex);
+  }
+}
+
+#endif /* POSCFG_FEATURE_MUTEXDESTROY */
+
+#endif /* NOSCFG_FEATURE_REGISTRY */
+#endif /* NOSCFG_FEATURE_MUTEXES */
+
+
+
+/*---------------------------------------------------------------------------
+ * NANO LAYER MESSAGE BOX FUNCTIONS
+ *-------------------------------------------------------------------------*/
+
+#if NOSCFG_FEATURE_MSGBOXES != 0
+
+void* nosMessageAlloc(UINT_t msgSize)
+{
+  void *buf;
+#if POSCFG_MSG_MEMORY != 0
+  if (msgSize > POSCFG_MSG_BUFSIZE)
+    return NULL;
+  buf = posMessageAlloc();
+#else
+#if NOSCFG_FEATURE_MEMALLOC == 0
+#error NOSCFG_FEATURE_MEMALLOC not enabled
+#endif
+  buf = nosMemAlloc(msgSize);
+#endif
+  return buf;
+}
+
+void nosMessageFree(void *buf)
+{
+#if POSCFG_MSG_MEMORY != 0
+  posMessageFree(buf);
+#else
+  nosMemFree(buf);
+#endif
+}
+
+VAR_t nosMessageSend(void *buf, NOSTASK_t taskhandle)
+{
+  VAR_t rc;
+  rc = posMessageSend(buf, (POSTASK_t) taskhandle);
+#if POSCFG_MSG_MEMORY == 0
+  if (rc != E_OK)
+    nosMemFree(buf);
+#endif
+  return rc;
+}
+
+#endif  /* NOSCFG_FEATURE_MSGBOXES */
+
+
+/*---------------------------------------------------------------------------
+ * NANO LAYER FLAG FUNCTIONS
+ *-------------------------------------------------------------------------*/
+
+#if NOSCFG_FEATURE_FLAGS != 0
+#if NOSCFG_FEATURE_REGISTRY != 0
+
+NOSFLAG_t nosFlagCreate(const char* name)
+{
+  POSFLAG_t flg;
+  REGELEM_t re;
+
+  re = nos_regNewSysKey(REGTYPE_FLAG,
+                        name == NULL ? (const char*)"f*" : name);
+  if (re == NULL)
+    return NULL;
+
+  flg = posFlagCreate();
+  if (flg == NULL)
+  {
+    nos_regDelSysKey(REGTYPE_FLAG, NULL, re);
+  }
+  else
+  {
+    nos_regEnableSysKey(re, flg);
+  }
+  return (NOSFLAG_t) flg;
+}
+
+#if POSCFG_FEATURE_FLAGDESTROY != 0
+
+void nosFlagDestroy(NOSFLAG_t flg)
+{
+  if (flg != NULL)
+  {
+    nos_regDelSysKey(REGTYPE_FLAG, flg, NULL);
+    posFlagDestroy((POSFLAG_t) flg);
+  }
+}
+
+#endif /* POSCFG_FEATURE_FLAGDESTROY */
+
+#endif /* NOSCFG_FEATURE_REGISTRY */
+#endif /* NOSCFG_FEATURE_FLAGS */
+
+
+
+/*---------------------------------------------------------------------------
+ * NANO LAYER TIMER FUNCTIONS
+ *-------------------------------------------------------------------------*/
+
+#if NOSCFG_FEATURE_TIMER != 0
+#if NOSCFG_FEATURE_REGISTRY != 0
+
+NOSTIMER_t nosTimerCreate(const char *name)
+{
+  POSTIMER_t tmr;
+  REGELEM_t re;
+
+  re = nos_regNewSysKey(REGTYPE_TIMER, 
+                        name == NULL ? (const char*)"r*" : name);
+  if (re == NULL)
+    return NULL;
+
+  tmr = posTimerCreate();
+  if (tmr == NULL)
+  {
+    nos_regDelSysKey(REGTYPE_TIMER, NULL, re);
+  }
+  else
+  {
+    nos_regEnableSysKey(re, tmr);
+  }
+  return (NOSTIMER_t) tmr;
+}
+
+void nosTimerDestroy(NOSTIMER_t tmr)
+{
+  if (tmr != NULL)
+  {
+    nos_regDelSysKey(REGTYPE_TIMER, tmr, NULL);
+    posTimerDestroy((POSTIMER_t) tmr);
+  }
+}
+
+#endif /* NOSCFG_FEATURE_REGISTRY */
+#endif /* NOSCFG_FEATURE_TIMER */
+
+
+
+/*---------------------------------------------------------------------------
+ *  NANO LAYER TASK FUNCTIONS
+ *-------------------------------------------------------------------------*/
+
+#ifdef NOS_NEEDTASKEXITHOOK
+
+static void nos_taskExitHook(POSTASK_t task, texhookevent_t event);
+static void nos_taskExitHook(POSTASK_t task, texhookevent_t event)
+{
+#if NOSCFG_FEATURE_REGISTRY != 0
+  if (event == texh_exitcalled)
+    nos_regDelSysKey(REGTYPE_TASK, task, NULL);
+#endif
+#if POSCFG_TASKSTACKTYPE == 0
+  if (event == texh_freestackmem)
+    NOS_MEM_FREE(task->nosstkroot);
+#endif
+}
+
+#endif /* NOS_NEEDTASKEXITHOOK */
 
 /*-------------------------------------------------------------------------*/
 
 #if NOSCFG_FEATURE_TASKCREATE != 0
 
-POSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+#ifdef NOS_NEEDTASKEXITHOOK
+#if POSCFG_FEATURE_INHIBITSCHED == 0
+#error POSCFG_FEATURE_INHIBITSCHED not enabled
+#endif
+#endif
+
+NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
                         VAR_t priority, UINT_t stacksize,
                         const char* name)
 {
   POSTASK_t task;
-
+#if NOSCFG_FEATURE_REGISTRY != 0
+  REGELEM_t re;
+#endif
 #if POSCFG_TASKSTACKTYPE == 0
   void *stk;
+#endif
+
+#if NOSCFG_FEATURE_REGISTRY != 0
+  re = nos_regNewSysKey(REGTYPE_TASK,
+                        name == NULL ? (const char*)"t*" : name);
+  if (re == NULL)
+    return NULL;
+#else
+  (void) name;
+#endif
+
+  /*===============================================*/
+#if POSCFG_TASKSTACKTYPE == 0
 
   if (stacksize == 0)
     stacksize = NOSCFG_DEFAULT_STACKSIZE;
 
+  task = NULL;
   stk = nosMemAlloc(NOSCFG_STKMEM_RESERVE + stacksize);
-  if (stk == NULL)
-    return NULL;
-
-#if POSCFG_FEATURE_INHIBITSCHED == 0
-#error POSCFG_FEATURE_INHIBITSCHED not enabled
-#endif
-  posTaskSchedLock();
-#if NOSCFG_STACK_GROWS_UP == 0
-  task = posTaskCreate(funcptr, funcarg, priority, 
-                       (void*) (((MEMPTR_t)stk) + stacksize -
-                                (NOSCFG_STKMEM_RESERVE + 1)));
-#else
-  task = posTaskCreate(funcptr, funcarg, priority,
-                       (void*) (((MEMPTR_t)stk) + NOSCFG_STKMEM_RESERVE));
-#endif
-  if (task != NULL)
+  if (stk != NULL)
   {
-    task->nosstkroot = stk;
-    task->stkfree = nos_taskMemFree;
-  }
-  posTaskSchedUnlock();
-#if POSCFG_FEATURE_SLEEP != 0
-  posTaskSleep(0);
-#elif POSCFG_FEATURE_YIELD != 0
-  posTaskYield();
+    posTaskSchedLock();
+#if NOSCFG_STACK_GROWS_UP == 0
+    task = posTaskCreate(funcptr, funcarg, priority, 
+                         (void*) (((MEMPTR_t)stk) + stacksize -
+                                  (NOSCFG_STKMEM_RESERVE + 1)));
+#else
+    task = posTaskCreate(funcptr, funcarg, priority,
+                         (void*) (((MEMPTR_t)stk) + NOSCFG_STKMEM_RESERVE));
 #endif
+    if (task != NULL)
+    {
+      task->nosstkroot = stk;
+      task->exithook   = nos_taskExitHook;
+#if NOSCFG_FEATURE_REGISTRY != 0
+      nos_regEnableSysKey(re, task);
+#endif
+    }
+    posTaskSchedUnlock();
 
+#if POSCFG_FEATURE_SLEEP != 0
+    posTaskSleep(0);
+#elif POSCFG_FEATURE_YIELD != 0
+    posTaskYield();
+#endif
+  }
+
+  /*-----------------------------------------------*/
 #elif POSCFG_TASKSTACKTYPE == 1
 
   if (stacksize == 0)
     stacksize = NOSCFG_DEFAULT_STACKSIZE;
 
+#if NOSCFG_FEATURE_REGISTRY != 0
+  posTaskSchedLock();
+#endif
+
   task = posTaskCreate(funcptr, funcarg, priority, stacksize);
 
+#if NOSCFG_FEATURE_REGISTRY != 0
+  if (task != NULL)
+  {
+    task->exithook = nos_taskExitHook;
+    nos_regEnableSysKey(re, task);
+  }
+  posTaskSchedUnlock();
+#endif
+
+  /*-----------------------------------------------*/
 #elif POSCFG_TASKSTACKTYPE == 2
+
+#if NOSCFG_FEATURE_REGISTRY != 0
+  posTaskSchedLock();
+#endif
 
   (void) stacksize;
   task = posTaskCreate(funcptr, funcarg, priority);
 
+#if NOSCFG_FEATURE_REGISTRY != 0
+  if (task != NULL)
+  {
+    task->exithook = nos_taskExitHook;
+    nos_regEnableSysKey(re, task);
+  }
+  posTaskSchedUnlock();
+#endif
+
 #endif /* POSCFG_TASKSTACKTYPE == 2 */
 
-  /* named tasks are not yet supported */
-  (void) name;
+  /*===============================================*/
+#if NOSCFG_FEATURE_REGISTRY != 0
+  if (task == NULL)
+  {
+    nos_regDelSysKey(REGTYPE_TASK, NULL, re);
+  }
+#endif
 
-  return task;
+  return (POSTASK_t) task;
 }
 
 #endif /* NOSCFG_FEATURE_TASKCREATE != 0 */
@@ -274,14 +585,20 @@ POSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 
 static void nano_init(void *arg)
 {
+#if NOSCFG_FEATURE_REGISTRY != 0
+  REGELEM_t re;
+#endif
 #if POSCFG_TASKSTACKTYPE == 0
   posCurrentTask_g->nosstkroot = arg;
-  posCurrentTask_g->stkfree = nos_taskMemFree;
+  posCurrentTask_g->exithook = nos_taskExitHook;
 #else
   (void) arg;
+#if NOSCFG_FEATURE_REGISTRY != 0
+  posCurrentTask_g->exithook = nos_taskExitHook;
+#endif
 #endif
 
-#if NOS_FEATURE_CPUUSAGE != 0
+#if NOSCFG_FEATURE_CPUUSAGE != 0
   nano_initCpuUsage();
 #endif
 #if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0)
@@ -289,6 +606,17 @@ static void nano_init(void *arg)
 #endif
 #if NOSCFG_FEATURE_BOTTOMHALF != 0
   nos_initBottomHalfs();
+#endif
+#if NOSCFG_FEATURE_REGISTRY != 0
+  nos_initRegistry();
+#endif
+
+#if NOSCFG_FEATURE_REGISTRY != 0
+  re = nos_regNewSysKey(REGTYPE_TASK, "root-task");
+  if (re != NULL)
+  {
+    nos_regEnableSysKey(re, posTaskGetCurrent());
+  }
 #endif
 
   (taskparams_g.func)(taskparams_g.arg);
