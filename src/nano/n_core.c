@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.5 2005/01/15 21:18:23 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.6 2005/01/17 21:26:12 dkuschel Exp $
  */
 
 #define _N_CORE_C
@@ -514,8 +514,10 @@ NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
       task->exithook   = nos_taskExitHook;
 #if NOSCFG_FEATURE_REGISTRY != 0
       nos_regEnableSysKey(re, task);
-#endif
       POS_SETTASKNAME(task, re->name);
+#else
+      POS_SETTASKNAME(task, name);
+#endif
     }
     posTaskSchedUnlock();
 
