@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2005, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,17 +30,20 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.2 2005/01/15 21:17:45 dkuschel Exp $
+#  $Id: makefile,v 1.3 2005/01/17 21:23:40 dkuschel Exp $
 
 
-# The default port is 6502
+# The default port is x86w32
 ifeq '$(strip $(PORT))' ''
-PORT = 6502
+PORT = x86w32
 endif
 export PORT
 
 SRCDIR = examples
 export DIR_USRINC = $(SRCDIR)
+ifneq '$(strip $(OLIBNAME))' ''
+OLIBVAR = OLIBNAME=$(OLIBNAME)
+endif
 
 ifeq '$(strip $(SOURCEFILE))' ''
 
@@ -50,17 +53,17 @@ RELROOT = ../
 include $(RELROOT)make/common.mak
 
 MAKECMD = -$(MAKE) -f $(SRCDIR)/makefile -C .. SOURCEFILE=$(SRCDIR)/
-#MAKECMD = -$(MAKE) -f $(SRCDIR)/makefile -C .. COMPILER=$(COMPILER) SOURCEFILE=$(SRCDIR)/
+MAKECLCMD = -$(MAKE) clean -f $(SRCDIR)/makefile -C .. SOURCEFILE=$(SRCDIR)/
 
 default: all
 
 all:
-	$(MAKE) -C .. clean NANO=0
+	$(MAKECLCMD)test.c NANO=0
 	$(MAKECMD)test.c NANO=0
 	$(MAKECMD)ex_task1.c NANO=0
 	$(MAKECMD)ex_task2.c NANO=0
 	$(MAKECMD)ex_task3.c NANO=0
-	$(MAKE) -C .. clean NANO=1
+	$(MAKECLCMD)ex_bhalf.c NANO=1
 	$(MAKECMD)ex_bhalf.c
 	$(MAKECMD)ex_flag1.c
 	$(MAKECMD)ex_flag2.c
@@ -77,11 +80,28 @@ all:
 	$(MAKECMD)ex_task4.c
 	$(MAKECMD)ex_timr1.c
 	$(MAKECMD)ex_timr2.c
-	$(MAKECMD)test.c
 
 clean:
-	$(MAKE) -C .. clean NANO=0
-	$(MAKE) -C .. clean NANO=1
+	$(MAKECLCMD)test.c NANO=0
+	$(MAKECLCMD)ex_task1.c NANO=0
+	$(MAKECLCMD)ex_task2.c NANO=0
+	$(MAKECLCMD)ex_task3.c NANO=0
+	$(MAKECLCMD)ex_bhalf.c
+	$(MAKECLCMD)ex_flag1.c
+	$(MAKECLCMD)ex_flag2.c
+	$(MAKECLCMD)ex_lists.c
+	$(MAKECLCMD)ex_mesg1.c
+	$(MAKECLCMD)ex_mesg2.c
+	$(MAKECLCMD)ex_mutx1.c
+	$(MAKECLCMD)ex_mutx2.c
+	$(MAKECLCMD)ex_sema1.c
+	$(MAKECLCMD)ex_sema2.c
+	$(MAKECLCMD)ex_sema3.c
+	$(MAKECLCMD)ex_sema4.c
+	$(MAKECLCMD)ex_sint1.c
+	$(MAKECLCMD)ex_task4.c
+	$(MAKECLCMD)ex_timr1.c
+	$(MAKECLCMD)ex_timr2.c
 
 else
 
