@@ -1,4 +1,14 @@
 
+Version 0.9.0:
+  o  nono layer: registry added, now support for named tasks/semas/timer etc.
+  o  faster initialization of the CPU usage measurement on fast CPUs
+  o  documentation updated
+  o  minor changes:
+       - keyword 'extern' added to function prototypes
+       - test for correct jiffies configuration added to n_core.c
+       - NOS_FEATURE_CPUUSAGE renamed to NOSCFG_FEATURE_CPUUSAGE
+
+
 Version 0.8.1:
   o  many new examples added to the examples directory
   o  port directory structure changed: subdirectory 'boot' introduced
