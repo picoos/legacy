@@ -4,6 +4,7 @@
 #  to the example file outfile.mak. Set there the variable 'SRC_LIB' or     #
 #  'MODULES' to reference this library). Please notice: In pico]OS syntax,  #
 #  a library that is based on this makefile is also called 'a module'.      #
+#  Note: You must rename this file to "makefile" or "makefile.pico".        #
 #############################################################################
 
 
