@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.4 2004/03/14 18:54:12 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.5 2004/03/21 18:37:45 dkuschel Exp $
  */
 
 
@@ -115,7 +115,7 @@
  * This define must be set to the tickrate of the timer
  * interrupt (= timer ticks per second).
  */
-#define HZ                     3000  /* timer ticks per second */
+#define HZ                     1000  /* timer ticks per second */
 
 /**
  * Defines the crystal clock in HZ
@@ -254,20 +254,136 @@
  * code that stores the processor state and disables
  * the interrupts. See ::POSCFG_LOCK_FLAGSTYPE for more details.
  */
-#define POS_SCHED_LOCK       asm volatile("in __tmp_reg__, __SREG__ \n" \
-                                   "cli \n" \
-                                   "push __tmp_reg__ \n" :: )
-
+#define POS_SCHED_LOCK       __asm__ __volatile__( \
+                                    "in __tmp_reg__, __SREG__"  "\n\t" \
+                                    "cli"                       "\n\t" \
+                                    "push __tmp_reg__"          "\n\t" \
+                                    :: )
 
 /** Scheduler unlocking.
  * This is the counterpart macro of ::POS_SCHED_LOCK. It restores
  * the saved processor flags and reenables the interrupts this way.
  */
-#define POS_SCHED_UNLOCK     asm volatile("pop __tmp_reg__ \n" \
-                                         "out __SREG__, __tmp_reg__ \n" :: )
+#define POS_SCHED_UNLOCK     __asm__ __volatile__( \
+                                    "pop __tmp_reg__"           "\n\t" \
+                                    "out __SREG__, __tmp_reg__" "\n\t" \
+                                    :: )
 
 /** @} */
 
+
+/*---------------------------------------------------------------------------
+ *  INTERRUPT SERVICE ROUTINE FRAME 
+ *-------------------------------------------------------------------------*/
+
+#define SAVE_CONTEXT(void) \
+    __asm__ __volatile__ ( \
+        "push   r0"     "\n\t" \
+        "in     r0, __SREG__" "\n\t" \
+        "cli"           "\n\t" \
+        "push   r0"     "\n\t" \
+        "push   r1"     "\n\t" \
+        "clr    __zero_reg__"   "\n\t" \
+        "push   r2"     "\n\t" \
+        "push   r3"     "\n\t" \
+        "push   r4"     "\n\t" \
+        "push   r5"     "\n\t" \
+        "push   r6"     "\n\t" \
+        "push   r7"     "\n\t" \
+        "push   r8"     "\n\t" \
+        "push   r9"     "\n\t" \
+        "push   r10"    "\n\t" \
+        "push   r11"    "\n\t" \
+        "push   r12"    "\n\t" \
+        "push   r13"    "\n\t" \
+        "push   r14"    "\n\t" \
+        "push   r15"    "\n\t" \
+        "push   r16"    "\n\t" \
+        "push   r17"    "\n\t" \
+        "push   r18"    "\n\t" \
+        "push   r19"    "\n\t" \
+        "push   r20"    "\n\t" \
+        "push   r21"    "\n\t" \
+        "push   r22"    "\n\t" \
+        "push   r23"    "\n\t" \
+        "push   r24"    "\n\t" \
+        "push   r25"    "\n\t" \
+        "push   r26"    "\n\t" \
+        "push   r27"    "\n\t" \
+        "push   r28"    "\n\t" \
+        "push   r29"    "\n\t" \
+        "push   r30"    "\n\t" \
+        "push   r31"    "\n\t" \
+    ::  \
+    )
+    
+
+    
+#define RESTORE_CONTEXT(void) \
+    __asm__ __volatile__ ( \
+        "pop    r31"    "\n\t" \
+        "pop    r30"    "\n\t" \
+        "pop    r29"    "\n\t" \
+        "pop    r28"    "\n\t" \
+        "pop    r27"    "\n\t" \
+        "pop    r26"    "\n\t" \
+        "pop    r25"    "\n\t" \
+        "pop    r24"    "\n\t" \
+        "pop    r23"    "\n\t" \
+        "pop    r22"    "\n\t" \
+        "pop    r21"    "\n\t" \
+        "pop    r20"    "\n\t" \
+        "pop    r19"    "\n\t" \
+        "pop    r18"    "\n\t" \
+        "pop    r17"    "\n\t" \
+        "pop    r16"    "\n\t" \
+        "pop    r15"    "\n\t" \
+        "pop    r14"    "\n\t" \
+        "pop    r13"    "\n\t" \
+        "pop    r12"    "\n\t" \
+        "pop    r11"    "\n\t" \
+        "pop    r10"    "\n\t" \
+        "pop    r9"     "\n\t" \
+        "pop    r8"     "\n\t" \
+        "pop    r7"     "\n\t" \
+        "pop    r6"     "\n\t" \
+        "pop    r5"     "\n\t" \
+        "pop    r4"     "\n\t" \
+        "pop    r3"     "\n\t" \
+        "pop    r2"     "\n\t" \
+        "pop    r1"     "\n\t" \
+        "pop    r0"     "\n\t" \
+        "out    __SREG__, r0" "\n\t" \
+        "pop    r0"    "\n\t" \
+    ::  \
+    )
+
+
+#define STORE_STACK_POINTER(void) \
+    __asm__ __volatile__ ( \
+        "in     __tmp_reg__, __SP_L__"  "\n\t" \
+        "st     %a0+, __tmp_reg__"      "\n\t" \
+        "in     __tmp_reg__, __SP_H__"  "\n\t" \
+        "st     %a0, __tmp_reg__"       "\n\t" \
+        : \
+        : "e" (posCurrentTask_g) \
+        : "memory" \
+    )
+
+
+#define PICOOS_SIGNAL(signame, handler)   \
+void signame (void) __attribute__ ((signal, naked));        \
+void signame (void) {                   \
+    SAVE_CONTEXT();                     \
+    if (posInInterrupt_g == 0) {        \
+       STORE_STACK_POINTER();           \
+    }                                   \
+    c_pos_intEnter();                   \
+    handler();                          \
+    c_pos_intExit();                    \
+    RESTORE_CONTEXT();                  \
+    __asm__ __volatile__("reti");       \
+}                                       \
 
 
 /*---------------------------------------------------------------------------
@@ -341,7 +457,8 @@
  * If the functions ::nosTaskCreate or ::nosInit are called with
  * a stack size of zero, this value is taken as the default stack size.
  */
-#define NOSCFG_DEFAULT_STACKSIZE     128
+#define NOSCFG_DEFAULT_STACKSIZE     64
+// 128
 
 /** Enable generic console output handshake.
  * Please see description of function ::c_nos_putcharReady for details.
