@@ -1,4 +1,10 @@
 
+Version 0.7.0:
+  o  nonblocking/blocking lists added (lists can be used for packet queues)
+  o  some small bug fixes in dynamic memory management
+  o  6502 port supports now dynamic count of tasks
+
+
 Version 0.6.0:
   o  atomic variables added
   o  posInstallIdleTaskHook returns now the ptr to the previous hook function
