@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.11 2005/02/01 21:10:38 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.12 2005/02/07 22:08:45 dkuschel Exp $
  */
 
 
@@ -564,6 +564,9 @@ static void pos_idletask(void *arg)
 
   for(;;)
   {
+#if POSCFG_FEATURE_INHIBITSCHED != 0
+    P_ASSERT("pos_idletask: schedule allowed", posInhibitSched_g == 0);
+#endif
     POS_SCHED_LOCK;
 #ifdef POS_DEBUGHELP
     posCurrentTask_g->deb.state = task_suspended;
@@ -1041,6 +1044,8 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   register UINT_t i;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTaskCreate: function pointer valid", funcptr != NULL);
+
   if ((UVAR_t)priority >= POSCFG_MAX_PRIO_LEVEL)
     return NULL;
 
@@ -1226,6 +1231,7 @@ POSTASK_t posTaskGetCurrent(void)
 
 VAR_t posTaskUnused(POSTASK_t taskhandle)
 {
+  P_ASSERT("posTaskUnused: task handle valid", taskhandle != NULL);
   POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -E_ARG); 
   return (taskhandle->state == POSTASKSTATE_UNUSED) ? 1 : 0;
 }
@@ -1241,6 +1247,7 @@ VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
   register UVAR_t  b, p;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTaskSetPriority: task handle valid", taskhandle != NULL);
   POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -E_ARG); 
   if ((UVAR_t)priority >= POSCFG_MAX_PRIO_LEVEL)
     return -E_ARG;
@@ -1292,6 +1299,7 @@ VAR_t posTaskGetPriority(POSTASK_t taskhandle)
   register VAR_t p;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTaskGetPriority: task handle valid", taskhandle != NULL);
   POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -E_ARG); 
   POS_SCHED_LOCK;
 #if SYS_TASKTABSIZE_Y == 1
@@ -1481,6 +1489,11 @@ void posSemaDestroy(POSSEMA_t sema)
   register EVENT_t ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posSemaDestroy: semaphore valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posSemaDestroy: semaphore allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
   POS_ARGCHECK(ev, ev->e.magic, POSMAGIC_EVENTU); 
 #if SYS_TASKTABSIZE_Y > 1
   if (ev->e.pend.ymask == 0)
@@ -1518,6 +1531,12 @@ VAR_t posSemaGet(POSSEMA_t sema)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posSemaGet: semaphore valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posSemaGet: semaphore allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
+  P_ASSERT("posSemaGet: not in an interrupt", posInInterrupt_g == 0);
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
@@ -1555,6 +1574,12 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posSemaWait: semaphore valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posSemaWait: semaphore allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
+  P_ASSERT("posSemaWait: not in an interrupt", posInInterrupt_g == 0);
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
@@ -1624,6 +1649,11 @@ VAR_t posSemaSignal(POSSEMA_t sema)
   register EVENT_t  ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posSemaSignal: semaphore valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posSemaSignal: semaphore allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
@@ -1678,6 +1708,7 @@ POSMUTEX_t posMutexCreate(void)
 
 void posMutexDestroy(POSMUTEX_t mutex)
 {
+  P_ASSERT("posMutexDestroy: mutex valid", mutex != NULL);
   posSemaDestroy((POSSEMA_t) mutex);
 }
 
@@ -1693,6 +1724,11 @@ VAR_t posMutexTryLock(POSMUTEX_t mutex)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posMutexTryLock: mutex valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posMutexTryLock: mutex allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
@@ -1730,6 +1766,12 @@ VAR_t posMutexLock(POSMUTEX_t mutex)
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posMutexLock: mutex valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posMutexLock: mutex allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
+  P_ASSERT("posMutexLock: not in an interrupt", posInInterrupt_g == 0);
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
@@ -1771,6 +1813,11 @@ VAR_t posMutexUnlock(POSMUTEX_t mutex)
   register EVENT_t  ev = (EVENT_t) mutex;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posMutexUnlock: mutex valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posMutexUnlock: mutex allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
@@ -1896,12 +1943,13 @@ void* posMessageAlloc(void)
 static void pos_msgFree(MSGBUF_t *mbuf)
 {
   POS_LOCKFLAGS;
+  P_ASSERT("posMessageFree: buffer valid", mbuf != NULL);
 #else
 void posMessageFree(void *buf)
 {
   MSGBUF_t *mbuf = (MSGBUF_t*) buf;
   POS_LOCKFLAGS;
-
+  P_ASSERT("posMessageFree: buffer valid", buf != NULL);
   POS_ARGCHECK(mbuf, mbuf->magic, POSMAGIC_MSGBUF); 
 #endif
   POS_SCHED_LOCK;
@@ -1937,6 +1985,7 @@ VAR_t posMessageSend(void *buf, POSTASK_t taskhandle)
 #if POSCFG_MSG_MEMORY != 0
     posMessageFree(buf);
 #endif
+    P_ASSERT("posMessageSend: arguments valid", 0);
     return -E_ARG;
   }
 #endif
@@ -2013,6 +2062,7 @@ void* posMessageGet(void)
 #endif
   POS_LOCKFLAGS;
 
+  P_ASSERT("posMessageGet: not in an interrupt", posInInterrupt_g == 0);
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
     return NULL;
@@ -2077,6 +2127,7 @@ void* posMessageWait(UINT_t timeoutticks)
 #endif
   POS_LOCKFLAGS;
 
+  P_ASSERT("posMessageWait: not in an interrupt", posInInterrupt_g == 0);
 #if POSCFG_ARGCHECK > 1
   if (posInInterrupt_g != 0)
     return NULL;
@@ -2249,6 +2300,7 @@ void posTimerDestroy(POSTIMER_t tmr)
   register TIMER_t  *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTimerDestroy: timer valid", tmr != NULL);
   POS_ARGCHECK(t, t->magic, POSMAGIC_TIMER); 
   posTimerStop(tmr);
   POS_SCHED_LOCK;
@@ -2271,6 +2323,8 @@ VAR_t posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
   register EVENT_t  ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTimerSet: timer valid", tmr != NULL);
+  P_ASSERT("posTimerSet: semaphore valid", sema != NULL);
   POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -E_ARG); 
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
@@ -2294,6 +2348,7 @@ VAR_t posTimerStart(POSTIMER_t tmr)
   register TIMER_t *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTimerStart: timer valid", tmr != NULL);
   POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -E_ARG); 
   POS_SCHED_LOCK;
   t->counter = t->wait;
@@ -2315,6 +2370,7 @@ VAR_t posTimerStop(POSTIMER_t tmr)
   register TIMER_t *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTimerStop: timer valid", tmr != NULL);
   POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -E_ARG); 
   POS_SCHED_LOCK;
   if (t->prev != t)
@@ -2335,6 +2391,7 @@ VAR_t posTimerFired(POSTIMER_t tmr)
   register VAR_t  f;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posTimerFired: timer valid", tmr != NULL);
   POS_ARGCHECK_RET(t, t->magic, POSMAGIC_TIMER, -E_ARG); 
   POS_SCHED_LOCK;
   f = t->fired;
@@ -2376,6 +2433,7 @@ POSFLAG_t posFlagCreate(void)
 
 void posFlagDestroy(POSFLAG_t flg)
 {
+  P_ASSERT("posFlagDestroy: flag valid", flg != NULL);
   posSemaDestroy((POSSEMA_t) flg);
 }
 
@@ -2388,6 +2446,11 @@ VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
   register EVENT_t  ev = (EVENT_t) flg;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posFlagSet: flag valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posFlagSet: flag allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK != 0
   if (flgnum >= (MVAR_BITS-1))
@@ -2409,6 +2472,12 @@ VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode)
   register UVAR_t  f;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posFlagGet: flag valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posFlagGet: flag allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
+  P_ASSERT("posFlagGet: not in an interrupt", posInInterrupt_g == 0);
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
 #if POSCFG_ARGCHECK > 1
   if ((mode != POSFLAG_MODE_GETSINGLE) && 
@@ -2454,6 +2523,12 @@ VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
   register UVAR_t  f;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posFlagWait: flag valid", ev != NULL);
+#if POSCFG_ARGCHECK > 1
+  P_ASSERT("posFlagWait: flag allocated",
+           ev->e.magic == POSMAGIC_EVENTU);
+#endif
+  P_ASSERT("posFlagWait: not in an interrupt", posInInterrupt_g == 0);
   POS_ARGCHECK_RET(ev, ev->e.magic, POSMAGIC_EVENTU, -E_ARG); 
   POS_SCHED_LOCK;
 
@@ -2514,6 +2589,7 @@ void posSoftInt(UVAR_t intno, UVAR_t param)
   UVAR_t next;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posSoftInt: interrupt number", intno < POSCFG_SOFTINTERRUPTS);
   if (intno < POSCFG_SOFTINTERRUPTS)
   {
     POS_IRQ_DISABLE_ALL;
@@ -2536,6 +2612,8 @@ VAR_t posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler)
 {
   POS_LOCKFLAGS;
 
+  P_ASSERT("posSoftIntSetHandler: interrupt number",
+           intno < POSCFG_SOFTINTERRUPTS);
   if (intno >= POSCFG_SOFTINTERRUPTS)
     return -E_ARG;
   POS_SCHED_LOCK;
@@ -2557,6 +2635,8 @@ VAR_t posSoftIntDelHandler(UVAR_t intno)
 {
   POS_LOCKFLAGS;
 
+  P_ASSERT("posSoftIntDelHandler: interrupt number",
+           intno < POSCFG_SOFTINTERRUPTS);
   if (intno >= POSCFG_SOFTINTERRUPTS)
     return -E_ARG;
   POS_SCHED_LOCK;
@@ -2581,6 +2661,7 @@ void posAtomicSet(POSATOMIC_t *var, INT_t value)
 {
   POS_LOCKFLAGS;
 
+  P_ASSERT("posAtomicSet: variable pointer", var != NULL);
   if (var != NULL)
   {
     POS_SCHED_LOCK;
@@ -2596,6 +2677,7 @@ INT_t posAtomicGet(POSATOMIC_t *var)
   INT_t value;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posAtomicGet: variable pointer", var != NULL);
   if (var == NULL)
     return 0;
 
@@ -2612,6 +2694,7 @@ INT_t posAtomicAdd(POSATOMIC_t *var, INT_t value)
   INT_t lastval;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posAtomicAdd: variable pointer", var != NULL);
   if (var == NULL)
     return 0;
 
@@ -2629,6 +2712,7 @@ INT_t posAtomicSub(POSATOMIC_t *var, INT_t value)
   INT_t lastval;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posAtomicSub: variable pointer", var != NULL);
   if (var == NULL)
     return 0;
 
@@ -2653,6 +2737,11 @@ void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
 {
   register POSLIST_t *next, *prev;
   POS_LOCKFLAGS;
+
+  P_ASSERT("posListAdd: list valid", listhead != NULL);
+  P_ASSERT("posListAdd: position types",
+           (pos == POSLIST_HEAD) || (pos == POSLIST_TAIL));
+  P_ASSERT("posListAdd: new element valid", new != NULL);
 
   POS_SCHED_LOCK;
   if (pos == POSLIST_HEAD)
@@ -2695,6 +2784,11 @@ POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
   register VAR_t status;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posListGet: list valid", listhead != NULL);
+  P_ASSERT("posListGet: position types",
+           (pos == POSLIST_HEAD) || (pos == POSLIST_TAIL));
+  P_ASSERT("posListGet: not in an interrupt", posInInterrupt_g == 0);
+
   POS_SCHED_LOCK;
   for (;;)
   {  
@@ -2724,6 +2818,7 @@ POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
       {
         POS_SCHED_UNLOCK;
         listhead->sema = posSemaCreate(0);
+        P_ASSERT("posListGet: semaphore created", listhead->sema != NULL);
         if (listhead->sema == NULL)
           return NULL;
         POS_SETEVENTNAME(listhead->sema, "listSem");
@@ -2765,13 +2860,16 @@ POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
 void posListRemove(POSLIST_t *listelem)
 {
   POS_LOCKFLAGS;
+
+  P_ASSERT("posListRemove: list element valid", listelem != NULL);
   POS_SCHED_LOCK;
   if (listelem != NULL)
   {
-    pos_listRemove(listelem);
 #if POSCFG_FEATURE_LISTLEN != 0
+    P_ASSERT("posListRemove: element is on a list", listelem->head != NULL);
     listelem->head->length--;
 #endif
+    pos_listRemove(listelem);
   }
   POS_SCHED_UNLOCK;
 }
@@ -2785,6 +2883,11 @@ void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
 {
   register POSLIST_t *elem;
   POS_LOCKFLAGS;
+
+  P_ASSERT("posListJoin: baselist valid", baselisthead != NULL);
+  P_ASSERT("posListJoin: joinlist valid", joinlisthead != NULL);
+  P_ASSERT("posListJoin: position types",
+           (pos == POSLIST_HEAD) || (pos == POSLIST_TAIL));
 
   POS_SCHED_LOCK;
   if (POSLIST_IS_EMPTY(joinlisthead))
@@ -2839,6 +2942,8 @@ UINT_t posListLen(POSLISTHEAD_t *listhead)
   UINT_t len;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posListLen: list valid", listhead != NULL);
+
   if (listhead == NULL)
     return 0;
 
@@ -2873,6 +2978,7 @@ void posListTerm(POSLISTHEAD_t *listhead)
   POSSEMA_t sema;
   POS_LOCKFLAGS;
 
+  P_ASSERT("posListTerm: list valid", listhead != NULL);
   if (listhead != NULL)
   {
     POS_SCHED_LOCK;
@@ -2919,8 +3025,8 @@ POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc)
  *-------------------------------------------------------------------------*/
 
 #if POSCFG_TASKSTACKTYPE == 0
-void posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-             void *stackFirstTask, void *stackIdleTask)
+void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
+              void *stackFirstTask, void *stackIdleTask)
 #elif POSCFG_TASKSTACKTYPE == 1
 void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
               UINT_t taskStackSize, UINT_t idleStackSize)

@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.19 2005/02/01 21:09:57 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.20 2005/02/07 22:03:14 dkuschel Exp $
  *
  */
 
@@ -245,8 +245,8 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0093
-#define POS_VER_S           "0.9.3"
+#define POS_VER_N           0x0094
+#define POS_VER_S           "0.9.4"
 #define POS_COPYRIGHT       "(c) 2004-2005, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
@@ -2756,6 +2756,22 @@ POSEXTERN void posListTerm(POSLISTHEAD_t *listhead);
  * ::POS_SETTASKNAME and ::POS_SETEVENTNAME.
  * @{
  */
+
+
+#if (DOX!=0) || defined(HAVE_PLATFORM_ASSERT)
+/** @brief pico]OS assertion macro.
+ *
+ * For testing and debugging you should enable pico]OS internal assertions.
+ * To do so, you must set the define HAVE_PLATFORM_ASSERT in your port.h
+ * -file and your platform port must provide this function:  void
+ * p_pos_assert(const char* text, const char *filename, int linenumber).
+ * The function gets called every time pico]OS has failed an assertion.
+ */
+#define P_ASSERT(text,x)  if (!(x)) p_pos_assert(text, __FILE__, __LINE__)
+#else
+#define P_ASSERT(text,x)  do { } while(0)
+#endif
+
 #if (DOX!=0) || defined(POS_DEBUGHELP)
 
 /** @brief  Task states
