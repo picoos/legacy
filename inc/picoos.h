@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.12 2004/04/18 18:02:29 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.13 2004/06/16 05:47:51 dkuschel Exp $
  *
  */
 
@@ -67,6 +67,7 @@
  *  - Multitasking able console I/O
  *  - Multitasking able dynamic memory management
  *  - Standardized API for easier task creation
+ *  - Named tasks, semaphores, mutexes and timer
  *  - CPU usage measurement
  *
  * <br><br>
@@ -117,7 +118,7 @@
  * <br><br>
  * @section license License
  *
- *  Copyright (c) 2004, Dennis Kuschel. <br>
+ *  Copyright (c) 2004-2005, Dennis Kuschel. <br>
  *  All rights reserved. <br>
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -156,7 +157,7 @@
  * mail: dennis_k@freenet.de <br>
  * web:  http://picoos.sourceforge.net <br>
  *
- * (C) 2004 Dennis Kuschel
+ * (C) 2004-2005 Dennis Kuschel
  */
 
 /** @defgroup intro     Introduction */
@@ -187,6 +188,7 @@
  *      - Multitasking able console I/O
  *      - Multitasking able dynamic memory management
  *      - Standardized API for easier task creation
+ *      - Named tasks, semaphores, mutexes and timer
  *      - CPU usage measurement
  *      - etc. (more will follow)
  *
@@ -209,9 +211,9 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0081
-#define POS_VER_S           "0.8.1"
-#define POS_COPYRIGHT       "(c) 2004, Dennis Kuschel"
+#define POS_VER_N           0x0090
+#define POS_VER_S           "0.9.0"
+#define POS_COPYRIGHT       "(c) 2004-2005, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
 #ifndef NULL
@@ -566,10 +568,12 @@
  *  SOME DEFINITIONS AND MACROS
  *-------------------------------------------------------------------------*/
 
-#ifndef _POSCORE_C
-#define POSEXTERN extern
-#else
+#ifdef _POSCORE_C
 #define POSEXTERN
+#define POSFROMEXT  extern
+#else
+#define POSEXTERN   extern
+#define POSFROMEXT
 #endif
 
 #if POSCFG_ROUNDROBIN == 0
@@ -627,6 +631,12 @@
 
 /** Error Code: The operation is forbidden at the current operation stage. */
 #define E_FORB      4
+
+/** Error Code: For query operations: End of query (no more elements) */
+#define E_NOMORE    5
+
+/** Error Code: The query operation was not successfull */
+#define E_NOTFOUND  6
 
 /** @} */
 
@@ -884,7 +894,7 @@ POSEXTERN  UVAR_t    posRunning_g = 0;
 VAR_t   errno;
 #endif
 #if POSCFG_FEATURE_ERRNO != 0
-VAR_t*  _errno_p(void);
+POSEXTERN VAR_t* _errno_p(void);
 #define errno (*_errno_p())
 #endif
 
@@ -1034,7 +1044,7 @@ VAR_t*  _errno_p(void);
 #define POS_FINDBIT(bf)          FINDBIT(bf, 0)
 #define POS_FINDBIT_EX(bf, ofs)  FINDBIT(bf, 0)
 #else  /* FINDBIT */
-UVAR_t p_pos_findbit(const UVAR_t bitfield);  /* arch_c.c */
+POSFROMEXT UVAR_t p_pos_findbit(const UVAR_t bitfield);  /* arch_c.c */
 #define POS_FINDBIT(bf)          p_pos_findbit(bf)
 #define POS_FINDBIT_EX(bf, ofs)  p_pos_findbit(bf)
 #endif /* FINDBIT */
@@ -1043,7 +1053,7 @@ UVAR_t p_pos_findbit(const UVAR_t bitfield);  /* arch_c.c */
 #define POS_FINDBIT(bf)          FINDBIT(bf, 0)
 #define POS_FINDBIT_EX(bf, ofs)  FINDBIT(bf, ofs)
 #else  /* FINDBIT */
-UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset);  /* arch_c.c */
+POSFROMEXT UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset);  /* arch_c.c */
 #define POS_FINDBIT(bf)          p_pos_findbit(bf, 0)
 #define POS_FINDBIT_EX(bf, ofs)  p_pos_findbit(bf, ofs)
 #endif /* FINDBIT */
@@ -1059,7 +1069,7 @@ UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset);  /* arch_c.c */
  * @note    ::POSCFG_ROUNDROBIN <b>must be defined to 0</b>
  *          to have this format of the function compiled in.
  */
-UVAR_t      p_pos_findbit(const UVAR_t bitfield);  
+POSFROMEXT UVAR_t p_pos_findbit(const UVAR_t bitfield);  
 
 /**
  * Bit finding function.
@@ -1071,7 +1081,7 @@ UVAR_t      p_pos_findbit(const UVAR_t bitfield);
  * @note    ::POSCFG_ROUNDROBIN <b>must be defined to 1</b>
  *          to have this format of the function compiled in.
  */
-UVAR_t      p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset); 
+POSFROMEXT UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset); 
 #endif
 
 #if (DOX!=0) || (POSCFG_CALLINITARCH != 0)
@@ -1086,7 +1096,7 @@ UVAR_t      p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset);
  *          A timer interrupt should be initialized in the funcion
  *          ::p_pos_startFirstContext.
  */
-void        p_pos_initArch(void);
+POSFROMEXT void p_pos_initArch(void);
 #endif
 
 #if (DOX!=0) || (POSCFG_TASKSTACKTYPE == 0)
@@ -1109,9 +1119,9 @@ void        p_pos_initArch(void);
  *          The processor interrupts are disabled when this function
  *          is called.
  */
-void        p_pos_initTask(POSTASK_t task, void *stackstart,
-                           POSTASKFUNC_t funcptr,
-                           void *funcarg);  /* arch_c.c */
+POSFROMEXT void p_pos_initTask(POSTASK_t task, void *stackstart,
+                               POSTASKFUNC_t funcptr,
+                               void *funcarg);  /* arch_c.c */
 #endif
 #if (DOX!=0) || (POSCFG_TASKSTACKTYPE == 1)
 /**
@@ -1138,9 +1148,9 @@ void        p_pos_initTask(POSTASK_t task, void *stackstart,
  *          is called.
  * @sa      p_pos_freeStack
  */
-VAR_t       p_pos_initTask(POSTASK_t task, UINT_t stacksize,
-                           POSTASKFUNC_t funcptr,
-                           void *funcarg);  /* arch_c.c */
+POSFROMEXT VAR_t p_pos_initTask(POSTASK_t task, UINT_t stacksize,
+                                POSTASKFUNC_t funcptr,
+                                void *funcarg);  /* arch_c.c */
 /**
  * Stack free function.
  * This function is called by the operating system to
@@ -1159,7 +1169,7 @@ VAR_t       p_pos_initTask(POSTASK_t task, UINT_t stacksize,
  *          the interrupts are enabled again.
  * @sa      p_pos_initTask
  */
-void        p_pos_freeStack(POSTASK_t task);/* arch_c.c */
+POSFROMEXT void p_pos_freeStack(POSTASK_t task);/* arch_c.c */
 #endif
 
 #if (DOX!=0) || (POSCFG_TASKSTACKTYPE == 2)
@@ -1186,8 +1196,8 @@ void        p_pos_freeStack(POSTASK_t task);/* arch_c.c */
  *          is called.
  * @sa      p_pos_freeStack
  */
-VAR_t       p_pos_initTask(POSTASK_t task, POSTASKFUNC_t funcptr,
-                           void *funcarg);  /* arch_c.c */
+POSFROMEXT VAR_t p_pos_initTask(POSTASK_t task, POSTASKFUNC_t funcptr,
+                                void *funcarg);  /* arch_c.c */
 
 /**
  * Stack free function.
@@ -1205,7 +1215,7 @@ VAR_t       p_pos_initTask(POSTASK_t task, POSTASKFUNC_t funcptr,
  *          is called.
  * @sa      p_pos_initTask
  */
-void        p_pos_freeStack(POSTASK_t task);/* arch_c.c */
+POSFROMEXT void p_pos_freeStack(POSTASK_t task);/* arch_c.c */
 #endif
 
 /**
@@ -1221,7 +1231,7 @@ void        p_pos_freeStack(POSTASK_t task);/* arch_c.c */
  *          is called.
  * @sa      p_pos_softContextSwitch, p_pos_intContextSwitch
  */
-void        p_pos_startFirstContext(void);   /* arch_c.c */
+POSFROMEXT void p_pos_startFirstContext(void);   /* arch_c.c */
 
 /**
  * Context switch function.
@@ -1237,7 +1247,7 @@ void        p_pos_startFirstContext(void);   /* arch_c.c */
  *          is called.
  * @sa      p_pos_intContextSwitch, p_pos_startFirstContext
  */
-void        p_pos_softContextSwitch(void);   /* arch_c.c */
+POSFROMEXT void p_pos_softContextSwitch(void);   /* arch_c.c */
 
 /**
  * Context switch function.
@@ -1252,8 +1262,7 @@ void        p_pos_softContextSwitch(void);   /* arch_c.c */
  *          is called.
  * @sa      p_pos_softContextSwitch, p_pos_startFirstContext
  */
-void        p_pos_intContextSwitch(void);    /* arch_c.c */
-
+POSFROMEXT void p_pos_intContextSwitch(void);    /* arch_c.c */
 
 /**
  * Interrupt control function.
@@ -1263,7 +1272,7 @@ void        p_pos_intContextSwitch(void);    /* arch_c.c */
  * functions can be called from within the ISR.
  * @sa      c_pos_intExit, c_pos_timerInterrupt
  */
-void        c_pos_intEnter(void);            /* picoos.c */
+POSEXTERN void c_pos_intEnter(void);            /* picoos.c */
 
 /**
  * Interrupt control function.
@@ -1273,7 +1282,7 @@ void        c_pos_intEnter(void);            /* picoos.c */
  * from within the ISR.
  * @sa      c_pos_intEnter, c_pos_timerInterrupt
  */
-void        c_pos_intExit(void);             /* picoos.c */
+POSEXTERN void c_pos_intExit(void);             /* picoos.c */
 
 /**
  * Timer interrupt control function.
@@ -1307,7 +1316,7 @@ void        c_pos_intExit(void);             /* picoos.c */
  *          the timer interrupt in the function ::p_pos_startFirstContext.
  * @sa      c_pos_intEnter, c_pos_intExit
  */
-void        c_pos_timerInterrupt(void);      /* picoos.c */
+POSEXTERN void c_pos_timerInterrupt(void);      /* picoos.c */
 
 /** @} */
 
@@ -1331,7 +1340,7 @@ void        c_pos_timerInterrupt(void);      /* picoos.c */
  *          to have this function compiled in.
  * @sa      posTaskSleep
  */
-void        posTaskYield(void);
+POSEXTERN void posTaskYield(void);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_SLEEP != 0)
@@ -1349,7 +1358,7 @@ void        posTaskYield(void);
  *          Sleeping a very short time is inaccurate.
  * @sa      posTaskYield, HZ, MS
  */
-void        posTaskSleep(UINT_t ticks);
+POSEXTERN void posTaskSleep(UINT_t ticks);
 #endif
 
 #if (DOX!=0) || (POSCFG_TASKSTACKTYPE == 0)
@@ -1369,8 +1378,8 @@ void        posTaskSleep(UINT_t ticks);
  *          to have this format of the function compiled in.
  * @sa      posTaskExit
  */
-POSTASK_t   posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                          VAR_t priority, void *stackstart);
+POSEXTERN POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                                  VAR_t priority, void *stackstart);
 
 /**
  * Operating System Initialization.
@@ -1387,8 +1396,8 @@ POSTASK_t   posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 0</b>
  *          to have this format of the function compiled in.
  */
-void        posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-                    void *stackFirstTask, void *stackIdleTask);
+POSEXTERN void posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
+                       void *stackFirstTask, void *stackIdleTask);
 #endif
 #if (DOX!=0) || (POSCFG_TASKSTACKTYPE == 1)
 /**
@@ -1410,8 +1419,8 @@ void        posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
  *          to have this format of the function compiled in.
  * @sa      posTaskExit
  */
-POSTASK_t   posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                          VAR_t priority, UINT_t stacksize);
+POSEXTERN POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                                  VAR_t priority, UINT_t stacksize);
 
 /**
  * Operating System Initialization.
@@ -1428,8 +1437,8 @@ POSTASK_t   posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 1</b>
  *          to have this format of the function compiled in.
  */
-void        posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-                    UINT_t taskStackSize, UINT_t idleStackSize);
+POSEXTERN void posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
+                       UINT_t taskStackSize, UINT_t idleStackSize);
 #endif
 #if (DOX!=0) || (POSCFG_TASKSTACKTYPE == 2)
 /**
@@ -1448,8 +1457,8 @@ void        posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
  *          to have this format of the function compiled in.
  * @sa      posTaskExit
  */
-POSTASK_t   posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                          VAR_t priority);
+POSEXTERN POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                                  VAR_t priority);
 
 /**
  * Operating System Initialization.
@@ -1464,7 +1473,7 @@ POSTASK_t   posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
  * @note    ::POSCFG_TASKSTACKTYPE <b>must be defined to 2</b>
  *          to have this format of the function compiled in.
  */
-void        posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority);
+POSEXTERN void posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority);
 
 #endif
 
@@ -1477,7 +1486,7 @@ void        posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority);
  *          to have this function compiled in.
  * @sa      posTaskCreate
  */
-void        posTaskExit(void);
+POSEXTERN void posTaskExit(void);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_GETTASK != 0)
@@ -1489,7 +1498,7 @@ void        posTaskExit(void);
  *          to have this function compiled in.
  * @sa      posTaskCreate, posTaskSetPriority
  */
-POSTASK_t   posTaskGetCurrent(void);
+POSEXTERN POSTASK_t posTaskGetCurrent(void);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_TASKUNUSED != 0)
@@ -1506,7 +1515,7 @@ POSTASK_t   posTaskGetCurrent(void);
  *          to have this function compiled in.
  * @sa      posTaskCreate, posTaskExit
  */
-VAR_t       posTaskUnused(POSTASK_t taskhandle);
+POSEXTERN VAR_t posTaskUnused(POSTASK_t taskhandle);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_SETPRIORITY != 0)
@@ -1523,7 +1532,7 @@ VAR_t       posTaskUnused(POSTASK_t taskhandle);
  *          to have this function compiled in.
  * @sa      posTaskGetPriority, posTaskGetCurrent, posTaskCreate
  */
-VAR_t       posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority);
+POSEXTERN VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_GETPRIORITY != 0)
@@ -1536,7 +1545,7 @@ VAR_t       posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority);
  *          to have this function compiled in.
  * @sa      posTaskSetPriority, posTaskGetCurrent, posTaskCreate
  */
-VAR_t       posTaskGetPriority(POSTASK_t taskhandle);
+POSEXTERN VAR_t posTaskGetPriority(POSTASK_t taskhandle);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_INHIBITSCHED != 0)
@@ -1551,7 +1560,7 @@ VAR_t       posTaskGetPriority(POSTASK_t taskhandle);
  *          to have this function compiled in.
  * @sa      posTaskSchedUnlock
  */
-void        posTaskSchedLock(void);
+POSEXTERN void posTaskSchedLock(void);
 
 /**
  * Task function.
@@ -1562,7 +1571,7 @@ void        posTaskSchedLock(void);
  *          to have this function compiled in.
  * @sa      posTaskSchedLock
  */
-void        posTaskSchedUnlock(void);
+POSEXTERN void posTaskSchedUnlock(void);
 #endif
 
 #if (DOX!=0) || (POSCFG_TASKCB_USERSPACE > 0)
@@ -1574,7 +1583,7 @@ void        posTaskSchedUnlock(void);
  *          is also used to set the size of the user memory (in bytes).
  * @return  pointer to user memory space.
  */
-void*       posTaskGetUserspace(void);
+POSEXTERN void* posTaskGetUserspace(void);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_IDLETASKHOOK != 0)
@@ -1596,7 +1605,7 @@ void*       posTaskGetUserspace(void);
  * @note    ::POSCFG_FEATURE_IDLETASKHOOK must be defined to 1 
  *          to have this function compiled in.
  */
-POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
+POSEXTERN POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
 #endif
 
 /** @} */
@@ -1643,7 +1652,7 @@ POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc);
  *          to have semaphore support compiled in.
  * @sa      posSemaDestroy, posSemaGet, posSemaWait, posSemaSignal
  */
-POSSEMA_t   posSemaCreate(INT_t initcount);
+POSEXTERN POSSEMA_t posSemaCreate(INT_t initcount);
 
 #if (DOX!=0) || (SYS_FEATURE_EVENTFREE != 0)
 /**
@@ -1656,7 +1665,7 @@ POSSEMA_t   posSemaCreate(INT_t initcount);
  *          to have this function compiled in.
  * @sa      posSemaCreate
  */
-void        posSemaDestroy(POSSEMA_t sema);
+POSEXTERN void posSemaDestroy(POSSEMA_t sema);
 #endif
 
 /**
@@ -1672,10 +1681,10 @@ void        posSemaDestroy(POSSEMA_t sema);
  * @sa      posSemaWait, posSemaSignal, posSemaCreate
  */
 #if (DOX!=0) || (POSCFG_SMALLCODE == 0) || (POSCFG_FEATURE_SEMAWAIT == 0)
-VAR_t       posSemaGet(POSSEMA_t sema);
+POSEXTERN VAR_t posSemaGet(POSSEMA_t sema);
 #else
 /* this define is for small code and it saves stack memory */
-#define     posSemaGet(sema)  posSemaWait(sema, INFINITE)
+#define  posSemaGet(sema)  posSemaWait(sema, INFINITE)
 #endif
 
 /**
@@ -1689,7 +1698,7 @@ VAR_t       posSemaGet(POSSEMA_t sema);
  *          to have semaphore support compiled in.
  * @sa      posSemaGet, posSemaWait, posSemaCreate
  */
-VAR_t       posSemaSignal(POSSEMA_t sema);
+POSEXTERN VAR_t posSemaSignal(POSSEMA_t sema);
 
 #if (DOX!=0) || (POSCFG_FEATURE_SEMAWAIT != 0)
 /**
@@ -1712,7 +1721,7 @@ VAR_t       posSemaSignal(POSSEMA_t sema);
  *          to have this function compiled in.
  * @sa      posSemaGet, posSemaSignal, posSemaCreate, HZ, MS
  */
-VAR_t       posSemaWait(POSSEMA_t sema, UINT_t timeoutticks);
+POSEXTERN VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks);
 #endif
 
 #endif /* SYS_FEATURE_EVENTS */
@@ -1742,7 +1751,7 @@ VAR_t       posSemaWait(POSSEMA_t sema, UINT_t timeoutticks);
  *          to have mutex support compiled in.
  * @sa      posMutexDestroy, posMutexLock, posMutexTryLock, posMutexUnlock
  */
-POSMUTEX_t  posMutexCreate(void);
+POSEXTERN POSMUTEX_t posMutexCreate(void);
 
 #if (DOX!=0) || (POSCFG_FEATURE_MUTEXDESTROY != 0)
 /**
@@ -1755,7 +1764,7 @@ POSMUTEX_t  posMutexCreate(void);
  *          to have this function compiled in.
  * @sa      posMutexCreate
  */
-void        posMutexDestroy(POSMUTEX_t mutex);
+POSEXTERN void posMutexDestroy(POSMUTEX_t mutex);
 #endif
 
 #if (DOX!=0) || (POSCFG_FEATURE_MUTEXTRYLOCK != 0)
@@ -1774,7 +1783,7 @@ void        posMutexDestroy(POSMUTEX_t mutex);
  *          to have this function compiled in.
  * @sa      posMutexLock, posMutexUnlock, posMutexCreate
  */
-VAR_t       posMutexTryLock(POSMUTEX_t mutex);
+POSEXTERN VAR_t posMutexTryLock(POSMUTEX_t mutex);
 #endif
 
 /**
@@ -1789,7 +1798,7 @@ VAR_t       posMutexTryLock(POSMUTEX_t mutex);
  *          to have mutex support compiled in.
  * @sa      posMutexTryLock, posMutexUnlock, posMutexCreate
  */
-VAR_t       posMutexLock(POSMUTEX_t mutex);
+POSEXTERN VAR_t posMutexLock(POSMUTEX_t mutex);
 
 /**
  * Mutex function.
@@ -1801,7 +1810,7 @@ VAR_t       posMutexLock(POSMUTEX_t mutex);
  *          to have mutex support compiled in.
  * @sa      posMutexLock, posMutexTryLock, posMutexCreate
  */
-VAR_t       posMutexUnlock(POSMUTEX_t mutex);
+POSEXTERN VAR_t posMutexUnlock(POSMUTEX_t mutex);
 
 #endif /* POSCFG_FEATURE_MUTEXES */
 /** @} */
@@ -1845,7 +1854,7 @@ VAR_t       posMutexUnlock(POSMUTEX_t mutex);
  *          to have this function compiled in.
  * @sa      posMessageSend, posMessageGet, posMessageFree
  */
-void*       posMessageAlloc(void);
+POSEXTERN void* posMessageAlloc(void);
 
 /**
  * Message box function.
@@ -1859,7 +1868,7 @@ void*       posMessageAlloc(void);
  *          to have this function compiled in.
  * @sa      posMessageGet, posMessageSend, posMessageAlloc
  */
-void        posMessageFree(void *buf);
+POSEXTERN void posMessageFree(void *buf);
 #endif
 
 /**
@@ -1879,7 +1888,7 @@ void        posMessageFree(void *buf);
  *          to have message box support compiled in.
  * @sa      posMessageAlloc, posMessageGet
  */
-VAR_t       posMessageSend(void *buf, POSTASK_t taskhandle);
+POSEXTERN VAR_t posMessageSend(void *buf, POSTASK_t taskhandle);
 
 /**
  * Message box function. Gets a new message from the message box.
@@ -1894,7 +1903,7 @@ VAR_t       posMessageSend(void *buf, POSTASK_t taskhandle);
  *          posMessageWait, posMessageSend
  */
 #if (DOX!=0) || (POSCFG_SMALLCODE == 0) || (POSCFG_FEATURE_MSGWAIT == 0)
-void*       posMessageGet(void);
+POSEXTERN void* posMessageGet(void);
 #else
 /* this define is for small code and it saves stack memory */
 #define     posMessageGet()  posMessageWait(INFINITE)
@@ -1912,7 +1921,7 @@ void*       posMessageGet(void);
  *          to have message box support compiled in.
  * @sa      posMessageGet, posMessageWait
  */
-VAR_t       posMessageAvailable(void);
+POSEXTERN VAR_t posMessageAvailable(void);
 
 #if (DOX!=0) || (POSCFG_FEATURE_MSGWAIT != 0)
 /**
@@ -1937,7 +1946,7 @@ VAR_t       posMessageAvailable(void);
  * @sa      posMessageFree, posMessageGet, posMessageAvailable,
  *          posMessageSend, HZ, MS
  */
-void*       posMessageWait(UINT_t timeoutticks);
+POSEXTERN void* posMessageWait(UINT_t timeoutticks);
 #endif
 
 #endif  /* POSCFG_FEATURE_MSGBOXES */
@@ -1966,7 +1975,7 @@ void*       posMessageWait(UINT_t timeoutticks);
  *          to have flag support compiled in.
  * @sa      posFlagGet, posFlagSet, posFlagDestroy
  */
-POSFLAG_t   posFlagCreate(void);
+POSEXTERN POSFLAG_t posFlagCreate(void);
 
 #if (DOX!=0) || (POSCFG_FEATURE_FLAGDESTROY != 0)
 /**
@@ -1979,7 +1988,7 @@ POSFLAG_t   posFlagCreate(void);
  *          to have this function compiled in.
  * @sa      posFlagCreate
  */
-void        posFlagDestroy(POSFLAG_t flg);
+POSEXTERN void posFlagDestroy(POSFLAG_t flg);
 #endif
 
 /**
@@ -1994,7 +2003,7 @@ void        posFlagDestroy(POSFLAG_t flg);
  *          to have flag support compiled in.
  * @sa      posFlagCreate, posFlagGet, posFlagWait
  */
-VAR_t       posFlagSet(POSFLAG_t flg, UVAR_t flgnum);
+POSEXTERN VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum);
 
 /**
  * Flag function.
@@ -2010,7 +2019,7 @@ VAR_t       posFlagSet(POSFLAG_t flg, UVAR_t flgnum);
  *          to have flag support compiled in.
  * @sa      posFlagCreate, posFlagSet, posFlagWait
  */
-VAR_t       posFlagGet(POSFLAG_t flg, UVAR_t mode);
+POSEXTERN VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode);
 
 #if (DOX!=0) || (POSCFG_FEATURE_FLAGWAIT != 0)
 /**
@@ -2032,7 +2041,7 @@ VAR_t       posFlagGet(POSFLAG_t flg, UVAR_t mode);
  *          to have this function compiled in.
  * @sa      posFlagCreate, posFlagSet, posFlagGet, HZ, MS
  */
-VAR_t       posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
+POSEXTERN VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
 #endif
 
 #define POSFLAG_MODE_GETSINGLE   0
@@ -2081,7 +2090,7 @@ VAR_t       posFlagWait(POSFLAG_t flg, UINT_t timeoutticks);
 #if (DOX!=0) || (POSCFG_FEATURE_LARGEJIFFIES == 0)
 POSEXTERN  JIF_t  jiffies;
 #else
-JIF_t       posGetJiffies(void);
+POSEXTERN  JIF_t  posGetJiffies(void);
 #define jiffies  posGetJiffies()
 #endif
 
@@ -2110,7 +2119,7 @@ JIF_t       posGetJiffies(void);
  *          to have timer support compiled in.
  * @sa      posTimerSet, posTimerStart, posTimerDestroy
  */
-POSTIMER_t  posTimerCreate(void);
+POSEXTERN POSTIMER_t posTimerCreate(void);
 
 /**
  * Timer function.
@@ -2129,8 +2138,8 @@ POSTIMER_t  posTimerCreate(void);
  *          to have timer support compiled in.
  * @sa      posTimerCreate, posTimerStart
  */
-VAR_t       posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
-                        UINT_t waitticks, UINT_t periodticks);
+POSEXTERN VAR_t posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
+                            UINT_t waitticks, UINT_t periodticks);
 /**
  * Timer function.
  * Starts a timer. The timer will fire first time when the
@@ -2142,7 +2151,7 @@ VAR_t       posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
  *          to have timer support compiled in.
  * @sa      posTimerStop, posTimerFired
  */
-VAR_t       posTimerStart(POSTIMER_t tmr);
+POSEXTERN VAR_t posTimerStart(POSTIMER_t tmr);
 
 /**
  * Timer function.
@@ -2154,7 +2163,7 @@ VAR_t       posTimerStart(POSTIMER_t tmr);
  *          to have timer support compiled in.
  * @sa      posTimerStart, posTimerDestroy
  */
-VAR_t       posTimerStop(POSTIMER_t tmr);
+POSEXTERN VAR_t posTimerStop(POSTIMER_t tmr);
 
 #if (DOX!=0) || (POSCFG_FEATURE_TIMERDESTROY != 0)
 /**
@@ -2167,7 +2176,7 @@ VAR_t       posTimerStop(POSTIMER_t tmr);
  *          to have this function compiled in.
  * @sa      posTimerCreate
  */
-void        posTimerDestroy(POSTIMER_t tmr);
+POSEXTERN void posTimerDestroy(POSTIMER_t tmr);
 #endif
 #if (DOX!=0) || (POSCFG_FEATURE_TIMERFIRED != 0)
 /**
@@ -2182,7 +2191,7 @@ void        posTimerDestroy(POSTIMER_t tmr);
  *          to have this function compiled in.
  * @sa      posTimerCreate, posTimerSet, posTimerStart
  */
-VAR_t       posTimerFired(POSTIMER_t tmr);
+POSEXTERN VAR_t posTimerFired(POSTIMER_t tmr);
 #endif
 
 #endif  /* POSCFG_FEATURE_TIMER */
@@ -2237,7 +2246,7 @@ VAR_t       posTimerFired(POSTIMER_t tmr);
  *          interrupt handler.
  * @sa      posSoftIntSetHandler, posSoftIntDelHandler, POSCFG_SOFTINTQUEUELEN
  */
-void        posSoftInt(UVAR_t intno, UVAR_t param);
+POSEXTERN void posSoftInt(UVAR_t intno, UVAR_t param);
 
 /**
  * Software Interrupt Function.
@@ -2252,7 +2261,7 @@ void        posSoftInt(UVAR_t intno, UVAR_t param);
  * @return  zero on success.
  * @sa      posSoftIntDelHandler, posSoftInt
  */
-VAR_t       posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler);
+POSEXTERN VAR_t posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler);
 
 #if (DOX!=0) || (POSCFG_FEATURE_SOFTINTDEL != 0)
 /**
@@ -2268,7 +2277,7 @@ VAR_t       posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler);
  * @return  zero on success.
  * @sa      posSoftIntDelHandler, posSoftInt
  */
-VAR_t       posSoftIntDelHandler(UVAR_t intno);
+POSEXTERN VAR_t posSoftIntDelHandler(UVAR_t intno);
 #endif
 
 #endif  /* POSCFG_FEATURE_SOFTINTS */
@@ -2302,7 +2311,7 @@ VAR_t       posSoftIntDelHandler(UVAR_t intno);
  *          to have atomic variable support compiled in.
  * @sa      posAtomicGet, posAtomicAdd, posAtomicSub
  */
-void        posAtomicSet(POSATOMIC_t *var, INT_t value);
+POSEXTERN void posAtomicSet(POSATOMIC_t *var, INT_t value);
 
 /**
  * Atomic Variable Function.
@@ -2314,7 +2323,7 @@ void        posAtomicSet(POSATOMIC_t *var, INT_t value);
  *          to have atomic variable support compiled in.
  * @sa      posAtomicSet, posAtomicAdd, posAtomicSub
  */
-INT_t       posAtomicGet(POSATOMIC_t *var);
+POSEXTERN INT_t posAtomicGet(POSATOMIC_t *var);
 
 /**
  * Atomic Variable Function.
@@ -2326,7 +2335,7 @@ INT_t       posAtomicGet(POSATOMIC_t *var);
  *          to have atomic variable support compiled in.
  * @sa      posAtomicSet, posAtomicGet, posAtomicSub
  */
-INT_t       posAtomicAdd(POSATOMIC_t *var, INT_t value);
+POSEXTERN INT_t posAtomicAdd(POSATOMIC_t *var, INT_t value);
 
 /**
  * Atomic Variable Function.
@@ -2338,7 +2347,7 @@ INT_t       posAtomicAdd(POSATOMIC_t *var, INT_t value);
  *          to have atomic variable support compiled in.
  * @sa      posAtomicSet, posAtomicGet, posAtomicAdd
  */
-INT_t       posAtomicSub(POSATOMIC_t *var, INT_t value);
+POSEXTERN INT_t posAtomicSub(POSATOMIC_t *var, INT_t value);
 
 #endif /* POSCFG_FEATURE_ATOMICVAR */
 /** @} */
@@ -2380,7 +2389,7 @@ INT_t       posAtomicSub(POSATOMIC_t *var, INT_t value);
  *          can be added to the list.
  * @sa      posListGet, posListLen, posListRemove, posListJoin, posListInit
  */
-void        posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new);
+POSEXTERN void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new);
 
 /**
  * List Function.
@@ -2413,8 +2422,8 @@ void        posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new);
  *          of this function is undefined.
  * @sa      posListAdd, posListLen, posListRemove, posListJoin, posListInit
  */
-POSLIST_t*  posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
-                       UINT_t timeout);
+POSEXTERN POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
+                                UINT_t timeout);
 
 /**
  * List Function.
@@ -2424,7 +2433,7 @@ POSLIST_t*  posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
  *          to have list support compiled in.
  * @sa      posListAdd, posListGet, posListLen, posListJoin, posListInit
  */
-void        posListRemove(POSLIST_t *listelem);
+POSEXTERN void posListRemove(POSLIST_t *listelem);
 
 /**
  * List Function.
@@ -2445,8 +2454,8 @@ void        posListRemove(POSLIST_t *listelem);
  *          to have this function compiled in.
  * @sa      posListAdd, posListGet, posListJoin, posListInit
  */
-void        posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
-                        POSLISTHEAD_t *joinlisthead);
+POSEXTERN void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
+                           POSLISTHEAD_t *joinlisthead);
 
 /**
  * List Function.
@@ -2457,7 +2466,7 @@ void        posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
  *          to have list support compiled in.
  * @sa      posListAdd, posListGet, posListRemove
  */
-UINT_t      posListLen(POSLISTHEAD_t *listhead);
+POSEXTERN UINT_t posListLen(POSLISTHEAD_t *listhead);
 
 /**
  * List Function.
@@ -2470,7 +2479,7 @@ UINT_t      posListLen(POSLISTHEAD_t *listhead);
  *          should be called to free operating system resources.
  * @sa      posListTerm, posListAdd, posListGet
  */
-void        posListInit(POSLISTHEAD_t *listhead);
+POSEXTERN void posListInit(POSLISTHEAD_t *listhead);
 
 /**
  * List Function.
@@ -2479,7 +2488,7 @@ void        posListInit(POSLISTHEAD_t *listhead);
  * @note    ::POSCFG_FEATURE_LISTS must be defined to 1 
  *          to have list support compiled in.
  */
-void        posListTerm(POSLISTHEAD_t *listhead);
+POSEXTERN void posListTerm(POSLISTHEAD_t *listhead);
 
 #if (DOX!=0)
 /**
@@ -2659,8 +2668,8 @@ POSEXTERN UVAR_t posShift1lTab_g[8];
 
 /* defaults for hooks */
 
-#ifndef POSCFG_STKFREE_HOOK
-#define POSCFG_STKFREE_HOOK  0
+#ifndef POSCFG_TASKEXIT_HOOK
+#define POSCFG_TASKEXIT_HOOK  0
 #endif
 
 /*-------------------------------------------------------------------------*/
@@ -2671,8 +2680,12 @@ POSEXTERN UVAR_t posShift1lTab_g[8];
 #define NOS_TASKDATA
 #endif
 
-#if POSCFG_STKFREE_HOOK != 0
-typedef void (*POSSTKFREEFUNC_t)(POSTASK_t task);
+#if POSCFG_TASKEXIT_HOOK != 0
+typedef enum {
+ texh_exitcalled,
+ texh_freestackmem
+} texhookevent_t;
+typedef void (*POSTASKEXITFUNC_t)(POSTASK_t task, texhookevent_t event);
 #endif
 
 struct POSTASK {
@@ -2682,8 +2695,8 @@ struct POSTASK {
     UVAR_t      usrspace[(POSCFG_TASKCB_USERSPACE + POSCFG_ALIGNMENT +
                          sizeof(UVAR_t)-2) / sizeof(UVAR_t)];
 #endif
-#if POSCFG_STKFREE_HOOK != 0
-    POSSTKFREEFUNC_t  stkfree;
+#if POSCFG_TASKEXIT_HOOK != 0
+    POSTASKEXITFUNC_t  exithook;
 #endif
 #if DOX==0
 #if POSCFG_ARGCHECK > 1
