@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.1.1.1 2004/02/16 20:11:13 smocz Exp $
+ * CVS-ID $Id: port.h,v 1.2 2004/02/21 14:40:55 dkuschel Exp $
  */
 
 
@@ -156,13 +156,27 @@
  */
 #define POSCFG_DYNAMIC_MEMORY    0
 
+/** Dynamic memory management.
+ * If this define is set to 1, the system will refill its volume of
+ * system structures for events, timers and messages when the user
+ * requests more structures than the amount that was preallocated
+ * (see defines ::POSCFG_MAX_EVENTS, ::POSCFG_MAX_MESSAGES and
+ * ::POSCFG_MAX_TIMER ). To be able to use this feature, you must also
+ * set the define ::POSCFG_DYNAMIC_MEMORY to 1. But attention:
+ * The define ::POS_MEM_ALLOC must be set to a memory allocation function
+ * <b>that is thread save</b>. Please set the define ::POS_MEM_ALLOC to
+ * ::nosMemAlloc to use the nano layer memory allocator.
+ */
+#define POSCFG_DYNAMIC_REFILL    0
+
 /** Define optional memory allocation function.
  * If ::POSCFG_DYNAMIC_MEMORY is set to 1, this definition must be set
  * to a memory allocation function such as "malloc". The memory allocation
- * function may not be reentrant, since the multitasking system is not
- * yet started when the function is called.
+ * function may not be reentrant when ::POSCFG_DYNAMIC_REFILL is set to 0,
+ * since the multitasking system is not yet started when the function is
+ * called.
  */
-#define POS_MEM_ALLOC(bytes)     malloc(bytes)
+#define POS_MEM_ALLOC(bytes)     nosMemAlloc(bytes)
 
 /** @} */
 
