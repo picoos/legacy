@@ -1,4 +1,16 @@
 
+Version 0.9.1:
+  o bug fix: jiffies, posCurrentTask_g, posNextTask_g,
+    posInInterrupt_g, posRunning_g are now marked as "volatile"
+  o bug fix: file compile.mak, DOS include path is now correctly converted
+  o bug fix: in posListAdd() was the new list head not set (new->head=listhead)
+  o fix: errno variable fixed for some external runtime library header files.
+  o directory structure changed: Now there is a new subdirectory in the port
+    directories. All config files have been moved into the subdir "defaults".
+  o MS Windows 32Bit port added. Now you are able to develope, test and
+    debug your pico]OS programs with the MS Visual Studio IDE (for example).
+
+
 Version 0.9.0:
   o  nono layer: registry added, now support for named tasks/semas/timer etc.
   o  faster initialization of the CPU usage measurement on fast CPUs
