@@ -1,5 +1,3 @@
-# Hey Emacs, this is a -*- makefile -*-
-#
 #  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
@@ -32,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id:$
+#  $Id: port.mak,v 1.1.1.1 2004/02/16 20:11:29 smocz Exp $
 
 
 # Set default compiler.
