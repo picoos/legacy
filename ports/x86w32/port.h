@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.2 2005/01/15 21:26:02 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.3 2005/02/01 21:08:07 dkuschel Exp $
  */
 
 
@@ -375,5 +375,24 @@ extern void p_pos_globalUnlock(int flags);
 
 
 #endif /* DOX */
+
+
+/*---------------------------------------------------------------------------
+ *  SOME SPECIAL FUNCTIONS
+ *-------------------------------------------------------------------------*/
+
+#ifndef _X86ARCH_C
+
+/* This function allows any MS Windows thread to call a pico]OS hardware
+ * interrupt handler function. Thus, it maps a usual MS Windows thread
+ * to a hardware interrupt from the view of pico]OS.
+ * Argument:  Pointer to the interrupt handler to execute.
+ * Note: This function must only be called by pure Windows threads,
+ *       it is not allowed to call this function from a pico]OS task.
+ */
+extern void callInterruptHandler( void (*handlerfunc)(void) );
+
+#endif
+
 
 #endif /* _PORT_H */
