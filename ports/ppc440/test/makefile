@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.2 2004/03/13 19:33:27 dkuschel Exp $
+#  $Id: makefile,v 1.3 2004/03/14 18:50:48 dkuschel Exp $
 
 
 # This port is ppc440
@@ -51,7 +51,7 @@ include $(RELROOT)make/common.mak
 TARGET = test
 
 # Set source files
-SRC_TXT = $(RELROOT)examples/test.c  init.c  start.s
+SRC_TXT = $(RELROOT)examples/test.c
 SRC_OBJ =
 SRC_LIB =
 
