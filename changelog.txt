@@ -1,4 +1,13 @@
 
+Version 0.9.3:
+  o  bug fix in nosTaskCreate(): fixed a possible configuration problem
+  o  makefiles changed, output directory structure is now selfexplaining
+  o  makefiles extended to support a modularized software structure
+  o  the win32 port does now support POSCFG_TASKSTACKTYPE 0/1/2
+  o  void* types exchanged by structure pointers (makes the compiler more sensitive)
+  o  configuration flag POSCFG_FEATURE_LISTLEN added
+
+
 Version 0.9.2:
   o  debugging feature added:  POSCFG_FEATURE_DEBUGHELP
   o  implemented a more flexible scheme to disable interrupts
