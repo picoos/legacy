@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.5 2004/03/16 21:36:08 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.6 2004/03/21 18:37:37 dkuschel Exp $
  */
 
 
@@ -217,7 +217,14 @@
  * the original PSW when the operating system enters the critical section.
  * If your processor has enough general purpose register, you may define
  * the variable as register variable for fastest possible access. This is
- * truly better than pushing the flags to the stack.
+ * truly better than pushing the flags to the stack.<br>
+ *
+ * @b Hint: @n
+ * Sometimes it is not possible to disable interrupts globally. Then
+ * you will set ::POS_SCHED_LOCK to disable only the timer interrupt.
+ * If you wish to use pico]OS software interrupts, you will then
+ * also need to configure ::POS_IRQ_DISABLE_ALL to disable
+ * interrupts globally.
  * @{
  */
 
@@ -234,7 +241,8 @@
  * set to the variable type that shall be used for the
  * processor flags. In this example, the variable definition
  * "register VAR_t flags;" would be added to each function
- * using the macros ::POS_SCHED_LOCK and ::POS_SCHED_UNLOCK.
+ * using the macros ::POS_SCHED_LOCK, ::POS_SCHED_UNLOCK,
+ * ::POS_IRQ_DISABLE_ALL and ::POS_IRQ_ENABLE_ALL.
  */
 #define POSCFG_LOCK_FLAGSTYPE    register VAR_t
 
@@ -245,29 +253,43 @@
  * code that stores the processor state and disables
  * the interrupts. See ::POSCFG_LOCK_FLAGSTYPE for more details.
  */
-#ifdef WATCOM
-#define POS_SCHED_LOCK           _asm {"pushf\ncli"}
-#else
 #ifdef GCC
 #define POS_SCHED_LOCK           asm volatile("pushf\n" "cli\n"::)
 #else
 #define POS_SCHED_LOCK           asm { PUSHF; CLI }
-#endif
 #endif
 
 /** Scheduler unlocking.
  * This is the counterpart macro of ::POS_SCHED_LOCK. It restores
  * the saved processor flags and reenables the interrupts this way.
  */
-#ifdef WATCOM
-#define POS_SCHED_UNLOCK         _asm {"popf"}
-#else
 #ifdef GCC
 #define POS_SCHED_UNLOCK         asm volatile("popf\n"::)
 #else
 #define POS_SCHED_UNLOCK         asm POPF
 #endif
-#endif
+
+/** Optional scheduler locking: Disable all interrupts.
+ * In some environments it is not possible to disable all interrupts
+ * for a longer period of time. In such an environment you will need to
+ * implement ::POS_SCHED_LOCK to only disable the timer interrupt and
+ * the interrupts that are directly connected to pico]OS. All other
+ * interrupts can be interfaced with the pico]OS software interrupt
+ * system to the pico]OS core. Only the interface functions need then
+ * to disable interrupts globally. Set this macro to a function that
+ * globally disables interrupts, including the interrupts that are
+ * also disabled by the usual ::POS_SCHED_LOCK macro.
+ * @note If your system timing is not critical, you can set
+ *       this macro to ::POS_SCHED_LOCK
+ * @sa POS_IRQ_ENABLE_ALL, POS_SCHED_LOCK, POSCFG_LOCK_USEFLAGS
+ */
+#define POS_IRQ_DISABLE_ALL      POS_SCHED_LOCK
+
+/** Optional scheduler locking: Enable all interrupts.
+ * This is the counterpart macro of ::POS_IRQ_DISABLE_ALL.
+ * It enables all interrupts again.
+ */
+#define POS_IRQ_ENABLE_ALL       POS_SCHED_UNLOCK
 
 /** @} */
 
