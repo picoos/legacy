@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: arch_c.c,v 1.1.1.1 2004/02/16 20:11:24 smocz Exp $
  */
 
 
@@ -111,24 +111,33 @@
  *  DEFINITIONS
  *-----------------------------------------------------------------------*/
 
+#if (SYS_POSTALLOCATE != 0) && (POSCFG_MAX_TASKS < 5)
+#define NUMBER_OF_TASKS  5
+#else
+#define NUMBER_OF_TASKS  POSCFG_MAX_TASKS
+#endif
+
+
 /* you may change this stack size values */
-#if (POSCFG_MAX_TASKS < 5)
+#if (NUMBER_OF_TASKS < 5)
 #define FTASK_DSTACK_SIZE       0x0400
-#elif (POSCFG_MAX_TASKS < 9)
+#elif (NUMBER_OF_TASKS < 9)
 #define FTASK_DSTACK_SIZE       0x0300
 #else
 #define FTASK_DSTACK_SIZE       0x0200
 #endif
+#define FTASK_DYNDSTACK_SIZE    0x0300
+
 
 /* Do not touch the following definitions!!! */
 
-#if (POSCFG_MAX_TASKS < 5)
+#if (NUMBER_OF_TASKS < 5)
 #define FTASKS      4
 #define STASKS      0 
 #define CSTACKS     FTASKS
 #else
 #define FTASKS      3
-#define STASKS      (POSCFG_MAX_TASKS - FTASKS)
+#define STASKS      (NUMBER_OF_TASKS - FTASKS)
 #define CSTACKS     (FTASKS + 1)
 #endif
 
@@ -191,10 +200,23 @@ static void alloc_stacks(POSTASK_t task)
 
     /* allocate a STASK dstack */
     for (n = 0; (n < STASKS-1) && (stasks_alloctab_g[n] != 0); n++);
-    stasks_alloctab_g[n] = 1;
-    task->dstacknbr = n;
-    p = stasks_dstack_g[0];
-    s = STASK_DSTACK_SIZE;
+#if (SYS_POSTALLOCATE != 0) && (POSCFG_ENABLE_NANO != 0)
+    if (n == STASKS-1)
+    {
+      n = 0;
+      s = FTASK_DYNDSTACK_SIZE;
+      p = (UVAR_t*) NOS_MEM_ALLOC(s); /* must use 'NOS'-mem-alloc here */
+      while (p == NULL);
+      task->dstacknbr = SNBR_SFLAG;
+    }
+    else
+#endif
+    {
+      stasks_alloctab_g[n] = 1;
+      task->dstacknbr = n;
+      p = stasks_dstack_g[0];
+      s = STASK_DSTACK_SIZE;
+    }
   }
   else
 #endif
@@ -233,6 +255,13 @@ static void free_stacks(POSTASK_t task)
 #if (STASKS != 0)
   if (task->cstacknbr == SNBR_SFLAG)
   {
+#if (SYS_POSTALLOCATE != 0) && (POSCFG_ENABLE_NANO != 0)
+    if (task->dstacknbr == SNBR_SFLAG)
+    {
+      NOS_MEM_FREE(task->dstackroot);  /* must use 'NOS'-mem-free here */
+    }
+    else
+#endif
     stasks_alloctab_g[task->dstacknbr] = 0;
   }
   else
