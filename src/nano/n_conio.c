@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.2 2004/03/21 18:35:06 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.3 2005/01/03 16:44:20 dkuschel Exp $
  */
 
 #define _N_CONIO_C
@@ -390,7 +390,7 @@ void n_printf(const char *fmt, NOSARG_t *args)
     else
     if (c == '*')
     {
-      width = (char) args[a++];
+      width = (char) (UINT_t) args[a++];
       c = *f++;
     }
 
@@ -471,7 +471,7 @@ void n_printf(const char *fmt, NOSARG_t *args)
     while (nbr != 0);
 
     /* print leading zeros or spaces */
-    while (width > i)
+    while ((UVAR_t)width > i)
     {
       CALL_PRFUNC(fill);
       width--;
