@@ -1,5 +1,5 @@
 
-#include "..\poscfg.h"
+#include <picoos.h>
 
 
 /* set CPU speed (in Hz) */
