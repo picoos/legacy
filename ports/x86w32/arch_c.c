@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.3 2005/01/17 21:59:46 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.4 2005/02/01 21:05:43 dkuschel Exp $
  */
 
 
@@ -45,6 +45,7 @@
 
 
 #define NANOINTERNAL
+#define _X86ARCH_C
 #include <picoos.h>
 
 #undef INFINITE
@@ -115,6 +116,7 @@ typedef struct TASKPRIV_s {
 
 static            HANDLE    timerEvent_g;
 static            HANDLE    globalSyncSem_g;
+static            HANDLE    windowsThreadSyncSem_g;
 static            HANDLE    interruptWaitSem_g;
 static  volatile  DWORD     interruptTaskId_g;
 static  volatile  int       taskLockCnt_g;
@@ -138,6 +140,7 @@ void p_pos_intContextSwitch(void);
 void p_pos_startFirstContext(void);
 void p_pos_globalLock(int *flags);
 void p_pos_globalUnlock(int flags);
+void callInterruptHandler( void (*handlerfunc)(void) );
 
 /* local functions */
 static DWORD WINAPI a_newThread(LPVOID param);
@@ -211,6 +214,55 @@ static void do_assert(const char* file, int line)
   }
 
   for(;;) { SemaWait(globalSyncSem_g); }
+}
+
+
+void callInterruptHandler( void (*handlerfunc)(void) )
+{
+  if (handlerfunc == NULL)
+    return;
+
+  /* synchronize Windows threads */
+  SemaWait(windowsThreadSyncSem_g);
+
+  /* wait here until it is allowed to run the pico]OS functions */
+  interruptActive_g = 1;
+  while ((blockInterrupt_g != 0) || (taskLockCnt_g != 0))
+  {
+    interruptWaiting_g = 1;
+    if (taskLockCnt_g == 0)
+    {
+      if (!interruptWaiting_g)
+        SemaWait(interruptWaitSem_g);
+      interruptWaiting_g = 0;
+      break;
+    }
+    interruptActive_g = 0;
+    SemaWait(interruptWaitSem_g);
+    interruptActive_g = 1;
+  }
+  assert(taskLockCnt_g == 0);
+  SemaWait(globalSyncSem_g);
+  assert(taskLockCnt_g == 0);
+  interruptExecuting_g = 1;
+  assert(taskLockCnt_g == 0);
+
+  /* call the pico]OS interrupt handler */
+  c_pos_intEnter();
+#if POSCFG_ENABLE_NANO
+  if (handlerfunc == c_pos_timerInterrupt)
+    a_keyboardInput(); /* do the keyboard interrupt */
+#endif
+  (handlerfunc)();
+  c_pos_intExit();
+
+  /* end the interrupt handler */
+  interruptExecuting_g = 0;
+  interruptActive_g = 0;
+  SemaSignal(globalSyncSem_g);
+
+  /* allow other threads to enter this function */
+  SemaSignal(windowsThreadSyncSem_g);
 }
 
 
@@ -351,43 +403,8 @@ static void a_timerTask(void)
       Sleep(1000/HZ);
     }
 
-    /* wait here until it is allowed to run the pico]OS functions */
-    interruptActive_g = 1;
-    while ((blockInterrupt_g != 0) || (taskLockCnt_g != 0))
-    {
-      interruptWaiting_g = 1;
-
-      if (taskLockCnt_g == 0)
-      {
-        if (!interruptWaiting_g)
-          SemaWait(interruptWaitSem_g);
-        interruptWaiting_g = 0;
-        break;
-      }
-
-      interruptActive_g = 0;
-      SemaWait(interruptWaitSem_g);
-      interruptActive_g = 1;
-    }
-    assert(taskLockCnt_g == 0);
-    SemaWait(globalSyncSem_g);
-    assert(taskLockCnt_g == 0);
-    interruptExecuting_g = 1;
-
-#if POSCFG_ENABLE_NANO
-    /* do the keyboard interrupt */
-    a_keyboardInput();
-#endif
-
-    /* do the timer interrupt */
-    c_pos_intEnter();
-    c_pos_timerInterrupt();
-    c_pos_intExit();
-
-    /* end the timer interrupt loop */
-    interruptExecuting_g = 0;
-    interruptActive_g = 0;
-    SemaSignal(globalSyncSem_g);
+    /* execute the timer interrupt */
+    callInterruptHandler( c_pos_timerInterrupt );
   }
 }
 
@@ -414,6 +431,9 @@ void p_pos_initArch(void)
 
     globalSyncSem_g = CreateSemaphore(NULL, 1, 1, NULL);
     assert(globalSyncSem_g != NULL);
+
+    windowsThreadSyncSem_g = CreateSemaphore(NULL, 1, 1, NULL);
+    assert(windowsThreadSyncSem_g != NULL);
 
     timerEvent_g         = NULL;
     taskLockCnt_g        = 0;
