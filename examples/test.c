@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: test.c,v 1.1.1.1 2004/02/16 20:11:15 smocz Exp $
  */
 
 #ifndef _NORTLIB
@@ -330,14 +330,14 @@ static void task1(void *arg)
 {
   POSTASK_t  self;
   POSTIMER_t timer;
-  VAR_t     curprio;
+  VAR_t      curprio;
 
   (void) arg;
 
   /* get handle and priority of current task */
   self    = posTaskGetCurrent();
   curprio = posTaskGetPriority(self);
-  
+
   /* try to increase current priority */
   posTaskSetPriority(self, curprio + 1);
   curprio = posTaskGetPriority(self);
@@ -362,7 +362,7 @@ static void task1(void *arg)
   startTask(task_softint, (void*) 4, curprio - 1);
 
   /* allocate a flag object */
-  flags_g = posFlagAlloc();
+  flags_g = posFlagCreate();
   if (flags_g == NULL)
     print("\nCan not allocate a flag object\n");
 
@@ -370,7 +370,7 @@ static void task1(void *arg)
   startTask(task_flag, NULL, curprio + 2);
 
   /* allocate a semaphore object */
-  timersem_g = posSemaAlloc(0);
+  timersem_g = posSemaCreate(0);
   if (timersem_g == NULL)
     print("\nCan not allocate a semaphore\n");
 
@@ -378,7 +378,7 @@ static void task1(void *arg)
   startTask(task_timer, NULL, curprio + 2);
 
   /* allocate a timer object and set the timer up */
-  timer = posTimerAlloc();
+  timer = posTimerCreate();
   if (timer == NULL)
     print("\nCan not allocate a timer\n");
   posTimerSet(timer, timersem_g, 2*HZ, 2*HZ);
@@ -387,7 +387,7 @@ static void task1(void *arg)
   posTimerStart(timer);
 
   /* allocate a mutex object for mutex test */
-  mutex_g = posMutexAlloc();
+  mutex_g = posMutexCreate();
   if (mutex_g == NULL)
     print("\nCan not allocate a mutex\n");
 
@@ -398,7 +398,7 @@ static void task1(void *arg)
 
   /* allocate semaphore object for semaphore test,
      allow 2 tasks to get the semaphore */
-  sema_g = posSemaAlloc(2);
+  sema_g = posSemaCreate(2);
   if (sema_g == NULL)
     print("\nCan not allocate a semaphore\n");
 
