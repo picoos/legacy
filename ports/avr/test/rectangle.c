@@ -44,16 +44,21 @@
  * 
  * --- build ---
  * 
- * You can build the test by navigate to $(picoos-root)/ports/avr/test 
- * directory an type "make". 
- * Now, in the directory $(picoos-root)/out/avr/deb should be a .elf, 
- * .cof and a .hex file. 
- * You can open the .cof file with AvrStudio and watch, how pico]OS 
- * work. 
- * With the hex-file you can program the target device and run the
- * program in the real world :-)
+ * 1. Set in the makefile in directory $(picoos-root)/ports/avr/test
+ *    SRC_TXT = rectangle.c
+ * 
+ * 2. You can build the test by navigate to $(picoos-root)/ports/avr/test 
+ *    directory an type "make". 
+ * 
+ * 3. Now, in the directory $(picoos-root)/out/avr/deb should be a .elf, 
+ *    .cof and a .hex file. 
+ * 
+ * 4. You can open the .cof file with AvrStudio and watch, how pico]OS 
+ *    work. 
+ *    With the hex-file you can program the target device and run the
+ *    program in the real world :-)
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: rectangle.c,v 1.1.1.1 2004/02/16 20:11:31 smocz Exp $
  */
 #include <stdio.h>
 #include <inttypes.h>
@@ -72,7 +77,8 @@ static uint8_t t2 = 0x00;
 
 /* The start task for the initialisation of the 2 other tasks.
  * This task will be destroyed, wenn the program runs out of the
- * block
+ * block 
+ */
 static void initialTask(void *arg) {
   
     posTaskCreate(pollTask, &t1, 1);
