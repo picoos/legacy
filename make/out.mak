@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: out.mak,v 1.1.1.1 2004/02/16 20:11:22 smocz Exp $
+#  $Id: out.mak,v 1.2 2004/06/05 11:44:28 dkuschel Exp $
 
 
 # Build target: generate executable
@@ -53,6 +53,11 @@ OBJ :=
 
 # Add pico]OS library
 SRC_LIB += $(DIR_LIB)/picoos$(EXT_LIB)
+
+# Export variables
+ifneq '$(strip $(DIR_OUTPUT))' ''
+export DIR_OUTPUT
+endif
 
 # Compile source files
 include $(MAKE_CPL)

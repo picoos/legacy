@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id:$
+#  $Id: lib.mak,v 1.1.1.1 2004/02/16 20:11:22 smocz Exp $
 
 
 # Build target: generate library
@@ -50,6 +50,11 @@ SRC := $(SRC_TXT)
 
 # Clear object file list
 OBJ :=
+
+# Export variables
+ifneq '$(strip $(DIR_OUTPUT))' ''
+export DIR_OUTPUT
+endif
 
 # Compile source files
 include $(MAKE_CPL)
