@@ -40,6 +40,11 @@ execution of make you will find two new subdirectories: The @c obj
 directory contains all generated object files, and the @c lib directory
 the final library. @n
 
+There is a second option available on the command line: @c BUILD=DEBUG
+would build a debug version of the operating system, and a @c BUILD=RELEASE
+would build a release version. Note that the debug version is the default
+when this option is not given. @n
+
 @b Note:  The name of the port is the name of its subdirectory
           in the @c ports directory. @n
 

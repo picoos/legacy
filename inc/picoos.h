@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.9 2004/03/16 21:36:08 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.10 2004/03/21 18:36:29 dkuschel Exp $
  *
  */
 
@@ -93,11 +93,15 @@
  *         included by user applications. 
  *  - poscfg.h
  *       - pico]OS configuration file. Must be supplied by the user.
+ *  - noscfg.h
+ *       - nano layer configuration file. Must be supplied by the user.
  *  - port.h
  *       - Configuration file for the port.
  *         Must be supplied by the user / port developer.
  *  - picoos.c
  *       - The pico]OS core source file. This is the operating system.
+ *  - n_xxxx.c
+ *       - The nano layer source files.
  *  - fbit_gen.c 
  *       - This file implements a set of generic "findbit" functions.
  *         The "findbit" function is needed by the operating system.
