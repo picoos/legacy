@@ -31,7 +31,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.1.1.1 2004/02/16 20:11:31 smocz Exp $
+#  $Id: makefile,v 1.2 2004/03/14 18:50:48 dkuschel Exp $
 
 
 # This port is avr
@@ -71,6 +71,8 @@ SRC_LIB =
 
 OBJCOPY = avr-objcopy
 
+OBJDUMP = avr-objdump
+
 COEFFICIENTS = --debugging \
 --change-section-address .data-0x800000 \
 --change-section-address .bss-0x800000 \
@@ -78,8 +80,9 @@ COEFFICIENTS = --debugging \
 --change-section-address .eeprom-0x810000 
 
 
-POSTLINK1 =	$(OBJCOPY) $(COEFFICIENTS) -O coff-ext-avr $(TARGETOUT) $(DIR_OUT)/$(TARGET).cof
+POSTLINK1 =	$(OBJCOPY) $(COEFFICIENTS) -O coff-avr $(TARGETOUT) $(DIR_OUT)/$(TARGET).cof
 POSTLINK2 = $(OBJCOPY) -O $(OUTPUT_FORMAT) -R .eeprom $(TARGETOUT) $(DIR_OUT)/$(TARGET).$(OUTPUT_EXT)
+POSTLINK3 = $(OBJDUMP) -h -S $(TARGETOUT) > $(DIR_OUT)/$(TARGET).lss
 
 
 # ---------------------------------------------------------------------------
