@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.1.1.1 2004/02/16 20:11:28 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.2 2004/05/08 19:51:43 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -43,11 +43,6 @@
 #include "picoos.h"
 
 #include "timerdef.h"
-
-
-/* local prototypes */
-static uint8_t* putPointerOnStack(uint8_t* stackPtr, void* functionPointer);
-static void constructStackFrame(POSTASK_t task, uint8_t* stackPtr, POSTASKFUNC_t funcptr, void *funcarg);
 
 
 // The initial value of SREG at the beginning of the task.
@@ -63,6 +58,23 @@ static void constructStackFrame(POSTASK_t task, uint8_t* stackPtr, POSTASKFUNC_t
 // to the called function. In the current gcc implementation (gcc 3.3)
 // is this R25:R24 for an pointer
 #define ARGUMENT_REGISTER_NUM 24
+
+
+/*---------------------------------------------------------------------------
+ *  GLOBAL VARIABLES
+ *-------------------------------------------------------------------------*/
+ 
+// Reserve memory for the stack for the interrupt service routienes.
+// The stack size is defined in port.h
+uint8_t isrStackMem_g[ ISR_STACK_SIZE ];
+
+
+/*---------------------------------------------------------------------------
+ *  LOCAL PROTOTYPES
+ *-------------------------------------------------------------------------*/
+static uint8_t* putPointerOnStack(uint8_t* stackPtr, void* functionPointer);
+
+static void constructStackFrame(POSTASK_t task, uint8_t* stackPtr, POSTASKFUNC_t funcptr, void *funcarg);
 
 
 /*
@@ -338,6 +350,10 @@ uint8_t* putPointerOnStack(uint8_t* stackPtr, void* pointer) {
 }
 
 
-
+/**
+ * Use the picoos signal macro to handle the timer interrupt for 
+ * the timer tick.
+ * In the interrupt the kernal routine c_pos_timerInterrupt() will
+ * be called.
+ */
 PICOOS_SIGNAL(SIG_OUTPUT_COMPARE1A, c_pos_timerInterrupt)
-
