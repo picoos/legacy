@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.2 2005/01/17 21:23:05 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.3 2005/01/17 21:59:46 dkuschel Exp $
  */
 
 
@@ -145,6 +145,8 @@ static void a_quitThisTask(TASKPRIV_t thistask);
 static void a_createThisTask(TASKPRIV_t thistask);
 static void a_timerTask(void);
 static void a_initTimer(void);
+static void a_initTask(POSTASK_t task, UINT_t stacksize,
+                       POSTASKFUNC_t funcptr, void *funcarg);
 static void do_assert(const char* file, int line);
 #if POSCFG_ENABLE_NANO
 static void a_keyboardInput(void);
@@ -303,6 +305,30 @@ static void a_quitThisTask(TASKPRIV_t thistask)
 }
 
 
+static void a_initTask(POSTASK_t task, UINT_t stacksize,
+                       POSTASKFUNC_t funcptr, void *funcarg)
+{
+  TASKPRIV_t newtask = GETTASKPRIV(task);
+
+  newtask->state        = task_mustcreate;
+  newtask->ownTaskID    = 0;
+  newtask->ownTaskHandle= NULL;
+  newtask->suspendSema = NULL;
+
+  newtask->stacksize    = (stacksize>MIN_STACKSIZE)? stacksize:MIN_STACKSIZE;
+  newtask->firstfunc    = funcptr;
+  newtask->taskarg      = funcarg;
+  
+  newtask->priority     = THREAD_PRIORITY_BELOW_NORMAL;
+  if (!idleTaskCreated_g)
+  {
+    newtask->priority   = THREAD_PRIORITY_IDLE;
+    idleTaskCreated_g = 1;
+  }
+
+  newtask->blockIntFlag = 0;
+}
+
 
 
 /*---------------------------------------------------------------------------
@@ -405,35 +431,39 @@ void p_pos_initArch(void)
 
 /*--------  TASK STRUCTURE SETUP  --------*/
 
+#if (POSCFG_TASKSTACKTYPE == 0)
+
+void p_pos_initTask(POSTASK_t task, void *user,
+                    POSTASKFUNC_t funcptr, void *funcarg)
+{
+  (void) user;
+  a_initTask(task, MIN_STACKSIZE, funcptr, funcarg);
+}
+
+#elif (POSCFG_TASKSTACKTYPE == 1)
 
 VAR_t p_pos_initTask(POSTASK_t task, UINT_t stacksize,
                      POSTASKFUNC_t funcptr, void *funcarg)
 {
-  TASKPRIV_t newtask = GETTASKPRIV(task);
-
-  newtask->state        = task_mustcreate;
-  newtask->ownTaskID    = 0;
-  newtask->ownTaskHandle= NULL;
-  newtask->suspendSema = NULL;
-
-  newtask->stacksize    = (stacksize>MIN_STACKSIZE)? stacksize:MIN_STACKSIZE;
-  newtask->firstfunc    = funcptr;
-  newtask->taskarg      = funcarg;
+  a_initTask(task, stacksize, funcptr, funcarg);
+  return 0;
+}
   
-  newtask->priority     = THREAD_PRIORITY_BELOW_NORMAL;
-  if (!idleTaskCreated_g)
-  {
-    newtask->priority   = THREAD_PRIORITY_IDLE;
-    idleTaskCreated_g = 1;
-  }
+#elif (POSCFG_TASKSTACKTYPE == 2)
 
-  newtask->blockIntFlag = 0;
-
+VAR_t p_pos_initTask(POSTASK_t task,
+                     POSTASKFUNC_t funcptr, void *funcarg)
+{
+  a_initTask(task, MIN_STACKSIZE, funcptr, funcarg);
   return 0;
 }
 
+#else
+#error POSCFG_TASKSTACKTYPE
+#endif
 
-void  p_pos_freeStack(POSTASK_t task)
+
+void p_pos_freeStack(POSTASK_t task)
 {
   TASKPRIV_t tp = GETTASKPRIV(task);
   tp->state = task_mustquit;
