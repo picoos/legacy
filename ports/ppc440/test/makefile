@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.1.1.1 2004/02/16 20:11:36 smocz Exp $
+#  $Id: makefile,v 1.2 2004/03/13 19:33:27 dkuschel Exp $
 
 
 # This port is ppc440
@@ -54,6 +54,9 @@ TARGET = test
 SRC_TXT = $(RELROOT)examples/test.c  init.c  start.s
 SRC_OBJ =
 SRC_LIB =
+
+# Set the directory that contains the configuration header files
+#DIR_CONFIG = ports\ppc440\test
 
 ifeq '$(COMPILER)' 'MW'
 

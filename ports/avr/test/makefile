@@ -31,7 +31,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id:$
+#  $Id: makefile,v 1.1.1.1 2004/02/16 20:11:31 smocz Exp $
 
 
 # This port is avr
@@ -60,6 +60,9 @@ TARGET = test
 SRC_TXT = rectangle.c
 SRC_OBJ =
 SRC_LIB =
+
+# Set the directory that contains the configuration header files
+#DIR_CONFIG = ports\avr\test
 
 
 # ---- Configure the linker port hook --------------------------------------

@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id:$
+#  $Id: common.mak,v 1.1.1.1 2004/02/16 20:11:21 smocz Exp $
 
 
 # Include configuration
@@ -135,6 +135,10 @@ DIR_OBJ  = $(DIR_OBJP)/$(MODEEXT)
 DIR_SRC  = $(RELROOT)src
 DIR_INC  = $(RELROOT)inc
 DIR_PORT = $(RELROOT)ports/$(PORT)
+
+ifneq '$(strip DIR_CONFIG)' ''
+export DIR_CONFIG
+endif
 
 # ---------------------------------------------------------------------------
 
