@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.4 2004/03/06 20:29:51 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.5 2004/03/07 14:56:16 dkuschel Exp $
  */
 
 
@@ -461,6 +461,19 @@
  * will be added to the user API.
  */
 #define POSCFG_FEATURE_IDLETASKHOOK  0
+
+/** Enable list support.
+ * If this definition is set to 1, the list functions are
+ * added to the user API.
+ */
+#define POSCFG_FEATURE_LISTS         1
+
+/** Include function ::posListJoin.
+ * If this definition is set to 1, the function ::posListJoin will
+ * be included into the pico]OS kernel. Note that also
+ * ::POSCFG_FEATURE_LISTS must be set to 1.
+ */
+#define POSCFG_FEATURE_LISTJOIN      1
 
 /** @} */
 
