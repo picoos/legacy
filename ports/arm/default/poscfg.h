@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.1 2005/01/11 16:17:27 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.2 2005/01/15 21:13:05 dkuschel Exp $
  */
 
 
@@ -497,6 +497,13 @@
  * ::POSCFG_FEATURE_LISTS must be set to 1.
  */
 #define POSCFG_FEATURE_LISTJOIN      1
+
+/** Include function ::posListLen.
+ * If this definition is set to 1, the function ::posListLen will
+ * be included into the pico]OS kernel. Note that also
+ * ::POSCFG_FEATURE_LISTS must be set to 1.
+ */
+#define POSCFG_FEATURE_LISTLEN       1
 
 /** Enable the debug help.
  * If this definition is set to 1, pico]OS exports the global
