@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: poscfg.h,v 1.1.1.1 2004/02/16 20:11:14 smocz Exp $
  */
 
 
@@ -105,7 +105,7 @@
 
 /** Maximum count of timers.
  * This define sets the maximum count of timers that can be allocated
- * with ::posTimerAlloc. If ::POSCFG_FEATURE_TIMER is set to 0, this
+ * with ::posTimerCreate. If ::POSCFG_FEATURE_TIMER is set to 0, this
  * define has no effect. Note that the value for this define
  * must be at least 1 if timers are enabled.
  */
@@ -317,12 +317,12 @@
  */
 #define POSCFG_FEATURE_SEMAPHORES    1
 
-/** Include function ::posSemaFree.
- * If this definition is set to 1, the function ::posSemaFree will
+/** Include function ::posSemaDestroy.
+ * If this definition is set to 1, the function ::posSemaDestroy will
  * be included into the pico]OS kernel. Note that also
  * ::POSCFG_FEATURE_SEMAPHORES must be set to 1.
  */
-#define POSCFG_FEATURE_SEMAFREE      1
+#define POSCFG_FEATURE_SEMADESTROY   1
 
 /** Include function ::posSemaWait.
  * If this definition is set to 1, the function ::posSemaWait will
@@ -337,12 +337,12 @@
  */
 #define POSCFG_FEATURE_MUTEXES       1
 
-/** Include function ::posMutexFree.
- * If this definition is set to 1, the function ::posMutexFree will
+/** Include function ::posMutexDestroy.
+ * If this definition is set to 1, the function ::posMutexDestroy will
  * be included into the pico]OS kernel. Note that also
  * ::POSCFG_FEATURE_MUTEXES must be set to 1.
  */
-#define POSCFG_FEATURE_MUTEXFREE     1
+#define POSCFG_FEATURE_MUTEXDESTROY  1
 
 /** Include function ::posMutexTryLock.
  * If this definition is set to 1, the function ::posMutexTryLock will
@@ -361,7 +361,7 @@
  * If this definition is set to 1, the function ::posTaskUnused will
  * be included into the pico]OS kernel.
  */
-#define POSCFG_FEATURE_ISTASKUNUSED  1
+#define POSCFG_FEATURE_TASKUNUSED    1
 
 /** Include message box functions.
  * If this definition is set to 1, the message box functions are
@@ -394,12 +394,12 @@
  */
 #define POSCFG_FEATURE_TIMER         1
 
-/** Include function ::posTimerFree.
- * If this definition is set to 1, the function ::posTimerFree will
+/** Include function ::posTimerDestroy.
+ * If this definition is set to 1, the function ::posTimerDestroy will
  * be included into the pico]OS kernel. Note that also
  * ::POSCFG_FEATURE_TIMER must be set to 1.
  */
-#define POSCFG_FEATURE_TIMERFREE     1
+#define POSCFG_FEATURE_TIMERDESTROY  1
 
 /** Include function ::posTimerFired.
  * If this definition is set to 1, the function ::posTimerFired will
@@ -414,12 +414,12 @@
  */
 #define POSCFG_FEATURE_FLAGS         1
 
-/** Include function ::posFlagFree.
- * If this definition is set to 1, the function ::posFlagFree will
+/** Include function ::posFlagDestroy.
+ * If this definition is set to 1, the function ::posFlagDestroy will
  * be included into the pico]OS kernel. Note that also
  * ::POSCFG_FEATURE_FLAGS must be set to 1.
  */
-#define POSCFG_FEATURE_FLAGFREE      1
+#define POSCFG_FEATURE_FLAGDESTROY   1
 
 /** Include function ::posFlagWait.
  * If this definition is set to 1, the function ::posFlagWait will
