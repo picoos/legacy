@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.4 2005/01/10 21:55:48 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.5 2005/01/15 21:18:22 dkuschel Exp $
  */
 
 #define _N_CONIO_C
@@ -372,26 +372,35 @@ void n_printf(const char *fmt, NOSARG_t *args)
     width = 0;
     fill  = c;
     base = 10;
-    if ((c == ' ') || (c == '0'))
-    {
-      c = *f++;
-    }
-    else
-    if (c == '.')
-    {
-      fill = '0';
-      c = *f++;
-    }
     if ((c >= '1') && (c <= '9'))
     {
+      fill = ' ';
       width = c - '0';
       c = *f++;
     }
     else
-    if (c == '*')
     {
-      width = (char) (UINT_t) args[a++];
-      c = *f++;
+      if ((c == ' ') || (c == '0'))
+      {
+        c = *f++;
+      }
+      else
+      if (c == '.')
+      {
+        fill = '0';
+        c = *f++;
+      }
+      if ((c >= '1') && (c <= '9'))
+      {
+        width = c - '0';
+        c = *f++;
+      }
+      else
+      if (c == '*')
+      {
+        width = (char) (UINT_t) args[a++];
+        c = *f++;
+      }
     }
 
     /* skip size modifiers (we only support INT_t) */
