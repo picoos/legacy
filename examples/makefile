@@ -30,11 +30,8 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.1 2004/06/05 13:41:47 dkuschel Exp $
+#  $Id: makefile,v 1.2 2005/01/15 21:17:45 dkuschel Exp $
 
-
-# Set root path
-RELROOT = ./
 
 # The default port is 6502
 ifeq '$(strip $(PORT))' ''
@@ -47,7 +44,13 @@ export DIR_USRINC = $(SRCDIR)
 
 ifeq '$(strip $(SOURCEFILE))' ''
 
+# Set root path
+RELROOT = ../
+
+include $(RELROOT)make/common.mak
+
 MAKECMD = -$(MAKE) -f $(SRCDIR)/makefile -C .. SOURCEFILE=$(SRCDIR)/
+#MAKECMD = -$(MAKE) -f $(SRCDIR)/makefile -C .. COMPILER=$(COMPILER) SOURCEFILE=$(SRCDIR)/
 
 default: all
 
@@ -83,6 +86,9 @@ clean:
 else
 
 # --------------------------------------------------------------------------
+
+# Set root path
+RELROOT = ./
 
 # Build mode
 BUILD = DEBUG
