@@ -31,14 +31,14 @@
 
 
 /**
- * @file    poscfg.h
- * @brief   pico]OS configuration file
+ * @file    test.c
+ * @brief   pico]OS test program
  * @author  Dennis Kuschel
  *
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: test.c,v 1.1.1.1 2004/02/16 20:11:15 smocz Exp $
+ * CVS-ID $Id: test.c,v 1.2 2004/02/21 14:42:51 dkuschel Exp $
  */
 
 #ifndef _NORTLIB
