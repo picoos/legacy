@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_bhalf.c,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
+ * CVS-ID $Id: n_bhalf.c,v 1.2 2004/03/21 18:34:38 dkuschel Exp $
  */
 
 #include "../src/nano/privnano.h"
@@ -54,6 +54,9 @@
 #endif
 #if NOSCFG_FEATURE_TASKCREATE == 0
 #error NOSCFG_FEATURE_TASKCREATE not enabled
+#endif
+#if POSCFG_FEATURE_SOFTINTS == 0
+#error POSCFG_FEATURE_SOFTINTS not enabled
 #endif
 
 
@@ -77,6 +80,7 @@ static UVAR_t       bhexecmask_g;
  *-------------------------------------------------------------------------*/
 
 static void nos_bhtask(void *arg);
+static void nos_bhtrigger(UVAR_t arg);
 
 
 
@@ -123,10 +127,18 @@ static void nos_bhtask(void *arg)
 }
 
 
+static void nos_bhtrigger(UVAR_t arg)
+{
+  (void) arg;
+  posSemaSignal(bhsema_g);
+}
+
+
 
 /*---------------------------------------------------------------------------
  *  BOTTOM HALF MANAGEMENT
  *-------------------------------------------------------------------------*/
+
 
 void nosBottomHalfStart(UVAR_t number)
 {
@@ -142,7 +154,17 @@ void nosBottomHalfStart(UVAR_t number)
 
     if (m == 0)
     {
-      posSemaSignal(bhsema_g);
+      if (posInInterrupt_g == 0)
+      {
+        /* We are possibly not in a pico]OS interrupt context,
+           so it is safer to rise a software interrupt. This
+           will call nos_bhtrigger() and signal the semaphore. */
+        posSoftInt(1, 0);
+      }
+      else
+      {
+        posSemaSignal(bhsema_g);
+      }
     }
   }
 }
@@ -181,6 +203,7 @@ void nos_initBottomHalfs(void)
   bhexecmask_g  = 0;
   bhsema_g = posSemaCreate(0);
   (void) nosTaskCreate(nos_bhtask, NULL, POSCFG_MAX_PRIO_LEVEL - 1, 0, NULL);
+  posSoftIntSetHandler(1, nos_bhtrigger);
 }
 
 #else  /* NOSCFG_FEATURE_BOTTOMHALF */
