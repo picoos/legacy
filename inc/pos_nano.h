@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: pos_nano.h,v 1.2 2004/03/21 18:36:29 dkuschel Exp $
+ * CVS-ID $Id: pos_nano.h,v 1.3 2004/06/16 05:44:12 dkuschel Exp $
  */
 
 #ifndef _POS_NANO_H
@@ -54,21 +54,37 @@
  *  NANO LAYER INSTALLATION
  *-------------------------------------------------------------------------*/
 
-/* include nano configuration file */
+/* include configuration files */
+#ifndef _PICOOS_H
+#include <poscfg.h>
+#endif
 #include <noscfg.h>
 
-#if POSCFG_TASKSTACKTYPE == 0
+
+#ifndef NOSCFG_FEATURE_REGISTRY
+#define NOSCFG_FEATURE_REGISTRY  0
+#endif
+
+#if POSCFG_TASKSTACKTYPE==0
+#define NOS_NEEDTASKEXITHOOK
+#else
+#if NOSCFG_FEATURE_REGISTRY!=0
+#define NOS_NEEDTASKEXITHOOK
+#endif
+#endif
+
+#ifdef NOS_NEEDTASKEXITHOOK
 
 /* define hook */
-#ifdef POSCFG_STKFREE_HOOK
-#undef POSCFG_STKFREE_HOOK
+#ifdef POSCFG_TASKEXIT_HOOK
+#undef POSCFG_TASKEXIT_HOOK
 #endif
-#define POSCFG_STKFREE_HOOK  1
+#define POSCFG_TASKEXIT_HOOK  1
 
 /* set additional task data for the nano layer */
 #define NOS_TASKDATA  void *nosstkroot;
 
-#endif /* POSCFG_TASKSTACKTYPE == 0 */
+#endif /* NOS_NEEDTASKEXITHOOK */
 
 /* include pico]OS header if not yet done */
 #ifndef _PICOOS_H
@@ -142,8 +158,71 @@
 #error NOS_MAX_BOTTOMHALFS must be in the range 1 .. MVAR_BITS
 #endif
 #endif
-#ifndef NOS_FEATURE_CPUUSAGE
-#error  NOS_FEATURE_CPUUSAGE not defined
+#ifndef NOSCFG_FEATURE_CPUUSAGE
+#error  NOSCFG_FEATURE_CPUUSAGE not defined
+#endif
+
+#if NOSCFG_FEATURE_REGISTRY
+#ifndef NOSCFG_FEATURE_REGQUERY
+#error  NOSCFG_FEATURE_REGQUERY
+#endif
+#ifndef NOSCFG_FEATURE_USERREG
+#error  NOSCFG_FEATURE_USERREG
+#endif
+#ifndef NOS_MAX_REGKEYLEN
+#error  NOS_MAX_REGKEYLEN
+#endif
+#if NOS_MAX_REGKEYLEN < 4
+#error NOS_MAX_REGKEYLEN must be at least 4
+#endif
+#ifndef NOS_REGKEY_PREALLOC
+#error  NOS_REGKEY_PREALLOC
+#endif
+#else /* NOSCFG_FEATURE_REGISTRY */
+#ifdef NOSCFG_FEATURE_USERREG
+#undef NOSCFG_FEATURE_USERREG
+#endif
+#define NOSCFG_FEATURE_USERREG 0
+#ifdef NOSCFG_FEATURE_REGQUERY
+#undef NOSCFG_FEATURE_REGQUERY
+#endif
+#define NOSCFG_FEATURE_REGQUERY 0
+#endif  /* NOSCFG_FEATURE_REGISTRY */
+
+#ifndef NOSCFG_FEATURE_SEMAPHORES
+#define NOSCFG_FEATURE_SEMAPHORES  0
+#endif
+
+#if NOSCFG_FEATURE_SEMAPHORES != 0  &&  POSCFG_FEATURE_SEMAPHORES == 0
+#error NOSCFG_FEATURE_SEMAPHORES enabled, but pico]OS semaphores disabled
+#endif
+
+#ifndef NOSCFG_FEATURE_MUTEXES
+#define NOSCFG_FEATURE_MUTEXES  0
+#endif
+#if NOSCFG_FEATURE_MUTEXES != 0  &&  POSCFG_FEATURE_MUTEXES == 0
+#error NOSCFG_FEATURE_MUTEXES enabled, but pico]OS mutexes disabled
+#endif
+
+#ifndef NOSCFG_FEATURE_MSGBOXES
+#define NOSCFG_FEATURE_MSGBOXES  0
+#endif
+#if NOSCFG_FEATURE_MSGBOXES != 0  &&  POSCFG_FEATURE_MSGBOXES == 0
+#error NOSCFG_FEATURE_MSGBOXES enabled, but pico]OS message boxes disabled
+#endif
+
+#ifndef NOSCFG_FEATURE_FLAGS
+#define NOSCFG_FEATURE_FLAGS  0
+#endif
+#if NOSCFG_FEATURE_FLAGS != 0  &&  POSCFG_FEATURE_FLAGS == 0
+#error NOSCFG_FEATURE_FLAGS enabled, but pico]OS flag functions disabled
+#endif
+
+#ifndef NOSCFG_FEATURE_TIMER
+#define NOSCFG_FEATURE_TIMER  0
+#endif
+#if NOSCFG_FEATURE_TIMER != 0  &&  POSCFG_FEATURE_TIMER == 0
+#error NOSCFG_FEATURE_TIMER enabled, but pico]OS timer functions disabled
 #endif
 
 
@@ -152,7 +231,7 @@
  *  DATA TYPES
  *-------------------------------------------------------------------------*/
 
-#if (DOX!=0) || (NOSCFG_FEATURE_BOTTOMHALF != 0)
+#if DOX!=0 || NOSCFG_FEATURE_BOTTOMHALF != 0
 /** Bottom half function pointer.
  * @param   arg         Optional argument that was set when the
  *                      bottom half was registered with
@@ -181,7 +260,13 @@ typedef void (*NOSBHFUNC_t)(void* arg, UVAR_t bh);
  * @{
  */
 
-#if (DOX!=0) || (NOSCFG_FEATURE_MEMALLOC != 0)
+#ifdef _N_MEM_C
+#define NANOEXT
+#else
+#define NANOEXT extern
+#endif
+
+#if DOX!=0 || NOSCFG_FEATURE_MEMALLOC != 0
 
 /**
  * Allocate memory from the heap.
@@ -196,7 +281,7 @@ typedef void (*NOSBHFUNC_t)(void* arg, UVAR_t bh);
  *          to have this function compiled in.
  * @sa      nosMemFree, NOSCFG_MEM_MANAGER_TYPE
  */
-void* nosMemAlloc(UINT_t size);
+NANOEXT void* nosMemAlloc(UINT_t size);
 
 /**
  * Free a block of memory to the heap.
@@ -206,7 +291,7 @@ void* nosMemAlloc(UINT_t size);
  *          to have this function compiled in.
  * @sa      nosMemAlloc, NOSCFG_MEM_MANAGER_TYPE
  */
-void  nosMemFree(void *p);
+NANOEXT void  nosMemFree(void *p);
 
 /* overwrite standard memory allocation functions */
 #ifndef NANOINTERNAL
@@ -240,7 +325,7 @@ void    nos_free(void *mp);
 
 #endif /* NOSCFG_FEATURE_MEMALLOC */
 
-#if (DOX!=0) || (NOSCFG_FEATURE_MEMSET != 0)
+#if DOX!=0 || NOSCFG_FEATURE_MEMSET != 0
 
 /**
  * Fill a block of memory with a special character.
@@ -253,7 +338,7 @@ void    nos_free(void *mp);
  *          to have this function compiled in.
  * @sa      nosMemAlloc, nosMemCopy
  */
-void nosMemSet(void *buf, char val, UINT_t count);
+NANOEXT void nosMemSet(void *buf, char val, UINT_t count);
 
 #ifdef memset
 #undef memset
@@ -262,7 +347,7 @@ void nosMemSet(void *buf, char val, UINT_t count);
 
 #endif /* NOSCFG_FEATURE_MEMSET */
 
-#if (DOX!=0) || (NOSCFG_FEATURE_MEMCOPY != 0)
+#if DOX!=0 || NOSCFG_FEATURE_MEMCOPY != 0
 
 /**
  * Copy a block of memory.
@@ -275,7 +360,7 @@ void nosMemSet(void *buf, char val, UINT_t count);
  *          to have this function compiled in.
  * @sa      nosMemAlloc, nosMemSet
  */
-void nosMemCopy(void *dst, void *src, UINT_t count);
+NANOEXT void nosMemCopy(void *dst, void *src, UINT_t count);
 
 #ifdef memcpy
 #undef memcpy
@@ -283,7 +368,7 @@ void nosMemCopy(void *dst, void *src, UINT_t count);
 #define memcpy  nosMemCopy
 
 #endif /* NOSCFG_FEATURE_MEMCOPY */
-
+#undef NANOEXT
 /** @} */
 
 
@@ -311,7 +396,14 @@ void nosMemCopy(void *dst, void *src, UINT_t count);
  * you may no more need a large runtime library in some special cases.
  * @{
  */
-#if (DOX!=0) || (NOSCFG_FEATURE_CONIN != 0)
+
+#ifdef _N_CONIO_C
+#define NANOEXT
+#else
+#define NANOEXT extern
+#endif
+
+#if DOX!=0 || NOSCFG_FEATURE_CONIN != 0
 
 /**
  * Keyboard input.
@@ -324,7 +416,7 @@ void nosMemCopy(void *dst, void *src, UINT_t count);
  *          software interrupt 0 to feed keyboard data into the nano layer.
  * @sa      nosKeyGet, nosKeyPressed, NOSCFG_CONIO_KEYBUFSIZE
  */
-void    c_nos_keyinput(UVAR_t key);
+NANOEXT void  c_nos_keyinput(UVAR_t key);
 
 /**
  * Wait and get the code of the next pressed key.
@@ -335,7 +427,7 @@ void    c_nos_keyinput(UVAR_t key);
  *          to have this function compiled in.
  * @sa      nosKeyPressed, c_nos_keyinput, NOSCFG_CONIO_KEYBUFSIZE
  */
-char    nosKeyGet(void);
+NANOEXT char  nosKeyGet(void);
 
 /**
  * Test if a key was pressed.
@@ -346,12 +438,12 @@ char    nosKeyGet(void);
  *          to have this function compiled in.
  * @sa      nosKeyGet, c_nos_keyinput, NOSCFG_CONIO_KEYBUFSIZE
  */
-UVAR_t  nosKeyPressed(void);
+NANOEXT UVAR_t  nosKeyPressed(void);
 
 #endif  /* NOSCFG_FEATURE_CONIN */
 
 
-#if (DOX!=0)
+#if DOX
 /**
  * Print a character to the console or terminal. This function
  * must be supplied by the architecture port; it is not callable
@@ -373,11 +465,11 @@ UVAR_t  nosKeyPressed(void);
  *          value of this function is ignored.
  * @sa      c_nos_putcharReady, c_nos_keyinput
  */
-UVAR_t  p_putchar(char c); 
+NANOEXT UVAR_t  p_putchar(char c); 
 #endif
 
 
-#if (DOX!=0) || (NOSCFG_CONOUT_HANDSHAKE != 0)
+#if DOX!=0 || NOSCFG_CONOUT_HANDSHAKE != 0
 /**
  * This is the optional handshake function for ::p_putchar.
  * The handshake function is usefull for console output over
@@ -399,11 +491,11 @@ UVAR_t  p_putchar(char c);
  * @note To enable this handshake function, the define
  *       ::NOSCFG_CONOUT_HANDSHAKE must be set to 1.
  */
-void    c_nos_putcharReady(void);
+NANOEXT void  c_nos_putcharReady(void);
 #endif
 
 
-#if (DOX!=0) || (NOSCFG_FEATURE_CONOUT != 0)
+#if DOX!=0 || NOSCFG_FEATURE_CONOUT != 0
 
 /**
  * Print a character to the console or terminal.
@@ -413,7 +505,7 @@ void    c_nos_putcharReady(void);
  *          to have this function compiled in.
  * @sa      nosPrint, p_putchar
  */
-void    nosPrintChar(char c);
+NANOEXT void  nosPrintChar(char c);
 
 /**
  * Print a character string to the console or terminal.
@@ -424,7 +516,7 @@ void    nosPrintChar(char c);
  *          to have this function compiled in.
  * @sa      nosPrintChar, p_putchar
  */
-void    nosPrint(const char *s);
+NANOEXT void  nosPrint(const char *s);
 
 #endif
 
@@ -435,16 +527,16 @@ void    nosPrint(const char *s);
 #endif
 #endif
 
-#if (NOSCFG_FEATURE_PRINTF != 0) || (NOSCFG_FEATURE_SPRINTF != 0)
+#if NOSCFG_FEATURE_PRINTF != 0 || NOSCFG_FEATURE_SPRINTF != 0
 typedef void* NOSARG_t;
 #endif
 
 
-#if (DOX!=0) || ((NOSCFG_FEATURE_CONOUT != 0)&&(NOSCFG_FEATURE_PRINTF != 0))
+#if DOX!=0 || ((NOSCFG_FEATURE_CONOUT != 0)&&(NOSCFG_FEATURE_PRINTF != 0))
 
-void n_printFormattedN(const char *fmt, NOSARG_t args);
+NANOEXT void n_printFormattedN(const char *fmt, NOSARG_t args);
 
-#if (DOX!=0)
+#if DOX
 /**
  * Print a formated character string to the console or terminal.
  * This function acts like the usual printf function, except that
@@ -460,7 +552,7 @@ void n_printFormattedN(const char *fmt, NOSARG_t args);
  *          nosPrintf2 (2 arguments) to nosPrintf6 (6 arguments).
  * @sa      nosPrintChar, nosPrint
  */
-void nosPrintf1(const char *fmt, arg a1);
+NANOEXT void nosPrintf1(const char *fmt, arg a1);
 
 #else /* DOX!=0 */
 #define nosPrintf1(fmt, a1)  \
@@ -512,8 +604,8 @@ void nosPrintf1(const char *fmt, arg a1);
 #endif /* NOSCFG_FEATURE_PRINTF */
 
 
-#if (DOX!=0) || (NOSCFG_FEATURE_SPRINTF != 0)
-#if (DOX!=0)
+#if DOX!=0 || NOSCFG_FEATURE_SPRINTF != 0
+#if DOX
 /**
  * Print a formated character string to a string buffer.
  * This function acts like the usual sprintf function, except that
@@ -529,11 +621,11 @@ void nosPrintf1(const char *fmt, arg a1);
  *          nosSPrintf2 (2 arguments) to nosSPrintf6 (6 arguments).
  * @sa      nosPrintf1, nosPrint
  */
-void nosSPrintf1(char *buf, const char *fmt, arg a1);
+NANOEXT void nosSPrintf1(char *buf, const char *fmt, arg a1);
 
 #else /* DOX!=0 */
 
-void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args);
+NANOEXT void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args);
 
 #define nosSPrintf1(buf, fmt, a1)  \
   do { \
@@ -582,6 +674,7 @@ void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args);
 
 #endif /* DOX!=0 */
 #endif /* NOSCFG_FEATURE_SPRINTF */
+#undef NANOEXT
 /** @} */
 
 
@@ -608,7 +701,13 @@ void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args);
  * @{
  */
 
-#if (DOX!=0) || (NOSCFG_FEATURE_BOTTOMHALF != 0)
+#ifdef _N_BHALF_C
+#define NANOEXT
+#else
+#define NANOEXT extern
+#endif
+
+#if DOX!=0 || NOSCFG_FEATURE_BOTTOMHALF != 0
 /**
  * Bottom half function. Registers a new bottom half.
  * @param   number      Number of the bottom half. Must be between
@@ -624,11 +723,12 @@ void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args);
  *          to enable bottom half support.
  * @note    Important! A bottom half function is not allowed to block,
  *          that means such a function must not call functions that
- *          may block (for example, this functions are posTaskSleep,
- *          posSemaGet, posSemaWait, posMutexLock).
+ *          may block (for example, this functions are nosTaskSleep,
+ *          nosSemaGet, nosSemaWait, nosMutexLock).
  * @sa      nosBottomHalfUnregister, nosBottomHalfStart
  */
-VAR_t nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func, void *arg);
+NANOEXT VAR_t  nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func,
+                                     void *arg);
 
 /**
  * Bottom half function. Unregisters a bottom half.
@@ -654,9 +754,233 @@ VAR_t nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func, void *arg);
  *          to enable bottom half support.
  * @sa      nosBottomHalfRegister, nosBottomHalfUnregister
  */
-void nosBottomHalfStart(UVAR_t number);
+NANOEXT void nosBottomHalfStart(UVAR_t number);
 
+#endif /* NOSCFG_FEATURE_BOTTOMHALF */
+#undef NANOEXT
+/** @} */
+
+
+
+/*---------------------------------------------------------------------------
+ *  REGISTRY
+ *-------------------------------------------------------------------------*/
+
+/** @defgroup registry Registry
+ * @ingroup userapin
+ * 
+ * <b> Note: This API is part of the nano layer </b>
+ *
+ * Registry keys are short ASCII texts that are assigned to binary numbers
+ * like integers or pointers. pico]OS uses registry keys in two ways: @n@n
+ * First, this keys are used to identify resources, such as tasks,
+ * semaphores and timers. So it is possible to create named semaphores,
+ * that are accessible by every program module that knows the name of
+ * the semaphore (the program module does not need to know the exact
+ * semaphore handle, the ASCII name is sufficiennt). Also with named
+ * resources it is possible to maintain a list of allocated resources,
+ * e.g. this resource list can be printed out to a shell window. @n@n
+ * Second, registry keys can be used by an application to maintain a
+ * central storage with setup and configuration data. This is known
+ * as "the registry" in MS Windows operating systems.
+ * @{
+ */
+
+#ifdef _N_REG_C
+#define NANOEXT
+#else
+#define NANOEXT extern
 #endif
+
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+
+/** Generic Handle */
+typedef void*  NOSGENERICHANDLE_t;
+
+/** Registry Query Handle. Every registry query uses an own handle
+    to the registry system.*/
+typedef void*  NOSREGQHANDLE_t;
+
+/* Generic registry key value type.
+   It is on the developer how he uses the type. */
+typedef union {
+  void*       voidptr; /*!< pointer type, may be used for handles */
+  int         integer; /*!< integer type, may be used to store numbers */
+} KEYVALUE_t;
+
+/** Registry type */
+typedef enum {
+  REGTYPE_TASK = 0,    /*!< task registry */
+#if DOX!=0 || NOSCFG_FEATURE_SEMAPHORES != 0
+  REGTYPE_SEMAPHORE,   /*!< semaphore registry */
+#endif
+#if DOX!=0 || NOSCFG_FEATURE_MUTEXES != 0
+  REGTYPE_MUTEX,       /*!< mutex registry */
+#endif
+#if DOX!=0 || NOSCFG_FEATURE_FLAGS != 0
+  REGTYPE_FLAG,        /*!< flag event registry */
+#endif
+#if DOX!=0 || NOSCFG_FEATURE_TIMER != 0
+  REGTYPE_TIMER,       /*!< timer registry */
+#endif
+#if DOX!=0 || NOSCFG_FEATURE_USERREG != 0
+  REGTYPE_USER,        /*!< user defined registry */
+#endif
+  REGTYPE_SEARCHALL    /*!< this is a special flag for the
+                            function nosGetNameByHandle */
+} NOSREGTYPE_t;
+#define MIN_REGTYPE  REGTYPE_TASK
+#define MAX_REGTYPE  (REGTYPE_SEARCHALL-1)
+
+
+/**
+ * Registry function. Searches the registry for an object name and returns
+ * the handle that is assigned to the object.
+ * For example, somebody can get a semaphore handle by just knowing the
+ * semaphores name.
+ * @param objtype   Type of the object that is searched for. Valid types are:
+ *                  REGTYPE_TASK, REGTYPE_SEMAPHORE, REGTYPE_MUTEX,
+ *                  REGTYPE_FLAG, REGTYPE_TIMER, REGTYPE_USER
+ * @param objname   Name of the object to search for.
+ * @return  The handle to the object on success,
+ *          NULL if the object was not found.
+ * @note    ::NOSCFG_FEATURE_REGISTRY must be defined to 1 to enable
+ *          the registry and this function.<br>
+ * @sa nosGetNameByHandle
+ */
+NANOEXT NOSGENERICHANDLE_t  nosGetHandleByName(
+                                 NOSREGTYPE_t objtype, const char *objname);
+
+
+/**
+ * Registry function. Searches the registry for a handle and returns the
+ * name of the objetct.
+ * @param handle    Object-handle to search the registry for.
+ * @param buffer    If the object could be found in the registry,
+ *                  the name of the object will be stored in this buffer.
+ * @param bufsize   Size of the buffer in bytes. The size should be at
+ *                  least ::NOS_MAX_REGKEYLEN + 1.
+ * @param what      What to search for. If the type of the handle is known,
+ *                  this parameter should be set to
+ *                  REGTYPE_TASK, REGTYPE_SEMAPHORE, REGTYPE_MUTEX,
+ *                  REGTYPE_FLAG, REGTYPE_TIMER or REGTYPE_USER.
+ *                  If the object type is unknown, you may specify
+ *                  REGTYPE_SEARCHALL. But note that the user branch of
+ *                  the registry will not be included into the search.
+ * @note    ::NOSCFG_FEATURE_REGISTRY must be defined to 1 to enable
+ *          the registry and this function.<br>
+ * @sa nosGetHandleByName
+ */
+NANOEXT VAR_t nosGetNameByHandle(NOSGENERICHANDLE_t handle,
+                                 char *buffer, VAR_t bufsize,
+                                 NOSREGTYPE_t what);
+
+#if DOX!=0  ||  NOSCFG_FEATURE_USERREG != 0
+/**
+ * Registry function. Sets a key value or creates a new registry key string.
+ * This function is used to assign a binary value to a text string.
+ * If the user knows the text string, he can call ::nosRegGet to
+ * get the binary value that is associated with the text string.
+ * @param   keyname   text string, name of the registry key to create or set
+ * @param   keyvalue  binary value that shall be assigned to the registry key
+ * @return  Zero on success. Nonzero values denote an error.
+ * @note    When creating a new registry key string, you can use the asteriks
+ *          joker sign as last character in the registry key string. This
+ *          function will replace the asteriks character by a decimal number,
+ *          so that the generated registry key will be unique. <br>
+ *          ::NOSCFG_FEATURE_REGISTRY and ::NOSCFG_FEATURE_USERREG
+ *          must be defined to 1 to enable the registry and this function.<br>
+ *          The maximum length of a registry key string is ::NOS_MAX_REGKEYLEN.
+ * @sa nosRegGet, nosRegDel
+ */
+NANOEXT VAR_t nosRegSet(const char *keyname, KEYVALUE_t keyvalue);
+
+/**
+ * Registry function. Returns the binary value that is assigned to a
+ * registry key. This function is the counterpart to function ::nosRegSet.
+ * @param   keyname     text string that binary value shall be returned
+ * @param   keyvalue    Pointer to a variable of type KEYVALUE_t.
+ *                      When the function succeeds (the text string
+ *                      could be found), the value that is associated
+ *                      with the registry key is stored in this variable.
+ * @return  Zero on success. Nonzero values denote an error.
+ * @note    ::NOSCFG_FEATURE_REGISTRY and ::NOSCFG_FEATURE_USERREG
+ *          must be defined to 1 to enable the registry and this function.
+ * @sa nosRegSet, nosRegDel
+ */
+NANOEXT VAR_t nosRegGet(const char *keyname, KEYVALUE_t *keyvalue);
+
+/**
+ * Registry function. Deletes a registry key string.
+ * @param   keyname     Name of the registry key string to delete.
+ * @return  Zero on success. Nonzero values denote an error.
+ * @note    ::NOSCFG_FEATURE_REGISTRY and ::NOSCFG_FEATURE_USERREG
+ *          must be defined to 1 to enable the registry and this function.
+ * @sa nosRegSet, nosRegGet
+ */
+NANOEXT VAR_t nosRegDel(const char *keyname);
+#endif
+
+#if DOX!=0 || NOSCFG_FEATURE_REGQUERY != 0
+/**
+ * Registry function. Queries a list of registry keys.
+ * This function starts a new registry query.
+ * @param   type        Type of the registry to query:
+ *                      - REGTYPE_TASK:      query list of task handles
+ *                      - REGTYPE_SEMAPHORE: query list of semaphore handles
+ *                      - REGTYPE_MUTEX:     query list of mutex handles
+ *                      - REGTYPE_FLAG:      query list of flag event handles
+ *                      - REGTYPE_TIMER:     query list of timer handles
+ *                      - REGTYPE_USER:  query list of user values (registry)
+ * @return  Handle to the new query. NULL is returned on error.
+ * @note    In the current implementation, only one registry query can run
+ *          at a time. The next query can start when the first query
+ *          is finnished (function ::nosRegQueryEnd called). <br>
+ *          As long as the user queries the registry, all other operating system
+ *          functions that try to access the registry will be blocked. <br>
+ *          ::NOSCFG_FEATURE_REGISTRY and ::NOSCFG_FEATURE_REGQUERY
+ *          must be defined to 1 to enable the registry and this function.
+ * @sa nosRegQueryElem, nosRegQueryEnd
+ */
+NANOEXT NOSREGQHANDLE_t  nosRegQueryBegin(NOSREGTYPE_t type);
+
+/**
+ * Registry function. Returns the next found element in a query.
+ * @param   qh          Handle to the current query 
+ *                      (returnvalue of ::nosRegQueryBegin).
+ * @param   genh        Pointer to a (user provided) generic handle variable.
+ *                      In this variable the handle of the next found
+ *                      registry key will be stored. For user registry keys
+ *                      (REGTYPE_USER), this is the KEYVALUE_t.voidptr
+ * @param   namebuf     Pointer to a (user provided) character buffer.
+ *                      The buffer is filled with the name of the next
+ *                      registry key that is found. The buffer must have
+ *                      at least a size of NOS_MAX_REGKEYLEN+1 characters.
+ * @param   bufsize     Size of namebuf in bytes.
+ * @return  Zero on success (E_OK). A negative value denotes an error.
+ *          -E_NOMORE is returned when the end of the query is reached.
+ * @note    ::NOSCFG_FEATURE_REGISTRY and ::NOSCFG_FEATURE_REGQUERY
+ *          must be defined to 1 to enable the registry and this function.
+ * @sa nosRegQueryBegin, nosRegQueryEnd
+ */
+NANOEXT VAR_t nosRegQueryElem(NOSREGQHANDLE_t qh, NOSGENERICHANDLE_t *genh,
+                              char* namebuf, VAR_t bufsize);
+
+/**
+ * Registry function. Finnishes a query.
+ * This function is the counterpart to ::nosRegQueryBegin.
+ * @param   qh          Handle to the current query 
+ *                      (returnvalue of ::nosRegQueryBegin).
+ * @return  Zero on success. A negative value denotes an error.
+ * @note    ::NOSCFG_FEATURE_REGISTRY and ::NOSCFG_FEATURE_REGQUERY
+ *          must be defined to 1 to enable the registry and this function.
+ * @sa nosRegQueryBegin, nosRegQueryElem
+ */
+NANOEXT void nosRegQueryEnd(NOSREGQHANDLE_t qh);
+#endif
+
+#endif /* NOSCFG_FEATURE_REGISTRY */
+#undef NANOEXT
 /** @} */
 
 
@@ -665,7 +989,7 @@ void nosBottomHalfStart(UVAR_t number);
  *  CPU USAGE
  *-------------------------------------------------------------------------*/
 
-#if (DOX!=0) || (NOS_FEATURE_CPUUSAGE != 0)
+#if (DOX!=0) || (NOSCFG_FEATURE_CPUUSAGE != 0)
 /** @defgroup cpuusage CPU Usage Calculation
  * @ingroup userapin
  * The nano layer features CPU usage measurement. If this feature is
@@ -677,7 +1001,7 @@ void nosBottomHalfStart(UVAR_t number);
 /**
  * Calculate and return the percentage of CPU usage.
  * @return  percentage of CPU usage (0 ... 100 %%)
- * @note    ::NOS_FEATURE_CPUUSAGE must be defined to 1
+ * @note    ::NOSCFG_FEATURE_CPUUSAGE must be defined to 1
  *          to have this function compiled in.
  */
 UVAR_t nosCpuUsage(void);
@@ -690,10 +1014,31 @@ UVAR_t nosCpuUsage(void);
  *  ABSTRACTED FUNCTIONS
  *-------------------------------------------------------------------------*/
 
+#ifdef _N_CORE_C
+#define NANOEXT
+#else
+#define NANOEXT extern
+#endif
+
 /** @defgroup absfunc Abstracted Functions
  * @ingroup userapin
+ * The nano layer supports most of all pico layer functions in an
+ * abstracted form. This is necessary to follow the layering scheme
+ * while all pico layer functions remain accessible.
+ * The general rule is to replace the prefix 'pos' by the new prefix 'nos'
+ * for the nano layer functions. But pay attention: Some nano layer functions
+ * have some more functionality as their pendant in the pico layer.
  * @{
  */
+
+/** @defgroup nanotask Task Control Functions
+ * @ingroup absfunc
+ * @{
+ */
+
+/** Handle to a nano layer task object. */
+typedef  POSTASK_t  NOSTASK_t;
+
 
 #if (DOX!=0) || (NOSCFG_FEATURE_TASKCREATE != 0)
 /**
@@ -707,18 +1052,929 @@ UVAR_t nosCpuUsage(void);
  * @param   stacksize   Size of the stack memory. If set to zero,
  *                      a default stack size is assumed
  *                      (see define ::NOSCFG_DEFAULT_STACKSIZE).
- * @param   name        Unique name for the task. This parameter is yet
- *                      ignored and can be set to NULL (=unnamed task).
+ * @param   name        Name of the new task to create. If the last character
+ *                      in the name is an asteriks (*), the operating system
+ *                      automatically assigns the task a unique name.
+ *                      This parameter can be NULL if the nano layer registry
+ *                      feature is not used and will not be used in future.
  * @return  handle to the task. NULL is returned when the
  *          task could not be created.
  * @note    ::NOSCFG_FEATURE_TASKCREATE must be defined to 1
  *          to have this function compiled in.
- * @sa      posTaskExit
+ * @sa      nosTaskExit
  */
-POSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                        VAR_t priority, UINT_t stacksize,
-                        const char* name);
+NANOEXT NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                                VAR_t priority, UINT_t stacksize,
+                                const char* name);
+
+
+#if (DOX!=0) || (POSCFG_FEATURE_YIELD != 0)
+/**
+ * Task function.
+ * This function can be called to give off processing time so other tasks
+ * ready to run will be scheduled (= cooparative multitasking).
+ * @note    ::POSCFG_FEATURE_YIELD must be defined to 1
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskSleep
+ */
+#if DOX
+NANOEXT void nosTaskYield(void);
+#else
+#define nosTaskYield()  posTaskYield()
 #endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_SLEEP != 0)
+/**
+ * Task function.
+ * Delay task execution for a couple of timer ticks.
+ * @param   ticks  delay time in timer ticks
+ *          (see ::HZ define and ::MS macro)
+ * @note    ::POSCFG_FEATURE_SLEEP must be defined to 1
+ *          to have this function compiled in.<br>
+ *          It is not guaranteed that the task will proceed
+ *          execution exactly when the time has elapsed.
+ *          A higher priorized task or a task having the same
+ *          priority may steal the processing time.
+ *          Sleeping a very short time is inaccurate. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskYield, HZ, MS
+ */
+#if DOX
+NANOEXT void nosTaskSleep(UINT_t ticks);
+#else
+#define nosTaskSleep(ticks)  posTaskSleep(ticks)
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_EXIT != 0)
+/**
+ * Task function.
+ * Terminate execution of a task.
+ * @note    ::POSCFG_FEATURE_EXIT must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskCreate
+ */
+#if DOX
+NANOEXT void nosTaskExit(void);
+#else
+#define nosTaskExit()  posTaskExit()
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_GETTASK != 0)
+/**
+ * Task function.
+ * Get the handle to the currently running task.
+ * @return  the task handle.
+ * @note    ::POSCFG_FEATURE_GETTASK must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskCreate, nosTaskSetPriority
+ */
+#if DOX
+NANOEXT NOSTASK_t nosTaskGetCurrent(void);
+#else
+#define nosTaskGetCurrent()  (NOSTASK_t)posTaskGetCurrent()
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_TASKUNUSED != 0)
+/**
+ * Task function.
+ * Tests if a task is yet in use by the operating system.
+ * This function can be used to test if a task has been
+ * fully terminated (and the stack memory is no more in use).
+ * @param   taskhandle  handle to the task.
+ * @return  1 (=true) when the task is unused. If the task
+ *          is still in use, zero is returned.
+ *          A negative value is returned on error.
+ * @note    ::POSCFG_FEATURE_TASKUNUSED must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskCreate, nosTaskExit
+ */
+#if DOX
+NANOEXT VAR_t nosTaskUnused(NOSTASK_t taskhandle);
+#else
+#define nosTaskUnused(th)  posTaskUnused((POSTASK_t)(th))
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_SETPRIORITY != 0)
+/**
+ * Task function.
+ * Change the priority of a task. Note that in a non-roundrobin
+ * scheduling environment every priority level can only exist once.
+ * @param   taskhandle  handle to the task.
+ * @param   priority    new priority. Must be in the range
+ *                      0 .. ::POSCFG_MAX_PRIO_LEVEL - 1.
+ *                      The higher the number, the higher the priority.
+ * @return  zero on success.
+ * @note    ::POSCFG_FEATURE_SETPRIORITY must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskGetPriority, nosTaskGetCurrent, nosTaskCreate
+ */
+#if DOX
+NANOEXT VAR_t nosTaskSetPriority(NOSTASK_t taskhandle, VAR_t priority);
+#else
+#define nosTaskSetPriority(th, prio) posTaskSetPriority((POSTASK_t)(th),prio)
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_GETPRIORITY != 0)
+/**
+ * Task function.
+ * Get the priority of a task.
+ * @param   taskhandle  handle to the task.
+ * @return  the priority of the task. A negative value is returned on error.
+ * @note    ::POSCFG_FEATURE_GETPRIORITY must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskSetPriority, nosTaskGetCurrent, nosTaskCreate
+ */
+#if DOX
+NANOEXT VAR_t nosTaskGetPriority(NOSTASK_t taskhandle);
+#else
+#define nosTaskGetPriority(th)  posTaskGetPriority((POSTASK_t)(th))
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_INHIBITSCHED != 0)
+/**
+ * Task function.
+ * Locks the scheduler. When this function is called, no task switches
+ * will be done any more, until the counterpart function ::nosTaskSchedUnlock
+ * is called. This function is usefull for short critical sections that
+ * require exclusive access to variables. Note that interrupts still
+ * remain enabled.
+ * @note    ::POSCFG_FEATURE_INHIBITSCHED must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskSchedUnlock
+ */
+#if DOX
+NANOEXT void nosTaskSchedLock(void);
+#else
+#define nosTaskSchedLock()  posTaskSchedLock()
+#endif
+
+/**
+ * Task function.
+ * Unlocks the scheduler. This function is called to leave a critical section.
+ * If a context switch request is pending, the context switch will happen
+ * directly after calling this function.
+ * @note    ::POSCFG_FEATURE_INHIBITSCHED must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTaskSchedLock
+ */
+#if DOX
+NANOEXT void nosTaskSchedUnlock(void);
+#else
+#define nosTaskSchedUnlock()  posTaskSchedUnlock()
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_TASKCB_USERSPACE > 0)
+/**
+ * Task function.
+ * Returns a pointer to the user memory in the current task control block.
+ * @note    ::POSCFG_TASKCB_USERSPACE must be defined to a nonzero value
+ *          to have this function compiled in. ::POSCFG_TASKCB_USERSPACE
+ *          is also used to set the size of the user memory (in bytes).<br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @return  pointer to user memory space.
+ */
+#if DOX
+NANOEXT void* nosTaskGetUserspace(void);
+#else
+#define nosTaskGetUserspace()  posTaskGetUserspace()
+#endif
+#endif
+
+#if (DOX!=0) || (POSCFG_FEATURE_IDLETASKHOOK != 0)
+/** Idle task function pointer */
+typedef POSIDLEFUNC_t NOSIDLEFUNC_t;
+/**
+ * Task function.
+ * Install or remove an optional idle task hook function.
+ * The hook function is called every time the system is idle.
+ * It is possible to use this hook to implement your own idle task;
+ * in this case the function does not need to return to the system.
+ * You may insert a call to ::nosTaskYield into your idle task loop
+ * to get a better task performance.
+ * @param   idlefunc  function pointer to the new idle task handler.
+ *                    If this parameter is set to NULL, the idle
+ *                    task function hook is removed again.
+ * @return  This function may return a pointer to the last hook
+ *          function set. If so (pointer is not NULL), the previous
+ *          hook function should be called from within your
+ *          idle task hook. This enables chaining of hook functions.
+ * @note    ::POSCFG_FEATURE_IDLETASKHOOK must be defined to 1 
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ */
+#if DOX
+NANOEXT NOSIDLEFUNC_t nosInstallIdleTaskHook(NOSIDLEFUNC_t idlefunc);
+#else
+#define nosInstallIdleTaskHook(ifunc)  posInstallIdleTaskHook(ifunc)
+#endif
+#endif
+
+#endif
+/** @} */
+
+/** @defgroup nanosema Semaphore Functions
+ * @ingroup absfunc
+ * For detailed information about using semaphores please see
+ * <a href="group__sema.html#_details">detailed description of semaphores</a>
+ * @{
+ */
+#if DOX!=0 || NOSCFG_FEATURE_SEMAPHORES != 0
+
+/** Handle to a nano layer semaphore object. */
+typedef  POSSEMA_t  NOSSEMA_t;
+
+/**
+ * Semaphore function.
+ * Allocates a new semaphore object.
+ * @param   initcount Initial semaphore count (see detailed semaphore
+ *                    description in pico laye documentation).
+ * @param   options   Currently unused. Please set this parameter to 0 (zero).
+ * @param   name      Name of the new semaphore object to create. If the last
+ *                    character in the name is an asteriks (*), the operating
+ *                    system automatically assigns the semaphore a unique name.
+ *                    This parameter can be NULL if the nano layer registry
+ *                    feature is not used and will not be used in future.
+ * @return  the pointer to the new semaphore object. NULL is returned on error.
+ * @note    ::NOSCFG_FEATURE_SEMAPHORES must be defined to 1 
+ *          to have semaphore support compiled in. <br>
+ *          You must use ::nosSemaDestroy to destroy the semaphore again.<br>
+ *          Even if the function posSemaDestroy would work also, it is
+ *          required to call ::nosSemaDestroy. Only this function removes
+ *          the semaphore from the registry. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosSemaDestroy, nosSemaGet, nosSemaWait, nosSemaSignal
+ */
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+NANOEXT NOSSEMA_t nosSemaCreate(INT_t initcount, UVAR_t options,
+                                const char *name);
+#else
+#define nosSemaCreate(i, o, n)  (NOSSEMA_t) posSemaCreate(i);
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_SEMADESTROY != 0
+/**
+ * Semaphore function.
+ * Frees a no more needed semaphore object.
+ * @param   sema  handle to the semaphore object.
+ * @note    ::NOSCFG_FEATURE_SEMAPHORES must be defined to 1 
+ *          to have semaphore support compiled in.<br>
+ *          ::POSCFG_FEATURE_SEMADESTROY must be defined to 1
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosSemaCreate
+ */
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+NANOEXT void nosSemaDestroy(NOSSEMA_t sema);
+#else
+#define nosSemaDestroy(sema)  posSemaDestroy((POSSEMA_t)(sema))
+#endif
+#endif
+
+#if DOX
+/**
+ * Semaphore function.
+ * This function signalizes a semaphore object, that means it increments
+ * the semaphore counter and sets tasks pending on the semaphore to 
+ * running state, when the counter reaches a positive, nonzero value.
+ * @param   sema  handle to the semaphore object.
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_SEMAPHORES must be defined to 1 
+ *          to have semaphore support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosSemaGet, nosSemaWait, nosSemaCreate
+ */
+NANOEXT  VAR_t nosSemaSignal(NOSSEMA_t sema);
+#else
+#define nosSemaSignal(sem)  posSemaSignal((POSSEMA_t)(sem))
+#endif
+
+#if DOX
+/**
+ * Semaphore function.
+ * This function tries to get the semaphore object. If the semaphore
+ * is in nonsignalized state (that means its counter is zero or less),
+ * this function blocks the task execution until the semaphore
+ * gets signaled.
+ * @param   sema  handle to the semaphore object.
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_SEMAPHORES must be defined to 1 
+ *          to have semaphore support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosSemaWait, nosSemaSignal, nosSemaCreate
+ */
+NANOEXT VAR_t nosSemaGet(NOSSEMA_t sema);
+#else
+#define nosSemaGet(sem)  posSemaGet((POSSEMA_t)(sem))
+#endif
+
+#if DOX
+/**
+ * Semaphore function.
+ * This function tries to get the semaphore object. If the semaphore
+ * is in nonsignalized state (that means its counter is zero or less),
+ * this function blocks the task execution until the semaphore
+ * gets signaled or a timeout happens.
+ * @param   sema  handle to the semaphore object.
+ * @param   timeoutticks  timeout in timer ticks
+ *          (see ::HZ define and ::MS macro).
+ *          If this parameter is set to zero, the function immediately
+ *          returns. If this parameter is set to INFINITE, the
+ *          function will never time out.
+ * @return  zero on success. A positive value (1 or TRUE) is returned
+ *          when the timeout was reached.
+ * @note    ::NOSCFG_FEATURE_SEMAPHORES must be defined to 1 
+ *          to have semaphore support compiled in.<br>
+ *          ::POSCFG_FEATURE_SEMAWAIT must be defined to 1
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosSemaGet, nosSemaSignal, nosSemaCreate, HZ, MS
+ */
+NANOEXT VAR_t nosSemaWait(NOSSEMA_t sema, UINT_t timeoutticks);
+#else
+#if POSCFG_FEATURE_SEMAWAIT
+#define nosSemaWait(sem, to)  posSemaWait((POSSEMA_t)(sem), to)
+#endif
+#endif
+
+#endif /* POSCFG_FEATURE_SEMAPHORES */
+/** @} */
+
+/** @defgroup nanomutex Mutex Functions
+ * @ingroup absfunc
+ * For detailed information about using mutexes please see
+ * <a href="group__mutex.html#_details">detailed description of mutexes</a>
+ * @{
+ */
+#if DOX!=0 || NOSCFG_FEATURE_MUTEXES != 0
+
+/** Handle to a nano layer semaphore object. */
+typedef  POSMUTEX_t  NOSMUTEX_t;
+
+/**
+ * Mutex function.
+ * Allocates a new mutex object.
+ * @param   options   Currently unused. Please set this parameter to 0 (zero).
+ * @param   name      Name of the new mutex object to create. If the last
+ *                    character in the name is an asteriks (*), the operating
+ *                    system automatically assigns the mutex a unique name.
+ *                    This parameter can be NULL if the nano layer registry
+ *                    feature is not used and will not be used in future.
+ * @return  the pointer to the new mutex object. NULL is returned on error.
+ * @note    ::NOSCFG_FEATURE_MUTEXES must be defined to 1 
+ *          to have mutex support compiled in. <br>
+ *          Even if the function posMutexDestroy would work also, it is
+ *          required to call ::nosMutexDestroy. Only this function removes
+ *          the mutex from the registry. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMutexDestroy, nosMutexLock, nosMutexTryLock, nosMutexUnlock
+ */
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+NANOEXT NOSMUTEX_t nosMutexCreate(UVAR_t options, const char *name);
+#else
+#define nosMutexCreate(opt, name)  (NOSMUTEX_t) posMutexCreate()
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_MUTEXDESTROY != 0
+/**
+ * Mutex function.
+ * Frees a no more needed mutex object.
+ * @param   mutex  handle to the mutex object.
+ * @note    ::NOSCFG_FEATURE_MUTEXES must be defined to 1 
+ *          to have mutex support compiled in.<br>
+ *          ::POSCFG_FEATURE_MUTEXDESTROY must be defined to 1
+ *          to have this function compiled in.<br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMutexCreate
+ */
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+NANOEXT void nosMutexDestroy(NOSMUTEX_t mutex);
+#else
+#define nosMutexDestroy(mutex)  posMutexDestroy((POSMUTEX_t)(mutex))
+#endif
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_MUTEXTRYLOCK != 0
+/**
+ * Mutex function.
+ * Tries to get the mutex lock. This function does not block when the
+ * mutex is not available, instead it returns a value showing that
+ * the mutex could not be locked.
+ * @param   mutex  handle to the mutex object.
+ * @return  zero when the mutex lock could be set. Otherwise, when
+ *          the mutex lock is yet helt by an other task, the function
+ *          returns 1. A negative value is returned on error.
+ * @note    ::NOSCFG_FEATURE_MUTEXES must be defined to 1 
+ *          to have mutex support compiled in.<br>
+ *          ::POSCFG_FEATURE_MUTEXTRYLOCK must be defined to 1
+ *          to have this function compiled in.<br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMutexLock, nosMutexUnlock, nosMutexCreate
+ */
+#if DOX
+NANOEXT VAR_t nosMutexTryLock(NOSMUTEX_t mutex);
+#else
+#define nosMutexTryLock(mutex)  posMutexTryLock((POSMUTEX_t)(mutex))
+#endif
+#endif
+
+/**
+ * Mutex function.
+ * This function locks a code section so that only one task can execute
+ * the code at a time. If an other task already has the lock, the task
+ * requesting the lock will be blocked until the mutex is unlocked again.
+ * Note that a ::nosMutexLock appears always in a pair with ::nosMutexUnlock.
+ * @param   mutex  handle to the mutex object.
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_MUTEXES must be defined to 1 
+ *          to have mutex support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMutexTryLock, nosMutexUnlock, nosMutexCreate
+ */
+#if DOX
+NANOEXT VAR_t nosMutexLock(NOSMUTEX_t mutex);
+#else
+#define nosMutexLock(mutex)  posMutexLock((POSMUTEX_t)(mutex))
+#endif
+
+/**
+ * Mutex function.
+ * This function unlocks a section of code so that other tasks
+ * are able to execute it.
+ * @param   mutex  handle to the mutex object.
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_MUTEXES must be defined to 1 
+ *          to have mutex support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMutexLock, nosMutexTryLock, nosMutexCreate
+ */
+#if DOX
+NANOEXT VAR_t nosMutexUnlock(NOSMUTEX_t mutex);
+#else
+#define nosMutexUnlock(mutex)  posMutexUnlock((POSMUTEX_t)(mutex))
+#endif
+
+#endif /* NOSCFG_FEATURE_MUTEXES */
+/** @} */
+
+
+/** @defgroup nanomsg Message Box Functions
+ * @ingroup absfunc
+ * For detailed information about using message boxes please see
+ * <a href="group__msg.html#_details">detailed description of message boxes</a>
+ * @{
+ */
+
+#if DOX!=0 || NOSCFG_FEATURE_MSGBOXES != 0
+
+/**
+ * Message box function.
+ * Allocates a new message buffer. To increase the execution speed,
+ * it is recommended to set ::POSCFG_MSG_MEMORY to 1. Otherwise,
+ * ::nosMessageAlloc will need to call ::nosMemAlloc to allocate memory
+ * (and this is possibly slower than the pico]OS internal message allocator).
+ * <br> Usually the sending task would allocate a new message buffer, fill
+ * in its data and send it via ::nosMessageSend to the receiving task.
+ * The receiving task is responsible for freeing the message buffer again.
+ * @param   msgSize   size of the requested message buffer in bytes.
+ * @return  the pointer to the new buffer. NULL is returned if the
+ *          system is low on memory or the requested msgSize is larger
+ *          than ::POSCFG_MSG_BUFSIZE (only if ::POSCFG_MSG_MEMORY is
+ *          set to 1).
+ * @note    ::NOSCFG_FEATURE_MSGBOXES must be defined to 1 
+ *          to have message box support compiled in.<br>
+ *          If ::POSCFG_MSG_MEMORY is set to 0, you also need to
+ *          enable the nano layer memory manager by setting
+ *          ::NOSCFG_FEATURE_MEMALLOC to 1.
+ * @sa      nosMessageSend, nosMessageGet, nosMessageFree
+ */
+NANOEXT void* nosMessageAlloc(UINT_t msgSize);
+
+/**
+ * Message box function. Frees a message buffer again.
+ * Usually the receiving task would call this function after
+ * it has processed a message to free the message buffer again.
+ * @param   buf  Pointer to the message buffer that is no more used.
+ * @note    ::NOSCFG_FEATURE_MSGBOXES must be defined to 1 
+ *          to have message box support compiled in.
+ * @sa      nosMessageGet, nosMessageSend, nosMessageAlloc
+ */
+NANOEXT void nosMessageFree(void *buf);
+
+/**
+ * Message box function. Sends a message to a task.
+ * @param   buf  Pointer to the message to send.
+ *               The message buffer must have been allocated by
+ *               calling ::nosMessageAlloc before.
+ * @param   taskhandle  handle to the task to send the message to.
+ * @return  zero on success. When an error condition exist, a
+ *          negative value is returned and the message buffer is freed.
+ * @note    ::NOSCFG_FEATURE_MSGBOXES must be defined to 1 
+ *          to have message box support compiled in.
+ * @sa      nosMessageAlloc, nosMessageGet
+ */
+NANOEXT VAR_t nosMessageSend(void *buf, NOSTASK_t taskhandle);
+
+/**
+ * Message box function. Gets a new message from the message box.
+ * If no message is available, the task blocks until a new message
+ * is received.
+ * @return  Pointer to the received message. Note that the
+ *          message memory must be freed again with ::nosMessageFree
+ *          when the message buffer is no more used.
+ * @note    ::NOSCFG_FEATURE_MSGBOXES must be defined to 1 
+ *          to have message box support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMessageFree, nosMessageAvailable,
+ *          nosMessageWait, nosMessageSend
+ */
+#if DOX
+NANOEXT void* nosMessageGet(void);
+#else
+#define  nosMessageGet()  posMessageGet()
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_MSGWAIT != 0
+/**
+ * Message box function.
+ * Gets a new message from the message box.
+ * If no message is available, the task blocks until a new message
+ * is received or the timeout has been reached.
+ * @param   timeoutticks  timeout in timer ticks
+ *          (see ::HZ define and ::MS macro).
+ *          If this parameter is set to zero, the function immediately
+ *          returns. If this parameter is set to INFINITE, the
+ *          function will never time out.
+ * @return  Pointer to the received message. Note that the
+ *          message memory must be freed again with ::nosMessageFree
+ *          when the message buffer is no more used.
+ *          NULL is returned when no message was received
+ *          within the specified time (=timeout).
+ * @note    ::NOSCFG_FEATURE_MSGBOXES must be defined to 1 
+ *          to have message box support compiled in.<br>
+ *          ::POSCFG_FEATURE_MSGWAIT must be defined to 1
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMessageFree, nosMessageGet, nosMessageAvailable,
+ *          nosMessageSend, HZ, MS
+ */
+#if DOX
+NANOEXT void* nosMessageWait(UINT_t timeoutticks);
+#else
+#define nosMessageWait(to)  posMessageWait(to)
+#endif
+#endif
+
+/**
+ * Message box function.
+ * Tests if a new message is available
+ * in the message box. This function can be used to prevent
+ * the task from blocking.
+ * @return  1 (=true) when a new message is available.
+ *          Otherwise zero is returned. A negative value
+ *          is returned on error.
+ * @note    ::NOSCFG_FEATURE_MSGBOXES must be defined to 1 
+ *          to have message box support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosMessageGet, nosMessageWait
+ */
+#if DOX
+NANOEXT VAR_t nosMessageAvailable(void);
+#else
+#define nosMessageAvailable()  posMessageAvailable()
+#endif
+
+#endif  /* NOSCFG_FEATURE_MSGBOXES */
+/** @} */
+
+/** @defgroup nanoflag Flag Functions
+ * @ingroup absfunc
+ * For detailed information about using flags please see
+ * <a href="group__flag.html#_details">detailed description of flags</a>
+ * @{
+ */
+
+#if DOX!=0 || NOSCFG_FEATURE_FLAGS != 0
+
+/** Handle to a nano layer flag object. */
+typedef  POSFLAG_t  NOSFLAG_t;
+
+/**
+ * Flag function.
+ * Allocates a flag object. A flag object behaves like an array of
+ * one bit semaphores. The object can hold up to ::MVAR_BITS - 1 flags.
+ * The flags can be used to simulate events, so a single thread can wait
+ * for several events simultaneously.
+ * @param   name      Name of the new flag object to create. If the last
+ *                    character in the name is an asteriks (*), the operating
+ *                    system automatically assigns the flag an unique name.
+ *                    This parameter can be NULL if the nano layer registry
+ *                    feature is not used and will not be used in future.
+ * @return  handle to the new flag object. NULL is returned on error.
+ * @note    ::NOSCFG_FEATURE_FLAGS must be defined to 1 
+ *          to have flag support compiled in. <br>
+ *          You must use ::nosFlagDestroy to destroy the flag object again.<br>
+ *          Even if the function posFlagDestroy would work also, it is
+ *          required to call ::nosFlagDestroy. Only this function removes
+ *          the flag object from the registry. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosFlagGet, nosFlagSet, nosFlagDestroy
+ */
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+NANOEXT NOSFLAG_t nosFlagCreate(const char* name);
+#else
+#define nosFlagCreate(name)  (NOSFLAG_t) posFlagCreate()
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_FLAGDESTROY != 0
+/**
+ * Flag function.
+ * Frees an unused flag object again.
+ * @param   flg  handle to the flag object.
+ * @note    ::NOSCFG_FEATURE_FLAGS must be defined to 1 
+ *          to have flag support compiled in.<br>
+ *          ::POSCFG_FEATURE_FLAGDESTROY must be defined to 1
+ *          to have this function compiled in.<br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosFlagCreate
+ */
+#if (DOX!=0) || (NOSCFG_FEATURE_REGISTRY != 0)
+NANOEXT void nosFlagDestroy(NOSFLAG_t flg);
+#else
+#define nosFlagDestroy(flg)  posFlagDestroy((POSFLAG_t)(flg))
+#endif
+#endif
+
+/**
+ * Flag function.
+ * Sets a flag bit in the flag object and sets the task that
+ * pends on the flag object to running state.
+ * @param   flg     Handle to the flag object.
+ * @param   flgnum  Number of the flag to set. The flag number
+ *                  must be in the range of 0 .. ::MVAR_BITS - 2.
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_FLAGS must be defined to 1 
+ *          to have flag support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosFlagCreate, nosFlagGet, nosFlagWait
+ */
+#if DOX
+NANOEXT VAR_t nosFlagSet(NOSFLAG_t flg, UVAR_t flgnum);
+#else
+#define nosFlagSet(flg, num)  posFlagSet((POSFLAG_t)(flg), num)
+#endif
+
+/**
+ * Flag function.
+ * Pends on a flag object and waits until one of the flags 
+ * in the flag object is set.
+ * @param   flg   Handle to the flag object.
+ * @param   mode  can be NOSFLAG_MODE_GETSINGLE or NOSFLAG_MODE_GETMASK.
+ * @return  the number of the next flag that is set when mode is set
+ *          to NOSFLAG_MODE_GETSINGLE. When mode is set to 
+ *          NOSFLAG_MODE_GETMASK, a bit mask with all set flags is
+ *          returned. A negative value is returned on error.
+ * @note    ::NOSCFG_FEATURE_FLAGS must be defined to 1 
+ *          to have flag support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosFlagCreate, nosFlagSet, nosFlagWait
+ */
+#if DOX
+NANOEXT VAR_t nosFlagGet(NOSFLAG_t flg, UVAR_t mode);
+#else
+#define nosFlagGet(flg, mode)  posFlagGet((POSFLAG_t)(flg), mode)
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_FLAGWAIT != 0
+/**
+ * Flag function.
+ * Pends on a flag object and waits until one of the flags 
+ * in the flag object is set or a timeout has happened.
+ * @param   flg   handle to the flag object.
+ * @param   timeoutticks  timeout in timer ticks
+ *          (see ::HZ define and ::MS macro).
+ *          If this parameter is set to zero, the function immediately
+ *          returns. If this parameter is set to INFINITE, the
+ *          function will never time out.
+ * @return  a mask of all set flags (positive value).
+ *          If zero is returned, the timeout was reached.
+ *          A negative value denotes an error.
+ * @note    ::NOSCFG_FEATURE_FLAGS must be defined to 1 
+ *          to have flag support compiled in.<br>
+ *          ::POSCFG_FEATURE_FLAGWAIT must be defined to 1
+ *          to have this function compiled in.<br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosFlagCreate, nosFlagSet, nosFlagGet, HZ, MS
+ */
+#if DOX
+NANOEXT VAR_t nosFlagWait(NOSFLAG_t flg, UINT_t timeoutticks);
+#else
+#define nosFlagWait(flg, to)  posFlagWait((POSFLAG_t)(flg), to)
+#endif
+#endif
+
+#define NOSFLAG_MODE_GETSINGLE  POSFLAG_MODE_GETSINGLE
+#define NOSFLAG_MODE_GETMASK    POSFLAG_MODE_GETMASK
+
+#endif /* NOSCFG_FEATURE_FLAGS */
+/** @} */
+
+/** @defgroup nanotimer Timer Functions
+ * @ingroup absfunc
+ * A timer object is a counting variable that is counted down by the
+ * system timer interrupt tick rate. If the variable reaches zero,
+ * a semaphore, that is bound to the timer, will be signaled.
+ * If the timer is in auto reload mode, the timer is restarted and
+ * will signal the semaphore again and again, depending on the
+ * period rate the timer is set to.
+ * @{
+ */
+
+#if DOX!=0 || NOSCFG_FEATURE_TIMER != 0
+
+/** Handle to a nano layer timer object. */
+typedef  POSTIMER_t  NOSTIMER_t;
+
+/**
+ * Timer function.
+ * Allocates a timer object. After a timer is allocated with this function,
+ * it must be set up with ::nosTimerSet and than started with ::nosTimerStart.
+ * @return  handle to the new timer object. NULL is returned on error.
+ * @param   name      Name of the new timer object to create. If the last
+ *                    character in the name is an asteriks (*), the operating
+ *                    system automatically assigns the timer an unique name.
+ *                    This parameter can be NULL if the nano layer registry
+ *                    feature is not used and will not be used in future.
+ * @note    ::NOSCFG_FEATURE_TIMER must be defined to 1 
+ *          to have timer support compiled in. <br>
+ *          You must use ::nosTimerDestroy to destroy the flag object again.
+ *          <br>Even if the function posTimerDestroy would work also, it is
+ *          required to call ::nosTimerDestroy. Only this function removes
+ *          the flag object from the registry. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTimerSet, nosTimerStart, nosTimerDestroy
+ */
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+NANOEXT NOSTIMER_t  nosTimerCreate(const char *name);
+#else
+#define nosTimerCreate(name)  (NOSTIMER_t) posTimerCreate()
+#endif
+
+/**
+ * Timer function.
+ * Sets up a timer object.
+ * @param   tmr  handle to the timer object.
+ * @param   sema seaphore object that shall be signaled when timer fires.
+ * @param   waitticks    number of initial wait ticks. The timer fires the
+ *                       first time when this ticks has been expired.
+ * @param   periodticks  After the timer has fired, it is reloaded with
+ *                       this value, and will fire again when this count
+ *                       of ticks has been expired (auto reload mode).
+ *                       If this value is set to zero, the timer
+ *                       won't be restarted (= one shot mode).
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_TIMER must be defined to 1 
+ *          to have timer support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTimerCreate, nosTimerStart
+ */
+#if DOX
+NANOEXT VAR_t nosTimerSet(NOSTIMER_t tmr, NOSSEMA_t sema,
+                          UINT_t waitticks, UINT_t periodticks);
+#else
+#define nosTimerSet(t, s, w, p) \
+          posTimerSet((POSTIMER_t)(t), (POSSEMA_t)(s), w, p)
+#endif
+
+/**
+ * Timer function.
+ * Starts a timer. The timer will fire first time when the
+ * waitticks counter has been reached zero. If the periodticks
+ * were set, the timer will be reloaded with this value.
+ * @param   tmr  handle to the timer object.
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_TIMER must be defined to 1 
+ *          to have timer support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTimerStop, nosTimerFired
+ */
+#if DOX
+NANOEXT VAR_t nosTimerStart(NOSTIMER_t tmr);
+#else
+#define nosTimerStart(tmr)  posTimerStart((POSTIMER_t)(tmr))
+#endif
+
+/**
+ * Timer function.
+ * Stops a timer. The timer will no more fire. The timer
+ * can be reenabled with ::nosTimerStart.
+ * @param   tmr   handle to the timer object.
+ * @return  zero on success.
+ * @note    ::NOSCFG_FEATURE_TIMER must be defined to 1 
+ *          to have timer support compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTimerStart, nosTimerDestroy
+ */
+#if DOX
+NANOEXT VAR_t nosTimerStop(NOSTIMER_t tmr);
+#else
+#define nosTimerStop(tmr)  posTimerStop((POSTIMER_t)(tmr))
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_TIMERDESTROY != 0
+/**
+ * Timer function.
+ * Deletes a timer object and free its resources.
+ * @param   tmr  handle to the timer object.
+ * @note    ::NOSCFG_FEATURE_TIMER must be defined to 1 
+ *          to have timer support compiled in. <br>
+ *          ::POSCFG_FEATURE_TIMERDESTROY must be defined to 1
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTimerCreate
+ */
+#if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
+NANOEXT void nosTimerDestroy(NOSTIMER_t tmr);
+#else
+#define nosTimerDestroy(tmr)  posTimerDestroy((POSTIMER_t)(tmr))
+#endif
+#endif
+
+#if DOX!=0 || POSCFG_FEATURE_TIMERFIRED != 0
+/**
+ * Timer function.
+ * The function is used to test if a timer has fired.
+ * @param   tmr  handle to the timer object.
+ * @return  1 when the timer has fired, otherwise 0.
+ *          A negative value is returned on error.
+ * @note    ::NOSCFG_FEATURE_TIMER must be defined to 1 
+ *          to have timer support compiled in. <br>
+ *          ::POSCFG_FEATURE_TIMERFIRED must be defined to 1
+ *          to have this function compiled in. <br>
+ *          Dependent of your configuration, this function can
+ *          be defined as macro to decrease code size.
+ * @sa      nosTimerCreate, nosTimerSet, nosTimerStart
+ */
+#if DOX
+NANOEXT VAR_t nosTimerFired(NOSTIMER_t tmr);
+#else
+#define nosTimerFired(tmr)  posTimerFired((POSTIMER_t)(tmr))
+#endif
+#endif
+
+#endif /* NOSCFG_FEATURE_TIMER */
+/** @} */
+
+#undef NANOEXT
 /** @} */
 
 
@@ -727,10 +1983,26 @@ POSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
  *  INITIALIZATION
  *-------------------------------------------------------------------------*/
 
+/** @defgroup nanoinit Nano Layer Initialization
+ * @ingroup userapin
+ * @{
+ */
+
+#ifdef _N_CORE_C
+#define NANOEXT
+#else
+#define NANOEXT extern
+#endif
+
 /**
  * Operating System Initialization.
- * This function initializes the operating system and starts the
- * first tasks: The idle task and the first user task.
+ * This function initializes the operating system (pico layer and nano layer)
+ * and starts the first tasks: the idle task and the first user task.
+ * Note: The nano layer requires dynamic memory management.
+ * If ::NOSCFG_MEM_MANAGER_TYPE is set to 1 (=use internal memory manager),
+ * it is required to set the variables ::__heap_start and
+ * ::__heap_end to valid values before this function is called.
+ *
  * @param   firstfunc   pointer to the first task function that
  *                      will run in the multitasking environment.
  * @param   funcarg     optional argument passed to the first task.
@@ -742,14 +2014,16 @@ POSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
  * @note    This function replaces the function ::posInit if the nano
  *          layer is enabled and linked to the destination application.
  */
-void  nosInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-              UINT_t taskStackSize, UINT_t idleStackSize);
+NANOEXT void  nosInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
+                      UINT_t taskStackSize, UINT_t idleStackSize);
 
 #ifndef _N_CORE_C
 #ifndef _POSCORE_C
 #define posInit _Please_use_nosInit_instead_of_posInit_
 #endif
 #endif
-
+#undef NANOEXT
+/** @} */
 
 #endif /* _POS_NANO_H */
+
