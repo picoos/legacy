@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.2 2004/02/21 14:41:45 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.3 2004/03/06 20:30:30 dkuschel Exp $
  */
 
 
@@ -81,7 +81,7 @@
  * should be set as small as possible to decrease memory usage.
  * Note that the OS has a built in idle task that also needs a task structure.
  */
-#define POSCFG_MAX_TASKS        15
+#define POSCFG_MAX_TASKS        16
 
 /** Maximum count of events.
  * This define sets the maximum count of event data structures which can be
@@ -89,6 +89,9 @@
  * event data structures. Keep the value of this define as small as possible
  * to decrease memory usage. Note that there is no maximum value this define
  * can have, the pico]OS supports an unlimmit count of events.
+ * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
+ * set to 1, the system will allocate memory for additional events if the
+ * volume of events defined by ::POSCFG_MAX_EVENTS is exhausted.
  */
 #define POSCFG_MAX_EVENTS       16
 
@@ -100,16 +103,22 @@
  * To get maximum performance, the value should be set to twice the count
  * of tasks that are sending messages.
  * If ::POSCFG_FEATURE_MSGBOXES is set to 0, this define has no effect.
+ * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
+ * set to 1, the system will allocate additional message buffers if the
+ * volume of buffers defined by ::POSCFG_MAX_MESSAGES is exhausted.
  */
-#define POSCFG_MAX_MESSAGES      4
+#define POSCFG_MAX_MESSAGES     4
 
 /** Maximum count of timers.
  * This define sets the maximum count of timers that can be allocated
  * with ::posTimerCreate. If ::POSCFG_FEATURE_TIMER is set to 0, this
  * define has no effect. Note that the value for this define
  * must be at least 1 if timers are enabled.
+ * @note If ::POSCFG_DYNAMIC_MEMORY and ::POSCFG_DYNAMIC_REFILL are both
+ * set to 1, the system will allocate memory for additional timers if the
+ * volume of timers defined by ::POSCFG_MAX_TIMER is exhausted.
  */
-#define POSCFG_MAX_TIMER         4 
+#define POSCFG_MAX_TIMER        4
 
 /** Set scheduling scheme.
  * The pico]OS supports two types of scheduling:<br>
