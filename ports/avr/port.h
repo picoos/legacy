@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.7 2004/05/09 21:22:17 smocz Exp $
+ * CVS-ID $Id: port.h,v 1.8 2004/05/15 16:40:02 smocz Exp $
  */
 
 
@@ -283,6 +283,11 @@
 extern uint8_t isrStackMem_g[];
 
 /**
+ * This function is implement in arch_c.c
+ */
+void interruptReturn(void) __attribute__ ((naked));
+
+/**
  * Macro for saving the context during an interrupt service.
  */
 #define SAVE_CONTEXT(void) \
@@ -403,8 +408,7 @@ void signame (void) {                   \
     handler();                          \
     c_pos_intExit();                    \
     SP = (uint16_t)posCurrentTask_g->stackptr; \
-    RESTORE_CONTEXT();                  \
-    __asm__ __volatile__("reti");       \
+    __asm__ __volatile__("jmp    interruptReturn"); \
 }                                       \
 
 
