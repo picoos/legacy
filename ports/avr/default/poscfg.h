@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2005, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.10 2004/04/24 10:01:05 smocz Exp $
+ * CVS-ID $Id: poscfg.h,v 1.1 2005/01/11 16:22:21 dkuschel Exp $
  */
 
 
@@ -497,6 +497,14 @@
  * ::POSCFG_FEATURE_LISTS must be set to 1.
  */
 #define POSCFG_FEATURE_LISTJOIN      0
+
+/** Enable the debug help.
+ * If this definition is set to 1, pico]OS exports the global
+ * variables ::picodeb_tasklist and ::picodeb_eventlist that
+ * may help you debugging your code using an in-circuit debugger
+ * with appropriated IDE.
+ */
+#define POSCFG_FEATURE_DEBUGHELP     0
 
 /** @} */
 

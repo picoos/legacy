@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.10 2004/04/18 18:06:23 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.1 2005/01/10 22:40:03 dkuschel Exp $
  */
 
 
@@ -497,6 +497,14 @@
  * ::POSCFG_FEATURE_LISTS must be set to 1.
  */
 #define POSCFG_FEATURE_LISTJOIN      1
+
+/** Enable the debug help.
+ * If this definition is set to 1, pico]OS exports the global
+ * variables ::picodeb_tasklist and ::picodeb_eventlist that
+ * may help you debugging your code using an in-circuit debugger
+ * with appropriated IDE.
+ */
+#define POSCFG_FEATURE_DEBUGHELP     1
 
 /** @} */
 
