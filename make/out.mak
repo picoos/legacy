@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: out.mak,v 1.2 2004/06/05 11:44:28 dkuschel Exp $
+#  $Id: out.mak,v 1.3 2005/01/10 21:42:17 dkuschel Exp $
 
 
 # Build target: generate executable
@@ -48,11 +48,18 @@ endif
 # Set source files
 SRC := $(SRC_TXT)
 
+# Set common dependencies
+COMMONDEP += $(SRC_HDR)
+
 # Clear object file list
 OBJ :=
 
-# Add pico]OS library
-SRC_LIB += $(DIR_LIB)/picoos$(EXT_LIB)
+# Set module libraries
+MOD_LIB = $(addsuffix $(EXT_LIB),$(addprefix $(DIR_LIB)/,$(foreach \
+               MODNAME,$(MODULES),$(notdir $(MODNAME)))))
+
+# Set pico]OS library
+PICOOS_LIB = $(DIR_LIB)/picoos$(EXT_LIB)
 
 # Export variables
 ifneq '$(strip $(DIR_OUTPUT))' ''
@@ -68,7 +75,34 @@ include $(MAKE_CPL)
 
 .PHONY: $(DIR_LIB)/picoos$(EXT_LIB)
 $(DIR_LIB)/picoos$(EXT_LIB):
-	$(MAKE) -C $(RELROOT) --no-print-directory all
+	$(MAKE) -C $(RELROOT) --no-print-directory $(MTARGET) OLIBNAME=picoos
+
+# ---------------------------------------------------------------------------
+
+# Build other libraries
+
+ifneq '$(strip $(EXEC_MAKEFILES))' ''
+.PHONY: $(EXEC_MAKEFILES)
+$(EXEC_MAKEFILES):
+	$(MAKE) -C $(dir $@) -f $(notdir $@) --no-print-directory $(MTARGET)
+endif
+
+ifneq '$(strip $(MODULES))' ''
+.PHONY: $(MODULES)
+$(MODULES):
+	$(MAKE) -C $@ -f $(notdir $(firstword \
+    $(wildcard $@/makefile.pico $@/Makefile.pico $@/makefile $@/Makefile) \
+    )) --no-print-directory $(MTARGET) OLIBNAME=$(notdir $@)
+endif
+
+
+#ifneq '$(strip $(MODULES))' ''
+#.PHONY: $(MODULES)
+#$(MODULES):
+#	$(MAKE) -C $@ --no-print-directory $(MTARGET) OLIBNAME=$(notdir $@)
+#endif
+
+ALL_MODULES = $(EXEC_MAKEFILES) $(MODULES)
 
 # ---------------------------------------------------------------------------
 
@@ -84,13 +118,15 @@ endif
 
 TARGETOUT=$(DIR_OUT)/$(TARGET)$(EXT_OUT)
 OBJLIST  =$(strip $(OBJ)) $(strip $(SRC_OBJ))
-LIBLIST  =$(SRC_LIB)
+LIBLIST  =$(MOD_LIB)
+LIBLIST +=$(SRC_LIB)
 LINKLIST =$(OPT_LD_FIRST)
 LINKLIST+=$(OPT_LD_PFOBJ)$(subst $(space),$(replace),$(strip $(OBJLIST)))
 LINKLIST+=$(OPT_LD_PFLIB)$(subst $(space),$(replace),$(strip $(LIBLIST)))
+LINKLIST+=$(OPT_LD_PFLIB)$(subst $(space),$(replace),$(strip $(PICOOS_LIB)))
 LINKLIST+=$(OPT_LD_LAST)
 
-$(TARGETOUT): $(OBJLIST) $(LIBLIST) $(DIR_OUT) $(COMMONDEP)
+$(TARGETOUT): $(ALL_MODULES) $(PICOOS_LIB) $(OBJLIST) $(DIR_OUT) $(COMMONDEP)
 	$(PRELINK1)
 	$(PRELINK2)
 	$(PRELINK3)
@@ -107,9 +143,10 @@ ifneq '$(PORT)' ''
 all: $(TARGETOUT)
 
 # Target: clean executable.
-clean: $(CLEAN_USER)
+clean: $(CLEAN_USER) $(ALL_MODULES) $(PICOOS_LIB)
 	-$(REMOVE) $(TARGETOUT)
 	-$(REMOVE) $(OBJ)
-	-$(MAKE) -C $(RELROOT) --no-print-directory clean
+
+#	-$(MAKE) -C $(RELROOT) --no-print-directory clean OLIBNAME=picoos
 
 endif
