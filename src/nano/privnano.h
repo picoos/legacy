@@ -29,7 +29,7 @@
  *
  *  This file is part of the pico]OS realtime operating system.
  *
- *  $Id: privnano.h,v 1.1 2004/03/16 21:33:39 dkuschel Exp $
+ *  $Id: privnano.h,v 1.2 2005/01/03 16:36:09 dkuschel Exp $
  *
  */
 
@@ -80,7 +80,11 @@ struct regelem {
 #if NOSCFG_FEATURE_REGQUERY
   volatile UVAR_t refcount;
 #endif
-  char            name[NOS_MAX_REGKEYLEN];
+#ifdef POS_DEBUGHELP
+  char  name[NOS_MAX_REGKEYLEN+1];
+#else
+  char  name[NOS_MAX_REGKEYLEN];
+#endif
 };
 typedef struct regelem* REGELEM_t;
 
