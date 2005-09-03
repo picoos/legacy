@@ -33,7 +33,7 @@
 ; * This file is originally from the pico]OS realtime operating system
 ; * (http://picoos.sourceforge.net).
 ; *
-; * CVS-ID $Id: arch_c.c,v 1.1.1.1 2004/02/16 20:11:33 smocz Exp $
+; * CVS-ID $Id: arch_arm_asm.s,v 1.1 2004/06/07 18:47:22 dkuschel Exp $
 ; */
 
 
@@ -256,7 +256,7 @@ p_pos_startFirstContext
     B   _osThreadSwitchTo
     
 p_pos_intContextSwitch
-    LDR r0,=posCurrentTask_g
+    LDR r0,=posNextTask_g
     LDR r0,[r0]
     B   _osThreadSwitchTo
 
