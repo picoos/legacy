@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.1.1.1 2004/02/16 20:11:26 smocz Exp $
+#  $Id: port.mak,v 1.2 2004/03/13 19:33:26 dkuschel Exp $
 
 
 # Compiler: Define place of compiler
@@ -91,7 +91,7 @@ else
 endif
 
 # Define Compiler Flags
-CFLAGS += -t $(TG) -O -A -T -o 
+CFLAGS += -t $(TG) -O -T -o 
 
 # Define Assembler Flags
 ASFLAGS += -t $(TG) -o 

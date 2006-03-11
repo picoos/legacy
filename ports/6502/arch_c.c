@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.2 2004/03/14 18:51:37 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.3 2004/03/16 21:37:01 dkuschel Exp $
  */
 
 
@@ -47,7 +47,7 @@
  *  6502 / 65c02 / 6510  Architecture Port               by Dennis Kuschel
  *
  *  This port was especially developed for the good old Commodore 64
- *  with the CC65 cross compiler, v 2.10.5, http://www.cc65.org/
+ *  with the CC65 cross compiler, v 2.11.0, http://www.cc65.org/
  *
  *  The CC65 cross compiler is a bit tricky: It uses some space in the
  *  zero page to store runtime variables, also the CPU stack is expanded
