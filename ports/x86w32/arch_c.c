@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.6 2005/02/15 19:23:12 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.7 2005/02/22 18:03:04 dkuschel Exp $
  */
 
 
@@ -213,7 +213,9 @@ static void do_assert(const char* file, int line)
 #else
   fprintf(stderr, "thistask: handle     = %08x\n", (unsigned int)posCurrentTask_g);
 #endif
+#if SYS_TASKSTATE != 0
   fprintf(stderr, "thistask: pico_state = %i\n", posCurrentTask_g->state);
+#endif
   fprintf(stderr, "thistask: arch_state = %i\n", thistask->state);
   fprintf(stderr, "thistask: blockIntFl = %i\n", thistask->blockIntFlag);
 
@@ -225,7 +227,9 @@ static void do_assert(const char* file, int line)
 #else
     fprintf(stderr, "\nnexttask: handle     = %08x\n", (unsigned int)posNextTask_g);
 #endif
+#if SYS_TASKSTATE != 0
     fprintf(stderr, "nexttask: pico_state = %i\n", posNextTask_g->state);
+#endif
     fprintf(stderr, "nexttask: arch_state = %i\n", nexttask->state);
     fprintf(stderr, "nexttask: blockIntFl = %i\n", nexttask->blockIntFlag);
   }
