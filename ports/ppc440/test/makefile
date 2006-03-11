@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2005, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.3 2004/03/14 18:50:48 dkuschel Exp $
+#  $Id: makefile,v 1.4 2004/06/05 11:39:55 dkuschel Exp $
 
 
 # This port is ppc440
@@ -40,6 +40,9 @@ PORT = ppc440
 #  GNU C    = GCC
 #  MetaWare = MW
 COMPILER = GCC
+
+# To include the pico]OS nano layer, set this define to 1
+NANO = 0
 
 # Set root path and include base make file
 RELROOT = ../../../
@@ -51,12 +54,19 @@ include $(RELROOT)make/common.mak
 TARGET = test
 
 # Set source files
-SRC_TXT = $(RELROOT)examples/test.c
+SRC_TXT = refsym.c $(RELROOT)examples/test.c
 SRC_OBJ =
 SRC_LIB =
 
-# Set the directory that contains the configuration header files
-#DIR_CONFIG = ports\ppc440\test
+# Set the directory that contains the configuration header files.
+# If this variable is not set, the default configuration files will be
+# taken from the port/default directory.
+#DIR_CONFIG = $(CURRENTDIR)
+
+# Set the output directory for the generated binaries
+DIR_OUTPUT = $(CURRENTDIR)/bin
+
+# ---------------------------------------------------------------------------
 
 ifeq '$(COMPILER)' 'MW'
 
@@ -69,7 +79,7 @@ else
 MAPFILE = sect_gcc.map
 
 # Do not link standard library
-LDFLAGS := -nostdlib $(LDFLAGS)
+LINKERFLAGS = -nostdlib
 
 endif
 
