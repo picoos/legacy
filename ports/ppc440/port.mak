@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.1.1.1 2004/02/16 20:11:35 smocz Exp $
+#  $Id: port.mak,v 1.2 2004/03/13 19:33:26 dkuschel Exp $
 
 
 # Set default compiler.
@@ -114,7 +114,7 @@ CAFLAGS += -Hasmcpp -P \
 ASFLAGS += -c -be -tppc440 -D_ELF_EABI_ -o 
 
 # Define Linker Flags
-LDFLAGS = \
+LDFLAGS = $(LINKERFLAGS) \
   -Bstart_addr=0x00100000 \
   -Bpage_size=0x4 -Ball_archive -e _start \
   -D $(MAPFILE) -q -o 
@@ -180,7 +180,7 @@ ASFLAGS += -c -mcpu=405 -Wa,-mregnames -D_ELF_EABI_ \
            -x assembler-with-cpp -o
 
 # Define Linker Flags
-LDFLAGS = -mcpu=405 -T $(MAPFILE) \
+LDFLAGS = $(LINKERFLAGS) -mcpu=405 -T $(MAPFILE) \
           -Wl,-Map,$(DIR_OUT)/$(TARGET).map \
           -Wl,--cref -Wl,-e,_start -o
 
