@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.12 2005/02/07 22:08:45 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.13 2005/02/22 20:38:53 dkuschel Exp $
  */
 
 
@@ -2071,6 +2071,7 @@ void* posMessageGet(void)
   if (task->msgsem == NULL)
   {
     sem = posSemaCreate(0);
+    P_ASSERT("posMessageGet: event allocation", sem != NULL);
     if (sem == NULL)
     {
       return NULL;
