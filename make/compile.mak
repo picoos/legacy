@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: compile.mak,v 1.4 2005/01/10 21:45:45 dkuschel Exp $
+#  $Id: compile.mak,v 1.5 2005/02/01 21:20:15 dkuschel Exp $
 
 
 # Compile files
@@ -43,6 +43,7 @@ endif
 ifneq '$(PORT)' ''
 
 # Set alternative binary output directory
+ifeq '$(strip $(RTOS_OUTPUTDIR))' ''
 ifneq '$(strip $(DIR_OUTPUT))' ''
 DIR_OUTB := $(DIR_OUTPUT)
 DIR_OUTP := $(DIR_OUTB)/$(PORT)-$(MODEEXT)
@@ -54,9 +55,28 @@ DIR_OBJB := $(DIR_OUTPUT)
 DIR_OBJP := $(DIR_OBJB)/$(PORT)-$(MODEEXT)
 DIR_OBJ  := $(DIR_OBJP)/obj
 endif
-DIR_OBJT := $(DIR_OBJ)
 ifneq '$(strip $(OLIBNAME))' ''
+DIR_OBJT := $(DIR_OBJ)
 DIR_OBJ  := $(DIR_OBJ)/$(OLIBNAME)
+else
+DIR_OBJT :=
+endif
+else
+# user provides a custom RTOS_OUTPUTDIR
+DIR_OUTB :=
+DIR_OUTP :=
+DIR_OUT  := $(RTOS_OUTPUTDIR)
+DIR_LIBB :=
+DIR_LIBP :=
+DIR_LIB  := $(RTOS_OUTPUTDIR)
+DIR_OBJB :=
+ifneq '$(strip $(RTOS_TEMPDIR))' ''
+DIR_OBJP :=
+DIR_OBJ  := $(RTOS_TEMPDIR)
+else
+DIR_OBJP := $(RTOS_OUTPUTDIR)
+DIR_OBJ  := $(RTOS_OUTPUTDIR)/obj
+endif
 endif
 
 # Set default configuration directory
@@ -97,6 +117,14 @@ CDEFS = $(addprefix $(OPT_CC_DEF),$(CDEFINES))
 AINCS = $(addprefix $(OPT_AS_INC),$(call adjpath,$(TAINCL)))
 ADEFS = $(addprefix $(OPT_AS_DEF),$(ADEFINES))
 
+# Set config header file dependencies
+ifneq '$(strip $(DIR_CONFIG))' ''
+COMMONDEP += $(wildcard $(DIR_CONFIG)/poscfg.h) \
+             $(wildcard $(DIR_CONFIG)/noscfg.h)
+else
+COMMONDEP += $(wildcard $(DCFGDEF)/*.h)
+endif
+
 # ---------------------------------------------------------------------------
 
 # Make subdirectories
@@ -104,48 +132,55 @@ ifneq '$(strip $(DIR_OUTPUT))' ''
 $(DIR_OUTPUT):
 	-$(MKDIR) $@
 endif
+ifneq '$(strip $(DIR_OBJB))' ''
 ifneq '$(DIR_OBJB)' '$(DIR_OUTPUT)'
 $(DIR_OBJB): $(DIR_OUTPUT)
 	-$(MKDIR) $@
 endif
+endif
+ifneq '$(strip $(DIR_OBJP))' ''
 $(DIR_OBJP): $(DIR_OBJB)
 	-$(MKDIR) $@
-ifneq '$(DIR_OBJ)' '$(DIR_OBJT)'
+endif
+ifneq '$(strip $(DIR_OBJT))' ''
 $(DIR_OBJT): $(DIR_OBJP)
 	-$(MKDIR) $@
-$(DIR_OBJ): $(DIR_OBJT)
-	-$(MKDIR) $@
-else
-$(DIR_OBJ): $(DIR_OBJP)
-	-$(MKDIR) $@
 endif
-ifneq '$(DIR_LIBB)' '$(DIR_OBJB)'
+$(DIR_OBJ): $(DIR_OBJT) $(DIR_OBJP)
+	-$(MKDIR) $@
+#
+ifneq '$(DIR_LIB)' '$(DIR_OBJ)'
 ifneq '$(DIR_LIBB)' '$(DIR_OUTPUT)'
+ifneq '$(strip $(DIR_LIBB))' ''
 $(DIR_LIBB): $(DIR_OUTPUT)
 	-$(MKDIR) $@
 endif
 endif
 ifneq '$(DIR_LIBP)' '$(DIR_OBJP)'
+ifneq '$(strip $(DIR_LIBP))' ''
 $(DIR_LIBP): $(DIR_LIBB)
 	-$(MKDIR) $@
 endif
-ifneq '$(DIR_LIB)' '$(DIR_OBJ)'
+endif
+ifneq '$(DIR_LIB)' '$(DIR_OBJP)'
 $(DIR_LIB): $(DIR_LIBP)
 	-$(MKDIR) $@
 endif
-ifneq '$(DIR_OUTB)' '$(DIR_OBJB)'
+endif
+#
+ifneq '$(DIR_OUT)' '$(DIR_LIB)'
 ifneq '$(DIR_OUTB)' '$(DIR_OUTPUT)'
+ifneq '$(strip $(DIR_OUTB))' ''
 $(DIR_OUTB): $(DIR_OUTPUT)
 	-$(MKDIR) $@
 endif
 endif
-ifneq '$(DIR_OUTP)' '$(DIR_OBJB)'
 ifneq '$(DIR_OUTP)' '$(DIR_OBJP)'
+ifneq '$(strip $(DIR_OUTP))' ''
 $(DIR_OUTP): $(DIR_OUTB)
 	-$(MKDIR) $@
 endif
 endif
-ifneq '$(DIR_OUT)' '$(DIR_OBJ)'
 $(DIR_OUT): $(DIR_OUTP)
 	-$(MKDIR) $@
 endif
