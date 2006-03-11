@@ -126,7 +126,7 @@ void eventtask(void *arg)
     }
 
     /* Wait some time. We do this because we want some flags
-     * to be accumulated, so posGetFlag will realy return a
+     * to be accumulated, so posGetFlag will really return a
      * bitfield of flags.
      */
     posTaskSleep(MS(1700));

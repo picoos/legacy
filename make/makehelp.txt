@@ -295,7 +295,7 @@ Lines 28 to 35 set the source files that shall be added to the library.
 @c SRC_TXT specifies a list of sourcecode files (in textual form), and
 @c SRC_HDR is set to a list of C header files that are referenced
 by the C source files. The variable @c SRC_OBJ can be filled with some
-precompiled object files (but this feature you won't realy use).
+precompiled object files (but this feature you won't really use).
 In line 39 you can set preprocessor defines to control the compilation
 of your software. The defines are passed to the compiler and can be checked
 with the #if / #endif preprocessor command in the C source files.

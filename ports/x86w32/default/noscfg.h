@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: noscfg.h,v 1.2 2005/01/03 16:30:49 dkuschel Exp $
+ * CVS-ID $Id: noscfg.h,v 1.1 2005/01/10 22:40:03 dkuschel Exp $
  */
 
 #ifndef _NOSCFG_H
@@ -252,7 +252,7 @@ extern void *__heap_end;
 #define NOSCFG_FEATURE_CONOUT        1
 
 /** Enable generic printf functions.
- * The nano layer supports a set of realy generic printf functions.
+ * The nano layer supports a set of really generic printf functions.
  * This functions are not variadic, that means they do not support
  * a variable parameter list, thus they can be compiled without having
  * a runtime library linked (the header file <stdarg.h> is not needed).
@@ -261,7 +261,7 @@ extern void *__heap_end;
 #define NOSCFG_FEATURE_PRINTF        1
 
 /** Enable generic string printf ('sprintf') functions.
- * The nano layer supports a set of realy generic sprintf functions.
+ * The nano layer supports a set of really generic sprintf functions.
  * This functions are not variadic, that means they do not support
  * a variable parameter list, thus they can be compiled without having
  * a runtime library linked (the header file <stdarg.h> is not needed).
