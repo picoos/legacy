@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.20 2005/02/07 22:03:14 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.21 2005/02/22 20:38:40 dkuschel Exp $
  *
  */
 
@@ -592,7 +592,8 @@
        POSCFG_FEATURE_FLAGS | POSCFG_FEATURE_LISTS)
 #define SYS_FEATURE_EVENTS  (POSCFG_FEATURE_SEMAPHORES | SYS_EVENTS_USED)
 #define SYS_FEATURE_EVENTFREE  (POSCFG_FEATURE_SEMADESTROY | \
-          POSCFG_FEATURE_MUTEXDESTROY | POSCFG_FEATURE_FLAGDESTROY)
+          POSCFG_FEATURE_MUTEXDESTROY | POSCFG_FEATURE_FLAGDESTROY | \
+          POSCFG_FEATURE_LISTS)
 #if (POSCFG_FEATURE_MSGBOXES != 0) && (POSCFG_FEATURE_EXIT != 0)
 #undef  SYS_FEATURE_EVENTFREE
 #define SYS_FEATURE_EVENTFREE  1
@@ -1975,7 +1976,10 @@ POSEXTERN VAR_t posMessageSend(void *buf, POSTASK_t taskhandle);
  * is received.
  * @return  pointer to the received message. Note that the
  *          message memory must be freed again with ::posMessageFree
- *          when ::POSCFG_MSG_MEMORY is defined to 1.
+ *          when ::POSCFG_MSG_MEMORY is defined to 1. @n
+ *          NULL may be returned when the system has not
+ *          enough events. In this case, please increase the
+ *          value for ::POSCFG_MAX_EVENTS in your poscfg.h .
  * @note    ::POSCFG_FEATURE_MSGBOXES must be defined to 1 
  *          to have message box support compiled in.
  * @sa      posMessageFree, posMessageAvailable,
@@ -2017,7 +2021,10 @@ POSEXTERN VAR_t posMessageAvailable(void);
  *          message memory must be freed again with posMessageFree
  *          when ::POSCFG_MSG_MEMORY is defined to 1.
  *          NULL is returned when no message was received
- *          within the specified time (=timeout).
+ *          within the specified time (=timeout). @n
+ *          Hint: NULL may also be returned when the system has
+ *          not enough events. In this case, please increase the
+ *          value for ::POSCFG_MAX_EVENTS in your poscfg.h .
  * @note    ::POSCFG_FEATURE_MSGBOXES must be defined to 1 
  *          to have message box support compiled in.@n
  *          ::POSCFG_FEATURE_MSGWAIT must be defined to 1
@@ -2717,7 +2724,7 @@ POSEXTERN void posListTerm(POSLISTHEAD_t *listhead);
 /** @defgroup debug Debug Features
  * @ingroup intro
  *
- * Sometimes it is realy hard to debug multitasking applications.
+ * Sometimes it is really hard to debug multitasking applications.
  * Pico]OS supports you by providing assess to some helpful informations.
  * In conjunction with an incircuit-debugger with the appropriated debugger
  * IDE you will have a powerfull tool to debug your applications. @n
@@ -2767,7 +2774,8 @@ POSEXTERN void posListTerm(POSLISTHEAD_t *listhead);
  * p_pos_assert(const char* text, const char *filename, int linenumber).
  * The function gets called every time pico]OS has failed an assertion.
  */
-#define P_ASSERT(text,x)  if (!(x)) p_pos_assert(text, __FILE__, __LINE__)
+#define P_ASSERT(text,x) \
+  if (!(x)) p_pos_assert((static const char*)(text), __FILE__, __LINE__)
 #else
 #define P_ASSERT(text,x)  do { } while(0)
 #endif
