@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.3 2005/02/01 21:06:49 dkuschel Exp $
+#  $Id: port.mak,v 1.4 2005/02/07 22:00:20 dkuschel Exp $
 
 
 # Set default compiler.
@@ -248,8 +248,11 @@ CFLAGS +=  -pedantic -Wall -c -o
 ASFLAGS += -c -Wa,-mregnames -x assembler-with-cpp -o
 
 # Define Linker Flags
-LDFLAGS = -mconsole -Wl,-Map,$(DIR_OUT)/$(TARGET).map \
-          -Wl,--cref  -o
+ifneq '$(BUILD)' 'DEBUG'
+LDFLAGS += -Wl,-s
+endif
+LDFLAGS += -mconsole -Wl,-Map,$(DIR_OUT)/$(TARGET).map \
+          -Wl,--cref -o
 
 # Define archiver flags
 ARFLAGS = r 
