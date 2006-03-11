@@ -6,7 +6,7 @@ This port enables the use of pico]OS on MS Windows based host machines.
 In general, all 32Bit Microsoft Windows versions are supported. But there
 is still a minor problem with the Windows 9X group of operating systems:
 In contrast to the Windows NT based operating systems, the systems
-Windows 95, Windows 98 and Windows ME provide realy bad multitasking.
+Windows 95, Windows 98 and Windows ME provide really bad multitasking.
 This may lead to an unpredictable behaviour of this port. In most cases
 all goes fine (especially when the Windows 95 host is fresh booted :-))
 but in rare cases the port will screw up. So I recommend you to use this
@@ -16,8 +16,8 @@ This port is based on Windows threads, but it supports the full pico]OS
 scheduling scheme. This does not mean that the port turns MS Windows into
 a realtime operating system! MS Windows is not, and will never be a
 realtime operating system. This port is thought to help you developing
-and testing your pico]OS application, maybe by use of the MS Visual C++
-compiler and debugger.
+and testing your pico]OS application, maybe by using the integrated
+MS Visual Studio development environment (IDE).
 
 Some hints on the compilers:
 This port supports MS Visual C++ v5.0 / v6.0, and the MinGW GCC suite.
@@ -46,7 +46,7 @@ This port supports MS Visual C++ v5.0 / v6.0, and the MinGW GCC suite.
 
     5. Type "make PORT=x86w32 COMPILER=GCC"
        If this does not work properly:
-       Make sure that the call to "make" realy executes the GNU-make
+       Make sure that the call to "make" really executes the GNU-make
        you have installed in step 2. You may need to change the
        order in the search-path of your MS Windows installation.
 
@@ -82,7 +82,7 @@ This port supports MS Visual C++ v5.0 / v6.0, and the MinGW GCC suite.
 
     4. Type "make PORT=x86w32"
        (if this does not work, try "make PORT=x86w32 COMPILER=VC6")
-       Make sure that the call to "make" realy executes the GNU-make
+       Make sure that the call to "make" really executes the GNU-make
        you have installed in step 1. You may need to change the
        order in the search-path of your MS Windows installation.
 
@@ -93,13 +93,13 @@ This port supports MS Visual C++ v5.0 / v6.0, and the MinGW GCC suite.
        picoos-x.y.z/ports/x86w32/test
 
   The debugging of a pico]OS application with the integrated
-  Visual Studio IDE is also realy easy:
+  Visual Studio IDE is also really easy:
 
     1. Start the MS Visual Studio IDE.
 
     2. Create a new project, click on File->New..., click on tab Project,
        and mark "Win32 console application" (the last entry in the list).
-       Choose a project name, and a place to store the project. I prever
+       Choose a project name, and a place to store the project. I prefer
        a place in the picoos directory tree.
 
     3. If the new (and still empty) project is create, please press ALT+F7,
