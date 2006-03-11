@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2006, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.1.1.1 2004/02/16 20:11:12 smocz Exp $
+#  $Id: makefile,v 1.2 2004/06/05 11:43:20 dkuschel Exp $
 
 
 # Set root path and include base make file
@@ -68,7 +68,8 @@ FILES_HEADER = \
 	$(wildcard $(DIR_INC)/*.h) \
 	$(wildcard $(DIR_SRC)/*.h) \
 	$(wildcard $(DIR_PORT)/*.h) \
-	$(wildcard $(DIR_PORT)/boot/*.h)
+	$(wildcard $(DIR_PORT)/boot/*.h) \
+	$(wildcard $(DIR_PORT)/default/*.h)
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +82,7 @@ COMMONDEP += $(FILES_HEADER)
 
 # ---------------------------------------------------------------------------
 
-# Build a library
+# Build the picoos library
 include $(MAKE_LIB)
 
 # ---------------------------------------------------------------------------
