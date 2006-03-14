@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.2 2005/01/15 21:13:06 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.3 2005/02/01 21:02:48 dkuschel Exp $
  */
 
 
@@ -243,6 +243,12 @@
  *        software interrupts compiled in.
  */
 #define POSCFG_SOFTINTQUEUELEN  20
+
+/** Timer tick rate.
+ * This define must be set to the tickrate of the timer
+ * interrupt (= timer ticks per second).
+ */
+#define HZ  30   /* Note: The C64 port divides the 60Hz timer clock by 2 */
 
 /** @} */
 

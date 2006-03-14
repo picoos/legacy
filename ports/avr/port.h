@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.8 2004/05/15 16:40:02 smocz Exp $
+ * CVS-ID $Id: port.h,v 1.9 2004/05/15 19:07:03 smocz Exp $
  */
 
 
@@ -110,18 +110,6 @@
  * you can set this define to 0 to save some execution time in ISRs.
  */
 #define POSCFG_ISR_INTERRUPTABLE 1
-
-/** Timer tick rate.
- * This define must be set to the tickrate of the timer
- * interrupt (= timer ticks per second).
- */
-#define HZ                     1000  /* timer ticks per second */
-
-/**
- * Defines the crystal clock in HZ
- */
-#define CRYSTAL_CLOCK          8000000UL
-
 
 /** Set the mechanism of stack memory handling.
  * There are three types of stack memory handling defined.<br>

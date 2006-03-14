@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.5 2004/03/21 18:37:45 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.6 2005/01/10 21:48:46 dkuschel Exp $
  */
 
 
@@ -118,12 +118,6 @@
  * you can set this define to 0 to save some execution time in ISRs.
  */
 #define POSCFG_ISR_INTERRUPTABLE 0
-
-/** Timer tick rate.
- * This define must be set to the tickrate of the timer
- * interrupt (= timer ticks per second).
- */
-#define HZ  30   /* Note: The C64 port divides the 60Hz timer clock by 2 */
 
 /** Set the mechanism of stack memory handling.
  * There are three types of stack memory handling defined.<br>
