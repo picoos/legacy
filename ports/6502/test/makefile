@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.2 2004/03/13 19:33:27 dkuschel Exp $
+#  $Id: makefile,v 1.3 2004/03/14 18:50:47 dkuschel Exp $
 
 
 # This port is 6502
@@ -50,8 +50,13 @@ SRC_TXT = $(RELROOT)examples/test.c
 SRC_OBJ =
 SRC_LIB =
 
-# Set the directory that contains the configuration header files
-#DIR_CONFIG = ports\6502\test
+# Set the directory that contains the configuration header files.
+# If this variable is not set, the default configuration files will be
+# taken from the port/default directory.
+#DIR_CONFIG = $(CURRENTDIR)
+
+# Set the output directory for the generated binaries
+DIR_OUTPUT = $(CURRENTDIR)/bin
 
 # ---------------------------------------------------------------------------
 
