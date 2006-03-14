@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.5 2005/02/15 19:31:24 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.6 2005/02/22 18:03:01 dkuschel Exp $
  */
 
 
@@ -109,12 +109,6 @@
  * you can set this define to 0 to save some execution time in ISRs.
  */
 #define POSCFG_ISR_INTERRUPTABLE 0
-
-/** Timer tick rate.
- * This define must be set to the tickrate of the timer
- * interrupt (= timer ticks per second).
- */
-#define HZ                       40 /* timer ticks per second */
 
 /** Set the mechanism of stack memory handling.
  * There are three types of stack memory handling defined.<br>
@@ -407,6 +401,11 @@ extern void singleThreadEnter(void);
 /* This is the counterpart function of singleThreadEnter().
  */
 extern void singleThreadExit(void);
+
+/* Idle task hook function ("suspend" the CPU for low power mode)
+ */
+extern void p_pos_idleTaskHook(void);
+#define HOOK_IDLETASK   p_pos_idleTaskHook();
 
 #endif
 

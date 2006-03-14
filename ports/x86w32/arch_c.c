@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.7 2005/02/22 18:03:04 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.8 2006/03/11 12:57:34 dkuschel Exp $
  */
 
 
@@ -117,9 +117,11 @@ typedef struct TASKPRIV_s {
 static            HANDLE    timerEvent_g;
 static            HANDLE    globalSyncSem_g;
 static            HANDLE    windowsThreadSyncMutex_g;
+static            HANDLE    idleTaskSuspendSem_g;
 static            HANDLE    interruptWaitSem_g;
 static  volatile  DWORD     interruptTaskId_g;
 static  volatile  DWORD     intlevelCounter_g;
+static  volatile  int       cpuIdleFlag_g;
 static  volatile  int       taskLockCnt_g;
 static  volatile  int       blockInterrupt_g;
 static  volatile  int       interruptWaiting_g;
@@ -319,6 +321,10 @@ void callInterruptHandler( void (*handlerfunc)(void) )
 #endif
   (handlerfunc)();
   c_pos_intExit();
+
+  /* wake idle task */
+  cpuIdleFlag_g = 0;
+  SemaSignal(idleTaskSuspendSem_g);
 
   interruptTaskId_g = 0;
   a_exitInterruptlevel();
@@ -553,12 +559,16 @@ void p_pos_initArch(void)
     windowsThreadSyncMutex_g = CreateMutex(NULL, FALSE, NULL);
     assert(windowsThreadSyncMutex_g != NULL);
 
+    idleTaskSuspendSem_g = CreateSemaphore(NULL, 0, 1, NULL);
+    assert(idleTaskSuspendSem_g != NULL);
+
     timerEvent_g         = NULL;
     taskLockCnt_g        = 0;
     blockInterrupt_g     = 0;
     interruptTaskId_g    = 0;
     intlevelCounter_g    = 0;
     idleTaskCreated_g    = 0;
+    cpuIdleFlag_g        = 0;
     interruptWaiting_g   = 0;
     interruptActive_g    = 0;
     interruptExecuting_g = 0;
@@ -624,14 +634,16 @@ void p_pos_softContextSwitch(void)
   assert(thistask != nexttask);
   assert(taskLockCnt_g != 0);
 
+  /* wake the idle task
+     (quick-and-dirty to get things working as expected) */
+  if (cpuIdleFlag_g != 0)
+  {
+    cpuIdleFlag_g = 0;
+    SemaSignal(idleTaskSuspendSem_g);
+  }
+
   /* swap context variable */
   posCurrentTask_g = posNextTask_g;
-
-  /* the idle task gives off processing time here */
-  if (thistask->priority == THREAD_PRIORITY_IDLE)
-  {
-    Sleep(0);
-  }
 
   /* start next task */
   if (nexttask->state == task_exist)
@@ -750,6 +762,13 @@ void p_pos_startFirstContext(void)
   a_timerTask();
 }
 
+
+void p_pos_idleTaskHook(void)
+{
+  /* the idle task gives of processing time here */
+  cpuIdleFlag_g = 1;
+  SemaWait(idleTaskSuspendSem_g);
+}
 
 
 /*--------  GLOBAL INTERRUPT LOCKING  --------*/
