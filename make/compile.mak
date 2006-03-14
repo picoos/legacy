@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: compile.mak,v 1.5 2005/02/01 21:20:15 dkuschel Exp $
+#  $Id: compile.mak,v 1.6 2006/03/11 13:17:36 dkuschel Exp $
 
 
 # Compile files
@@ -81,7 +81,11 @@ endif
 
 # Set default configuration directory
 ifeq '$(strip $(DIR_CONFIG))' ''
+ifeq '$(strip $(CPU))' ''
 DCFGDEF = $(DIR_PORT)/default
+else
+DCFGDEF = $(DIR_PORT)/$(CPU)/default
+endif
 endif
 
 # Define all object files.
@@ -110,6 +114,11 @@ endif
 # Place include/define options here
 CINCLUDES += $(DIR_INC) $(DCFGDEF) $(DIR_CONFIG) $(DIR_PORT) $(DIR_USRINC)
 AINCLUDES += $(DIR_INC) $(DCFGDEF) $(DIR_CONFIG) $(DIR_PORT) $(DIR_USRINC)
+ifneq '$(strip $(CPU))' ''
+CINCLUDES += $(DIR_PORT)/$(CPU)
+AINCLUDES += $(DIR_PORT)/$(CPU)
+endif
+
 TCINCL = . $(filter-out .,$(CINCLUDES))
 TAINCL = . $(filter-out .,$(AINCLUDES))
 CINCS = $(addprefix $(OPT_CC_INC),$(call adjpath,$(TCINCL)))

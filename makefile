@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.2 2004/06/05 11:43:20 dkuschel Exp $
+#  $Id: makefile,v 1.3 2006/03/11 13:15:00 dkuschel Exp $
 
 
 # Set root path and include base make file
@@ -71,6 +71,21 @@ FILES_HEADER = \
 	$(wildcard $(DIR_PORT)/boot/*.h) \
 	$(wildcard $(DIR_PORT)/default/*.h)
 
+# Set additional files in CPU subdirectories
+ifneq '$(strip $(CPU))' ''
+
+FILES_PORT += \
+	$(wildcard $(DIR_PORT)/$(CPU)/*$(EXT_C)) \
+	$(wildcard $(DIR_PORT)/$(CPU)/*$(EXT_ASM)) \
+	$(wildcard $(DIR_PORT)/$(CPU)/boot/*$(EXT_C)) \
+	$(wildcard $(DIR_PORT)/$(CPU)/boot/*$(EXT_ASM))
+
+FILES_HEADER = \
+	$(wildcard $(DIR_PORT)/$(CPU)/*.h) \
+	$(wildcard $(DIR_PORT)/$(CPU)/boot/*.h) \
+	$(wildcard $(DIR_PORT)/$(CPU)/default/*.h)
+
+endif
 
 # ---------------------------------------------------------------------------
 

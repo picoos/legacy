@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2006, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: common.mak,v 1.4 2005/02/01 21:15:18 dkuschel Exp $
+#  $Id: common.mak,v 1.5 2005/02/07 22:10:07 dkuschel Exp $
 
 
 # Include configuration
@@ -137,6 +137,7 @@ endif
 
 export BUILD
 export PORT
+export CPU
 
 # Define paths
 DIR_OUTB = $(RELROOT)out
