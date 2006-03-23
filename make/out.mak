@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: out.mak,v 1.3 2005/01/10 21:42:17 dkuschel Exp $
+#  $Id: out.mak,v 1.2 2006/03/12 12:13:53 ari Exp $
 
 
 # Build target: generate executable
@@ -126,7 +126,7 @@ LINKLIST+=$(OPT_LD_PFLIB)$(subst $(space),$(replace),$(strip $(LIBLIST)))
 LINKLIST+=$(OPT_LD_PFLIB)$(subst $(space),$(replace),$(strip $(PICOOS_LIB)))
 LINKLIST+=$(OPT_LD_LAST)
 
-$(TARGETOUT): $(ALL_MODULES) $(PICOOS_LIB) $(OBJLIST) $(DIR_OUT) $(COMMONDEP)
+$(TARGETOUT): $(ALL_MODULES) $(PICOOS_LIB) $(OBJLIST) $(COMMONDEP) | $(DIR_OUT)
 	$(PRELINK1)
 	$(PRELINK2)
 	$(PRELINK3)

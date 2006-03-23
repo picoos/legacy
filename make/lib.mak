@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: lib.mak,v 1.2 2005/01/10 21:43:53 dkuschel Exp $
+#  $Id: lib.mak,v 1.2 2006/03/12 12:13:53 ari Exp $
 
 
 # Build target: generate library
@@ -71,7 +71,7 @@ include $(MAKE_CPL)
 TARGETLIB = $(DIR_LIB)/$(TARGET)$(EXT_LIB)
 AOBJS = $(addprefix $(OPT_AR_ADD),$(OBJ))
 
-$(TARGETLIB): $(OBJ) $(DIR_LIB) $(COMMONDEP) $(SRC_OBJ)
+$(TARGETLIB): $(OBJ) $(COMMONDEP) $(SRC_OBJ) | $(DIR_LIB)
 	$(AR) $(ARFLAGS)$(call adjpath,$@) $(call adjpath,$(AOBJS) $(SRC_OBJ))
 
 # ---------------------------------------------------------------------------
