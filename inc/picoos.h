@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.21 2005/02/22 20:38:40 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.22 2006/03/11 13:11:16 dkuschel Exp $
  *
  */
 
@@ -153,7 +153,7 @@
  * @n@n
  * @section license License
  *
- *  Copyright (c) 2004-2005, Dennis Kuschel. @n
+ *  Copyright (c) 2004-2006, Dennis Kuschel. @n
  *  All rights reserved. @n
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -191,7 +191,7 @@
  * mail: dennis_k@freenet.de @n
  * web:  http://picoos.sourceforge.net @n
  *
- * (C) 2004-2005 Dennis Kuschel
+ * (C) 2004-2006 Dennis Kuschel
  */
 
 /** @defgroup intro     Introduction */
@@ -246,8 +246,8 @@
 
 
 #define POS_VER_N           0x0094
-#define POS_VER_S           "0.9.4"
-#define POS_COPYRIGHT       "(c) 2004-2005, D.Kuschel"
+#define POS_VER_S           "0.9.4a"
+#define POS_COPYRIGHT       "(c) 2004-2006, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
 #ifndef NULL
@@ -2775,7 +2775,7 @@ POSEXTERN void posListTerm(POSLISTHEAD_t *listhead);
  * The function gets called every time pico]OS has failed an assertion.
  */
 #define P_ASSERT(text,x) \
-  if (!(x)) p_pos_assert((static const char*)(text), __FILE__, __LINE__)
+  if (!(x)) p_pos_assert((const char*)(text), __FILE__, __LINE__)
 #else
 #define P_ASSERT(text,x)  do { } while(0)
 #endif
