@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: pos_nano.h,v 1.4 2005/01/03 16:41:29 dkuschel Exp $
+ * CVS-ID $Id: pos_nano.h,v 1.5 2005/01/15 21:25:10 dkuschel Exp $
  */
 
 #ifndef _POS_NANO_H
@@ -56,6 +56,7 @@
 
 /* include configuration files */
 #ifndef _PICOOS_H
+#include <port.h>
 #include <poscfg.h>
 #endif
 #include <noscfg.h>
@@ -225,6 +226,13 @@
 #error NOSCFG_FEATURE_TIMER enabled, but pico]OS timer functions disabled
 #endif
 
+#ifndef NOSCFG_MEM_OVWR_STANDARD
+#define NOSCFG_MEM_OVWR_STANDARD  1
+#endif
+#ifndef NOSCFG_FEATURE_REALLOC
+#define NOSCFG_FEATURE_REALLOC    0
+#endif
+
 
 
 /*---------------------------------------------------------------------------
@@ -293,8 +301,14 @@ NANOEXT void* nosMemAlloc(UINT_t size);
  */
 NANOEXT void  nosMemFree(void *p);
 
+
+#if DOX!=0 || NOSCFG_FEATURE_REALLOC != 0
+NANOEXT void *nosMemRealloc(void *memblock, UINT_t size);
+#endif
+
 /* overwrite standard memory allocation functions */
 #ifndef NANOINTERNAL
+#if NOSCFG_MEM_OVWR_STANDARD != 0
 #ifdef malloc
 #undef malloc
 #endif
@@ -307,13 +321,14 @@ NANOEXT void  nosMemFree(void *p);
 #define malloc  nosMemAlloc
 #define calloc  (not_supported)
 #define free    nosMemFree
+#endif /* NOSCFG_MEM_OVWR_STANDARD */
 #else /* NANOINTERNAL */
 /* internal malloc/free, used by OS core and platform ports */
 #if NOSCFG_MEM_MANAGER_TYPE == 0
 #define NOS_MEM_ALLOC(x)   malloc((size_t)(x))
 #define NOS_MEM_FREE(x)    free(x)
 #elif   NOSCFG_MEM_MANAGER_TYPE == 1
-void*   nos_malloc(unsigned int size);
+void*   nos_malloc(UINT_t size);
 void    nos_free(void *mp);
 #define NOS_MEM_ALLOC(x)   nos_malloc(x)
 #define NOS_MEM_FREE(x)    nos_free(x)
@@ -340,10 +355,12 @@ void    nos_free(void *mp);
  */
 NANOEXT void nosMemSet(void *buf, char val, UINT_t count);
 
+#if NOSCFG_MEM_OVWR_STANDARD != 0
 #ifdef memset
 #undef memset
 #endif
 #define memset  nosMemSet
+#endif
 
 #endif /* NOSCFG_FEATURE_MEMSET */
 
@@ -362,10 +379,12 @@ NANOEXT void nosMemSet(void *buf, char val, UINT_t count);
  */
 NANOEXT void nosMemCopy(void *dst, void *src, UINT_t count);
 
+#if NOSCFG_MEM_OVWR_STANDARD != 0
 #ifdef memcpy
 #undef memcpy
 #endif
 #define memcpy  nosMemCopy
+#endif
 
 #endif /* NOSCFG_FEATURE_MEMCOPY */
 #undef NANOEXT
@@ -443,7 +462,7 @@ NANOEXT UVAR_t  nosKeyPressed(void);
 #endif  /* NOSCFG_FEATURE_CONIN */
 
 
-#if DOX
+#if DOX!=0 || NOSCFG_FEATURE_CONOUT != 0
 /**
  * Print a character to the console or terminal. This function
  * must be supplied by the architecture port; it is not callable
