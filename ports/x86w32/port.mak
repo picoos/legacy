@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.4 2005/02/07 22:00:20 dkuschel Exp $
+#  $Id: port.mak,v 1.5 2006/03/11 12:58:30 dkuschel Exp $
 
 
 # Set default compiler.
@@ -67,6 +67,7 @@ EXT_ASM = .asm
 EXT_OBJ = .obj
 EXT_LIB = .lib
 EXT_OUT = .exe
+PRE_LIB =
 
 # Define tools: compiler, assembler, archiver, linker
 CC = cl
@@ -139,6 +140,7 @@ EXT_ASM = .s
 EXT_OBJ = .o
 EXT_LIB = .a
 EXT_OUT = .exe
+PRE_LIB = lib
 
 # Set path to the compiler
 #GCC_DIR = E:/Programme/mingw
