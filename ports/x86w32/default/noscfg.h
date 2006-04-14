@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: noscfg.h,v 1.1 2005/01/10 22:40:03 dkuschel Exp $
+ * CVS-ID $Id: noscfg.h,v 1.2 2006/03/11 13:12:01 dkuschel Exp $
  */
 
 #ifndef _NOSCFG_H
@@ -74,6 +74,14 @@
  *       See defines ::NOSCFG_MEM_USER_MALLOC and ::NOSCFG_MEM_USER_FREE.
  */
 #define NOSCFG_MEM_MANAGER_TYPE      1
+
+/** Overwrite standard malloc/realloc/free/memcpy/memset functions with
+ *  nano layer memory functions: @n
+ *  0 = Do not overwrite standard malloc/realloc/free/memcpy/memset functions@n
+ *  1 = Overwrite standard malloc/realloc/free/memcpy/memset functions with
+ *      nano layer functions
+ */
+#define NOSCFG_MEM_OVWR_STANDARD     1
 
 /** This is a pointer to the start of the memory heap.
  * It can either be a real variable pointing to heap memory,
@@ -146,6 +154,15 @@ extern void *__heap_end;
  * be included into the nano layer.
  */
 #define NOSCFG_FEATURE_MEMCOPY       1
+
+/** Include function ::nosMemRealloc.
+ * If this definition is set to 1, the function ::nosMemRealloc will
+ * be included into the nano layer.
+ * @note  When the function ::nosMemRealloc is enabled by this define, you
+ *        should set ::NOSCFG_MEM_MANAGE_MODE to 1. Otherwise the memory
+ *        will fragment too much if ::nosMemRealloc is used frequently.
+ */
+#define NOSCFG_FEATURE_REALLOC       0
 
 /** @} */
 
