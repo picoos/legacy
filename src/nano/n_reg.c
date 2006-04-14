@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_reg.c,v 1.1 2005/01/03 16:23:22 dkuschel Exp $
+ * CVS-ID $Id: n_reg.c,v 1.2 2005/01/15 21:20:20 dkuschel Exp $
  */
 
 
@@ -147,6 +147,7 @@ static void      n_buildKeyName(char *dest, const char *basename,
                                 VAR_t basenlen, INT_t nbr);
 static VAR_t     n_newKey(NOSREGTYPE_t type, 
                           const char* name, REGELEM_t *reret);
+void             nos_initRegistry(void);
 
 
 
