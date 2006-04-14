@@ -1,4 +1,14 @@
 
+Version 0.9.4a:
+  o  ARM port re-structured
+  o  function nosMemRealloc() added
+  o  small configuration problem fixed in picoos.h
+  o  small configuration problem fixed in x86w32 port
+  o  ports can now be split into a common and a CPU specific part
+  o  "HZ" definition moved from port.h to poscfg.h
+  o  The x86w32-port does no more consume 100% CPU time when pico]OS is idle.
+
+
 Version 0.9.4:
   o  fixed a NULL pointer write in function posListRemove()
   o  fixed a bug in nano layer initialization

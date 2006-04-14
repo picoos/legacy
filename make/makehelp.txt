@@ -33,7 +33,7 @@ specifies the destination port. For example, a valid make call would look
 like this (at the DOS prompt): @n
 
 @code
-C:\picoos-0.9.1> make all PORT=6502
+C:\picoos-1.0.0> make all PORT=6502
 @endcode
 
 This will build pico]OS for the 6502 processor family. After the successful
@@ -48,6 +48,29 @@ when this option is not given. @n
 
 @b Note:  The name of the port is the name of its subdirectory
           in the @c ports directory. @n
+
+
+
+@n      <h3> Compiling pico]OS from within an other project </h3>
+
+Usually you will have more than one project that uses pico]OS. pico]OS is
+only installed one time on the harddisk, and you have several projects that
+link against the pico]OS library. Every project has different requirements on
+the RTOS, thus each project has its own configuration files for pico]OS. To
+avoid binary clashes with the other projects, it is required to tell make where
+the configuration files are located and where the generated pico]OS library
+shall be stored. This is done by two additional arguments in the command line
+of the make call: @n
+
+@code
+C:\picoos-1.0.0> make all PORT=6502  RTOS_OUTPUTDIR=/repository/myproj/RTOS   \
+                                     DIR_CONFIG=/repository/myproj/config
+@endcode
+
+The parameter @c RTOS_OUTPUTDIR tells make where to store the generated
+pico]OS library. @c DIR_CONFIG specifies the directory where the configuration
+files can be found. Note that the paths should be absolute paths, or,
+relative paths from the view of pico]OS (and that is mostly impracticable).
 
 
 
@@ -176,12 +199,12 @@ an other configuration than the default, you can place your own configuration
 files @c poscfg.h and @c noscfg.h into your project directory. You must then
 set @c DIR_CONFIG (line 61) to the place where the configuration files are
 located. Note that this path is absolute to the pico]OS root, so if your
-project directory is <tt>picoos-0.9.1/myproject</tt>, you would set
+project directory is <tt>picoos-1.0.0/myproject</tt>, you would set
 <tt>DIR_CONFIG = myproject</tt>. To make things easier, the pre-defined
 variable @c CURRENTDIR points always to the current directory.
 In line 66 you may specify your own output directory for the generated
 binaries. If you do not set this variable, the binaries will be saved in
-the directory <tt>picoos-0.9.1/out/portname/rel_or_deb/</tt>.
+the directory <tt>picoos-1.0.0/out/portname/rel_or_deb/</tt>.
 Finally, the line 85 includes the makefile that starts the
 build process. @n
 
@@ -304,7 +327,7 @@ use the preprocessor command @c #include @c <header.h> to include a header
 file that is located in the global include path.
 In line 50 you may specify your own output directory for the generated
 binaries. If you do not set this variable, the binaries will be saved in
-the directory <tt>picoos-0.9.1/out/portname/rel_or_deb/</tt>.
+the directory <tt>picoos-1.0.0/out/portname/rel_or_deb/</tt>.
 Finally, the line 59 includes the makefile that starts the
 build process. @n@n
 To generate the library manually, you can call the makefile with the
