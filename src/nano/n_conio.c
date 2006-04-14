@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.5 2005/01/15 21:18:22 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.6 2005/01/17 21:58:12 dkuschel Exp $
  */
 
 #define _N_CONIO_C
@@ -66,10 +66,6 @@
 /*---------------------------------------------------------------------------
  * IMPORTS
  *-------------------------------------------------------------------------*/
-
-#if NOSCFG_FEATURE_CONOUT != 0
-extern UVAR_t p_putchar(char c);
-#endif
 
 
 
@@ -146,7 +142,11 @@ static NPRINTFUNC_t       prf_g;
 #else
 #define SET_PRFUNC(func)  do { } while(0)
 #if NOSCFG_FEATURE_PRINTF != 0
+#if NOSCFG_CONOUT_HANDSHAKE == 1
+#define CALL_PRFUNC(c)    nos_putchar(c)
+#else
 #define CALL_PRFUNC(c)    p_putchar(c)
+#endif
 #else
 #define CALL_PRFUNC(c)    n_updstr(c)
 #endif
