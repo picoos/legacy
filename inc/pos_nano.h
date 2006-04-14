@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: pos_nano.h,v 1.5 2005/01/15 21:25:10 dkuschel Exp $
+ * CVS-ID $Id: pos_nano.h,v 1.6 2006/04/14 08:57:33 dkuschel Exp $
  */
 
 #ifndef _POS_NANO_H
@@ -287,7 +287,7 @@ typedef void (*NOSBHFUNC_t)(void* arg, UVAR_t bh);
  *          to allocate a block with the wished size.
  * @note    ::NOSCFG_FEATURE_MEMALLOC must be defined to 1 
  *          to have this function compiled in.
- * @sa      nosMemFree, NOSCFG_MEM_MANAGER_TYPE
+ * @sa      nosMemRealloc, nosMemFree, NOSCFG_MEM_MANAGER_TYPE
  */
 NANOEXT void* nosMemAlloc(UINT_t size);
 
@@ -297,12 +297,28 @@ NANOEXT void* nosMemAlloc(UINT_t size);
  * @param   p pointer to the memory block to free.
  * @note    ::NOSCFG_FEATURE_MEMALLOC must be defined to 1 
  *          to have this function compiled in.
- * @sa      nosMemAlloc, NOSCFG_MEM_MANAGER_TYPE
+ * @sa      nosMemAlloc, nosMemRealloc, NOSCFG_MEM_MANAGER_TYPE
  */
 NANOEXT void  nosMemFree(void *p);
 
 
 #if DOX!=0 || NOSCFG_FEATURE_REALLOC != 0
+/**
+ * Reallocate a block of memory.
+ * Sometimes it is necessary to increase or decrease the size of a
+ * memory block on the heap. This function works like the usual
+ * realloc(), it is optimized to keep the heap clean and unfragmented.
+ * @param   memblock  pointer to the memory block on the heap.
+ * @param   size  new size of the memory block (larger or smaller)
+ * @return  The function returns the pointer to the new memory block
+ *          on success. NULL is returned when the function failed
+ *          to change the size of the block.
+ * @note    ::NOSCFG_FEATURE_MEMALLOC and ::NOSCFG_FEATURE_REALLOC
+ *          must be defined to 1 to have this function compiled in.
+ * @note    ::nosMemRealloc reaches the best performance only when
+ *          ::NOSCFG_MEM_MANAGE_MODE is set to 1
+ * @sa      nosMemAlloc, nosMemFree, NOSCFG_MEM_MANAGER_TYPE
+ */
 NANOEXT void *nosMemRealloc(void *memblock, UINT_t size);
 #endif
 
