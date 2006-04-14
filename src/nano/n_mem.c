@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_mem.c,v 1.3 2005/01/03 16:47:44 dkuschel Exp $
+ * CVS-ID $Id: n_mem.c,v 1.4 2005/01/10 21:54:59 dkuschel Exp $
  */
 
 #define _N_MEM_C
@@ -49,6 +49,10 @@
 #if POSCFG_FEATURE_INHIBITSCHED == 0
 #error POSCFG_FEATURE_INHIBITSCHED not enabled
 #endif
+#endif
+#if (NOSCFG_MEM_MANAGE_MODE == 1) ||  \
+    ((POSCFG_SMALLCODE == 0) && (NOSCFG_FEATURE_REALLOC != 0))
+#define MEMFREE_CHECK_INTENSIVE
 #endif
 
 /* include malloc from runtime library */
@@ -61,6 +65,13 @@
 
 /* function prototypes */
 void nos_initMem(void);
+
+/* we need nosMemCopy for nosRealloc */
+#if (NOSCFG_FEATURE_REALLOC != 0) && (NOSCFG_FEATURE_MEMCOPY == 0)
+#undef NOSCFG_FEATURE_MEMCOPY
+#define NOSCFG_FEATURE_MEMCOPY  1
+void nosMemCopy(void *dst, void *src, UINT_t count);
+#endif
 
 
 
@@ -209,7 +220,12 @@ void nosMemCopy(void *dst, void *src, UINT_t count)
 #if NOSCFG_MEM_MANAGER_TYPE == 1
 
 #define MEM_MAGIC    0x5D7A
+
+#if POSCFG_ALIGNMENT > 1
 #define MEM_ALIGN(x) (((x) + (POSCFG_ALIGNMENT-1)) & ~(POSCFG_ALIGNMENT - 1))
+#else
+#define MEM_ALIGN(x) (x)
+#endif
 #define BLOCK_STRUCT_SIZE    MEM_ALIGN(sizeof(struct BLOCK_s))
 
 typedef struct BLOCK_s
@@ -225,18 +241,15 @@ static BLOCK_t  freeBlockList_g;
 
 /*-------------------------------------------------------------------------*/
 
-void* nos_malloc(unsigned int size)
+void* nos_malloc(UINT_t size)
 {
   BLOCK_t  bp, bl, l, p;
-  unsigned int s;
+  UINT_t   s;
 
   if (size == 0)
     return NULL;
 
-#if POSCFG_ALIGNMENT > 1
-  size = MEM_ALIGN(size);
-#endif
-  size += BLOCK_STRUCT_SIZE;
+  size = MEM_ALIGN(size) + BLOCK_STRUCT_SIZE;
 
   /* find block that fits best
    */
@@ -292,7 +305,7 @@ void* nos_malloc(unsigned int size)
 void nos_free(void *mp)
 {
   BLOCK_t b, p;
-#if NOSCFG_MEM_MANAGE_MODE == 1
+#ifdef MEMFREE_CHECK_INTENSIVE
   BLOCK_t n, lp = NULL, lb = NULL;
   short f = 0;
 #endif
@@ -315,7 +328,7 @@ void nos_free(void *mp)
     if ((BLOCK_t)(void*)(((MEMPTR_t) p) + p->size) == b)
     {
       p->size += b->size;
-#if NOSCFG_MEM_MANAGE_MODE == 1
+#ifdef MEMFREE_CHECK_INTENSIVE
       b = p;
       f = 1;
       break;
@@ -328,7 +341,7 @@ void nos_free(void *mp)
   }
 
   /* find right neighbour */
-#if NOSCFG_MEM_MANAGE_MODE == 1
+#ifdef MEMFREE_CHECK_INTENSIVE
   n = (BLOCK_t)(void*)(((MEMPTR_t) b) + b->size);
   for (p = freeBlockList_g; p != NULL; p = p->h.next)
   {
@@ -385,12 +398,102 @@ void nos_free(void *mp)
 
 /*-------------------------------------------------------------------------*/
 
+#if NOSCFG_FEATURE_REALLOC != 0
+
+static void* nos_realloc(void *memblock, UINT_t size)
+{
+  BLOCK_t b, l, n, p;
+  UINT_t  s, asize;
+  void    *r;
+
+  if (((MEMPTR_t) memblock) < BLOCK_STRUCT_SIZE)
+    return NULL;
+
+  if (size == 0)
+  {
+    nos_free(memblock);
+    return NULL;
+  }
+
+  b = ((BLOCK_t) memblock) - 1;
+  if (b->h.magic != MEM_MAGIC)
+    return NULL;
+
+  asize = MEM_ALIGN(size) + BLOCK_STRUCT_SIZE;
+  if (asize > b->size)
+  {
+    /* check if some free memory is available before/behind the memblock */
+    l = NULL;
+    n = (BLOCK_t) (((MEMPTR_t) b) + b->size);
+    for (p = freeBlockList_g; p != NULL; l = p, p = p->h.next)
+    {
+      if ((p == n) || (b == (BLOCK_t) (((MEMPTR_t) p) + p->size)))
+      {
+        s = b->size + p->size;
+        if (s >= asize)
+        {
+          /* allocate the block that is the direct neighbour of memblock */
+          if (l == NULL)
+          {
+            freeBlockList_g = p->h.next;
+          }
+          else
+          {
+            l->h.next = p->h.next;
+          }
+          /* move content of memblock to begin of first block */
+          if (p != n)
+          {
+            r = (void*) (p + 1);
+            nosMemCopy(r, memblock, b->size - sizeof(struct BLOCK_s));
+            memblock = r;
+            b = p;
+          }
+          /* set size and magic of resulting memblock */
+          b->h.magic = MEM_MAGIC;
+          b->size = s;
+          break;
+        }        
+      }
+    }
+  }
+
+  if (asize <= b->size)
+  {
+    /* shrink memory block, put no more used memory to list of free blocks */
+    s = b->size - asize;
+    if (s >= (BLOCK_STRUCT_SIZE + POSCFG_ALIGNMENT))
+    {
+      b->size = asize;
+      n = (BLOCK_t) (((MEMPTR_t) b) + asize);
+      n->h.magic = MEM_MAGIC;
+      n->size = s;
+      nos_free((void*)(n + 1));
+    }
+    return memblock;
+  }
+
+  /* re-allocation not possible, do the slow memcpy method */
+  r = nos_malloc(size);
+  if (r != NULL)
+  {
+    nosMemCopy(r, memblock, b->size - sizeof(struct BLOCK_s));
+    nos_free(memblock);
+  }
+  return r;
+}
+
+#endif /* NOSCFG_FEATURE_REALLOC */
+
+/*-------------------------------------------------------------------------*/
+
 void nos_initMem(void)
 {
   freeBlockList_g = (BLOCK_t)(void*)MEM_ALIGN((MEMPTR_t)(__heap_start));
   freeBlockList_g->h.next = NULL;
-  freeBlockList_g->size =
-    ((MEMPTR_t)__heap_end) - ((MEMPTR_t)freeBlockList_g) + 1;
+  freeBlockList_g->size = 
+    (((MEMPTR_t)__heap_end) - ((MEMPTR_t)freeBlockList_g) + 1) &
+      ~(POSCFG_ALIGNMENT - 1);
 }
 
 #endif  /* NOSCFG_MEM_MANAGER_TYPE == 1 */
@@ -416,6 +519,21 @@ void  nosMemFree(void *p)
   NOS_MEM_FREE(p);
   posTaskSchedUnlock();
 }
+
+/*-------------------------------------------------------------------------*/
+
+#if NOSCFG_FEATURE_REALLOC != 0
+
+void* nosMemRealloc(void *memblock, UINT_t size)
+{
+  void *p;
+  posTaskSchedLock();
+  p = nos_realloc(memblock, size);
+  posTaskSchedUnlock();
+  return p;
+}
+
+#endif
 
 /*-------------------------------------------------------------------------*/
 
