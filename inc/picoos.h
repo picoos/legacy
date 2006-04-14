@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.22 2006/03/11 13:11:16 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.23 2006/04/14 08:59:01 dkuschel Exp $
  *
  */
 
@@ -114,8 +114,8 @@
  *  - 6502 / 65c02 / 6510 series, port for Commodore 64 available.
  *    Minimum configuration (4 tasks): 4.6kb code, 4.7kb data
  *  - PowerPC: IBM PPC440  (GNU C and MetaWare compiler supported)
- *  - AVR (GNU C compiler supported)
- *  - ARM (SAMSUNG S3C2510A CPU / ARM940T core)
+ *  - AVR (ATMega, GNU C compiler supported)
+ *  - ARM: SAMSUNG S3C2510A CPU (ARM940T core), Philips LPC ARM chips
  *
  * @n@n
  * @subsection files Files
