@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_mem.c,v 1.4 2005/01/10 21:54:59 dkuschel Exp $
+ * CVS-ID $Id: n_mem.c,v 1.5 2006/04/14 09:07:08 dkuschel Exp $
  */
 
 #define _N_MEM_C
@@ -105,6 +105,7 @@ void nosMemSet(void *buf, char val, UINT_t count)
 
   if (count >= sizeof(UVAR_t))
   {
+    UVAR_t *ucb = (UVAR_t*) cb;
     UVAR_t f = (UVAR_t) val;
     f |= f << 8;
 #if MVAR_BITS > 16
@@ -112,10 +113,11 @@ void nosMemSet(void *buf, char val, UINT_t count)
 #endif
     do
     {
-      *((UVAR_t*)cb)++ = f;
+      *ucb++ = f;
       count -= sizeof(UVAR_t);
     }
     while (count >= sizeof(UVAR_t));
+    cb = (char*) ucb;
   }
 
   if (count != 0)
@@ -180,12 +182,16 @@ void nosMemCopy(void *dst, void *src, UINT_t count)
 
     if (count >= sizeof(UVAR_t))
     {
+      UVAR_t *ucd = (UVAR_t*) cd;
+      UVAR_t *ucs = (UVAR_t*) cs;
       do
       {
-        *((UVAR_t*)cd)++ = *((UVAR_t*)cs)++;
+        *ucd++ = *ucs++;
         count -= sizeof(UVAR_t);
       }
       while (count >= sizeof(UVAR_t));
+      cd = (char*) ucd;
+      cs = (char*) ucs;
     }
   }
 
