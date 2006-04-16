@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2006, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: compile.mak,v 1.3 2006/03/12 12:13:53 ari Exp $
+#  $Id: compile.mak,v 1.8 2006/03/23 21:36:51 dkuschel Exp $
 
 
 # Compile files
@@ -196,62 +196,92 @@ endif
 
 # ---------------------------------------------------------------------------
 
+# Build a macro that is used to generate the correct C-flags
+ifneq '$(strip $(OPT_CC_ODIR))' ''
+ifneq '$(strip $(OPT_CC_OFILE))' ''
+make_cflags = $(CFLAGS) $(OPT_CC_ODIR)$(call adjpath,$(DIR_OBJ)) $(OPT_CC_OFILE)$(call adjpath,$(1))
+else
+make_cflags = $(CFLAGS) $(OPT_CC_ODIR)$(call adjpath,$(DIR_OBJ))
+endif
+else
+ifneq '$(strip $(OPT_CC_OFILE))' ''
+make_cflags = $(CFLAGS) $(OPT_CC_OFILE)$(call adjpath,$(1))
+else
+make_cflags = $(CFLAGS)$(call adjpath,$(1))
+endif
+endif
+
+# Build a macro that is used to generate the correct Assembler-flags
+ifneq '$(strip $(OPT_AS_ODIR))' ''
+ifneq '$(strip $(OPT_AS_OFILE))' ''
+make_asflags = $(ASFLAGS) $(OPT_AS_ODIR)$(call adjpath,$(DIR_OBJ)) $(OPT_AS_OFILE)$(call adjpath,$(1))
+else
+make_asflags = $(ASFLAGS) $(OPT_AS_ODIR)$(call adjpath,$(DIR_OBJ))
+endif
+else
+ifneq '$(strip $(OPT_AS_OFILE))' ''
+make_asflags = $(ASFLAGS) $(OPT_AS_OFILE)$(call adjpath,$(1))
+else
+make_asflags = $(ASFLAGS)$(call adjpath,$(1))
+endif
+endif
+
 ifeq '$(strip $(CC2ASM))' '1'
 
 # Compile: create intermediate files from C source files, and then
 # assemble: create object files from intermediate files
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC1)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC2)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC3)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC4)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC5)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC6)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC7)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 $(DIR_OBJ)/%$(EXT_OBJ): $(DIR_SRC8)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
+	$(CC) $(call make_cflags,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**)) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 	-$(REMOVE) $(call adjpath,$(subst $(EXT_OBJ)**,$(EXT_INT),$@**))
 
 else
 
 # Compile: create object files from C source files
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC1)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC2)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC3)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC4)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC5)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC6)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC7)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC8)%$(EXT_C) $(COMMONDEP) | $(DIR_OBJ)
-	$(CC) $(CFLAGS)$(call adjpath,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
+	$(CC) $(call make_cflags,$@) $(CINCS) $(CDEFS) $(call adjpath,$<)
 
 endif
 
@@ -264,56 +294,56 @@ CAINCS = $(call adjpath,$(addprefix $(OPT_CC_INC),$(AINCLUDES)))
 CADEFS = $(addprefix $(OPT_CC_DEF),$(ADEFINES))
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC1)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC2)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC3)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC4)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC5)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC6)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC7)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC8)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
 	$(CC) $(CAFLAGS)$(call adjpath,$@) $(CAINCS) $(CADEFS) $(call adjpath,$<)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$*$(EXT_INT))
 	-$(RM) $*$(EXT_INT)
 
 else
 
 # Assemble: create object files from assembler source files.
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC1)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC2)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC3)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC4)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC5)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC6)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC7)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 $(DIR_OBJ)/%$(EXT_OBJ) : $(DIR_SRC8)%$(EXT_ASM) $(COMMONDEP) | $(DIR_OBJ)
-	$(AS) $(ASFLAGS)$(call adjpath,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
+	$(AS) $(call make_asflags,$@) $(AINCS) $(ADEFS) $(call adjpath,$<)
 
 endif
 

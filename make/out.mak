@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2006, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: out.mak,v 1.2 2006/03/12 12:13:53 ari Exp $
+#  $Id: out.mak,v 1.5 2006/03/23 21:36:51 dkuschel Exp $
 
 
 # Build target: generate executable
@@ -95,13 +95,6 @@ $(MODULES):
     )) --no-print-directory $(MTARGET) OLIBNAME=$(notdir $@)
 endif
 
-
-#ifneq '$(strip $(MODULES))' ''
-#.PHONY: $(MODULES)
-#$(MODULES):
-#	$(MAKE) -C $@ --no-print-directory $(MTARGET) OLIBNAME=$(notdir $@)
-#endif
-
 ALL_MODULES = $(EXEC_MAKEFILES) $(MODULES)
 
 # ---------------------------------------------------------------------------
@@ -117,13 +110,18 @@ replace=$(OPT_LD_SEP)
 endif
 
 TARGETOUT=$(DIR_OUT)/$(TARGET)$(EXT_OUT)
-OBJLIST  =$(strip $(OBJ)) $(strip $(SRC_OBJ))
+OBJLIST  =$(strip $(OBJ) $(SRC_OBJ))
+ifneq '$(strip $(LINK_FIRST))' ''
+LKOBJ1 = $(DIR_OBJ)/$(LINK_FIRST)$(EXT_OBJ)
+OBJLIST := $(LKOBJ1) $(filter-out $(LKOBJ1),$(OBJLIST))
+endif
+
 LIBLIST  =$(MOD_LIB)
 LIBLIST +=$(SRC_LIB)
 LINKLIST =$(OPT_LD_FIRST)
-LINKLIST+=$(OPT_LD_PFOBJ)$(subst $(space),$(replace),$(strip $(OBJLIST)))
-LINKLIST+=$(OPT_LD_PFLIB)$(subst $(space),$(replace),$(strip $(LIBLIST)))
-LINKLIST+=$(OPT_LD_PFLIB)$(subst $(space),$(replace),$(strip $(PICOOS_LIB)))
+LINKLIST+=$(addprefix $(OPT_LD_PFOBJ),$(subst $(space),$(replace),$(strip $(OBJLIST))))
+LINKLIST+=$(addprefix $(OPT_LD_PFLIB),$(subst $(space),$(replace),$(strip $(LIBLIST))))
+LINKLIST+=$(addprefix $(OPT_LD_PFLIB),$(subst $(space),$(replace),$(strip $(PICOOS_LIB))))
 LINKLIST+=$(OPT_LD_LAST)
 
 $(TARGETOUT): $(ALL_MODULES) $(PICOOS_LIB) $(OBJLIST) $(COMMONDEP) | $(DIR_OUT)
