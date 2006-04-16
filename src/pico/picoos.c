@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.13 2005/02/22 20:38:53 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.14 2006/03/11 13:09:40 dkuschel Exp $
  */
 
 
@@ -1441,7 +1441,7 @@ POSSEMA_t posSemaCreate(INT_t initcount)
   if (ev != NULL)
   {
 #if POSCFG_ARGCHECK > 1
-    if (ev->e.magic != POSMAGIC_EVENTF)
+    if (ev->e.magic != (UVAR_t) POSMAGIC_EVENTF)
     {
       POS_SCHED_UNLOCK;
       return NULL;

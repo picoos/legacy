@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_mem.c,v 1.5 2006/04/14 09:07:08 dkuschel Exp $
+ * CVS-ID $Id: n_mem.c,v 1.6 2006/04/14 13:46:05 dkuschel Exp $
  */
 
 #define _N_MEM_C
@@ -546,6 +546,7 @@ void* nosMemRealloc(void *memblock, UINT_t size)
 #else  /* NOSCFG_FEATURE_MEMALLOC != 0 */
 
 /* this is just a dummy function */
+void nos_initMem(void);
 void nos_initMem(void) {}
 
 #endif

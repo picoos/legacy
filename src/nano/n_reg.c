@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_reg.c,v 1.2 2005/01/15 21:20:20 dkuschel Exp $
+ * CVS-ID $Id: n_reg.c,v 1.3 2006/04/14 09:03:12 dkuschel Exp $
  */
 
 
@@ -147,7 +147,6 @@ static void      n_buildKeyName(char *dest, const char *basename,
                                 VAR_t basenlen, INT_t nbr);
 static VAR_t     n_newKey(NOSREGTYPE_t type, 
                           const char* name, REGELEM_t *reret);
-void             nos_initRegistry(void);
 
 
 
@@ -492,7 +491,7 @@ NOSREGQHANDLE_t  nosRegQueryBegin(NOSREGTYPE_t type)
 {
   REGQUERY_t  rq;
 
-  if ((type < MIN_REGTYPE) || (type > MAX_REGTYPE))
+  if (type > MAX_REGTYPE)
     return NULL;
 
   rq = (REGQUERY_t) nosMemAlloc(sizeof(struct regquery));
@@ -585,7 +584,7 @@ NOSGENERICHANDLE_t  nosGetHandleByName(NOSREGTYPE_t objtype,
 {
   REGELEM_t re;
 
-  if ((objtype < MIN_REGTYPE) || (objtype > MAX_REGTYPE) || (objname ==NULL))
+  if ((objtype > MAX_REGTYPE) || (objname ==NULL))
     return NULL;
   if (n_strlen(objname) > NOS_MAX_REGKEYLEN)
     return NULL;
@@ -614,7 +613,7 @@ VAR_t nosGetNameByHandle(NOSGENERICHANDLE_t handle,
 
   if (what != REGTYPE_SEARCHALL)
   {
-    if ((what >= MIN_REGTYPE) && (what <= MAX_REGTYPE))
+    if (what <= MAX_REGTYPE)
     {
       re = n_findKeyByHandle(what, handle);
     }
@@ -721,6 +720,7 @@ void nos_initRegistry(void)
 
 #else /* NOSCFG_FEATURE_REGISTRY */
 
+void nos_initRegistry(void);
 void nos_initRegistry(void)
 {
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_bhalf.c,v 1.4 2005/01/03 16:42:57 dkuschel Exp $
+ * CVS-ID $Id: n_bhalf.c,v 1.5 2005/01/15 21:18:22 dkuschel Exp $
  */
 
 #define _N_BHALF_C
@@ -80,6 +80,10 @@ static UVAR_t       bhexecmask_g;
  *  FUNCTION PROTOTYPES
  *-------------------------------------------------------------------------*/
 
+/* exported */
+void nos_initBottomHalfs(void);
+
+/* private */
 static void nos_bhtask(void *arg);
 static void nos_bhtrigger(UVAR_t arg);
 
@@ -213,6 +217,7 @@ void nos_initBottomHalfs(void)
 #else  /* NOSCFG_FEATURE_BOTTOMHALF */
 
 /* this is just a dummy function */
+void nos_initBottomHalfs(void);
 void nos_initBottomHalfs(void) {}
 
 #endif /* NOSCFG_FEATURE_BOTTOMHALF */
