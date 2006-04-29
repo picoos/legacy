@@ -75,14 +75,6 @@
  */
 #define NOSCFG_MEM_MANAGER_TYPE      1
 
-/** Overwrite standard malloc/realloc/free/memcpy/memset functions with
- *  nano layer memory functions: @n
- *  0 = Do not overwrite standard malloc/realloc/free/memcpy/memset functions@n
- *  1 = Overwrite standard malloc/realloc/free/memcpy/memset functions with
- *      nano layer functions
- */
-#define NOSCFG_MEM_OVWR_STANDARD     1
-
 /** This is a pointer to the start of the memory heap.
  * It can either be a real variable pointing to heap memory,
  * or it can be a simple static constant define. It is recommended
@@ -154,15 +146,6 @@ extern void *__heap_end;
  * be included into the nano layer.
  */
 #define NOSCFG_FEATURE_MEMCOPY       1
-
-/** Include function ::nosMemRealloc.
- * If this definition is set to 1, the function ::nosMemRealloc will
- * be included into the nano layer.
- * @note  When the function ::nosMemRealloc is enabled by this define, you
- *        should set ::NOSCFG_MEM_MANAGE_MODE to 1. Otherwise the memory
- *        will fragment too much if ::nosMemRealloc is used frequently.
- */
-#define NOSCFG_FEATURE_REALLOC       0
 
 /** @} */
 

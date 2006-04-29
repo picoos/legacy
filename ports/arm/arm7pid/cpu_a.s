@@ -39,7 +39,7 @@
  * CVS-ID $Id: cpu_a.s,v 1.3 2006/04/11 18:05:04 ari Exp $
  */
  
-#include "arch_a_macros.h"
+.include "arch_a_macros.h"
 
 	.text
 	.code 32
@@ -91,8 +91,8 @@ armCpuIrqHandler:
 
     	bl	c_pos_intEnter
 
-    	ldr     r1, =IrqStatus              // Get location of interrupt contrl
-    	ldr	r0, [r1]                    // Get current IRQ status
+    	ldr     r1, =IrqStatus              @ Get location of interrupt contrl
+    	ldr	r0, [r1]                    @ Get current IRQ status
 	bl	c_armCpuIrqHandler	
 
     	bl 	c_pos_intExit

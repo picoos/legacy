@@ -59,12 +59,12 @@ start:
 _start:
 _mainCRTStartup:
 
-	mov	r10, #0xA000000		// loads in R10 0xA000000
-	mvn	r0, #0			// loads in R0 !0x0 (0xFFFFFFFF)
-	str	r0, [r10,#0x10C]	// Stores in 0xA000000+0x10C the 0xFFFFFFFF value -> does FIQEnableClear
-	str	r0, [r10,#0xC]		// Stores in 0xA000000+0xC the 0xFFFFFFFF value	-> does IRQEnableClear
-	mov	r10, #0xB000000		// loads in R10 0xB000000 (remap and pause base address)
-	str	r0, [r10,#0x20]		// Stores in 0xB00000+0x20 the 0xFFFFFFFF value	-> does ClearResetMap
+	mov	r10, #0xA000000		@ loads in R10 0xA000000
+	mvn	r0, #0			@ loads in R0 !0x0 (0xFFFFFFFF)
+	str	r0, [r10,#0x10C]	@ Stores in 0xA000000+0x10C the 0xFFFFFFFF value -> does FIQEnableClear
+	str	r0, [r10,#0xC]		@ Stores in 0xA000000+0xC the 0xFFFFFFFF value	-> does IRQEnableClear
+	mov	r10, #0xB000000		@ loads in R10 0xB000000 (remap and pause base address)
+	str	r0, [r10,#0x20]		@ Stores in 0xB00000+0x20 the 0xFFFFFFFF value	-> does ClearResetMap
 
 	ldr	 r0, =IrqEnableClear
 	ldr	 r1, =0xFFFFFFFF
