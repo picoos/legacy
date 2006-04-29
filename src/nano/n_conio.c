@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.6 2005/01/17 21:58:12 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.7 2006/04/14 09:04:15 dkuschel Exp $
  */
 
 #define _N_CONIO_C
@@ -83,7 +83,7 @@ static void n_printf(const char *fmt, NOSARG_t *args);
 #if NOSCFG_FEATURE_SPRINTF != 0
 static UVAR_t n_updstr(char c);
 #endif
-#if NOSCFG_CONOUT_HANDSHAKE != 0
+#if (NOSCFG_FEATURE_CONOUT != 0) && (NOSCFG_CONOUT_HANDSHAKE != 0)
 static UVAR_t nos_putchar(char c);
 #endif
 
