@@ -1,7 +1,8 @@
 
-Version 0.9.4a:
-  o  ARM port re-structured
+Version 1.0.0:
+  o  ARM port re-structured, new processors added
   o  function nosMemRealloc() added
+  o  fixed some compiler warnings in nano layer
   o  small configuration problem fixed in picoos.h
   o  small configuration problem fixed in x86w32 port
   o  ports can now be split into a common and a CPU specific part
