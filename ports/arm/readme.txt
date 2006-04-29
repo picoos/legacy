@@ -1,101 +1,76 @@
-ARM-Port
---------
+pico]OS port form Arm cpus
+--------------------------
 
-This is a release of the ARM port. Maybe not all bugs are found yet. 
-The code has been only tested on SAMSUNG S3C2510A CPU(ARM940T core),
-and compiled with ARM's Software Development Toolkit (SDT) version
-2.51.
+This is a port of pico]OS to different arm chips.
+It has been tested with GCC 4.1.0 as compiler on following boards:
 
-Restrictions of this port:
-   This port does not support extended nano-layer features like standard-
-   console-I/O yet. To enable standard-I/O, you need to add a UART driver.
-   Please see the pico]OS documentation for how to connect the UART driver
-   to nano-layer standard-I/O (see description of functions  c_nos_keyinput
-   and p_putchar). The file noscfg.h is not shipped with this port, thus you
-   need to create your own one (see noscfg.h in examples directory).
- 
-   The file port.mak is not complete and thus non-working yet.
-   Please use the batch file build.bat instead to build the demo program.
+- Embedded Artists Quickstart ethernet board (see www.embeddedartists.com)
+- Olimex LPC-E2129 development board (see www.olimex.com)
 
+Both these boards use arm cpu from Philips LPC2000 family.
 
-About task context:
-   We save ARM CPU register : r0-r12,r14(return PC),r15(PC),CPSR(status register), 
-     where r13 is stack pointer, this saved in current TCB(task control block).
-     and current stack top(4bytes) saved also.
-     with task stack init, CPSR mode is SUPER MODE(interrupt not masked).
-   when context switch, ARM CPU interrupt masked.
-     we save registers to current task's stack, and restore new task's stack pointer to r13,
-     r14(return PC), then force ARM in IRQ mode, copy new task's registers to ARM IRQ mode's 
-     stack(this stack is not same as super mode stack),
-     then
-        ldmfd sp!, {r0-r12,pc}^
-     restore r0-r12,pc,CPSR(CPSR include ARM mode, force it return SUPER MODE).
+This port runs tasks in arm system mode (maybe user mode also someday?).
+Interrupts have their own stacks for each mode. The context switching
+is performed by handly stmfd/ldmfd instructions provided by arm CPU,
+and ideas for this are taken from previous pico]OS arm port (form samsung
+arm cpu), FreeBSD arm port and ethernut arm port. For details, see
+comments on assembly source files.
 
+Generic arm code is in arch_?.{c|s} files. Cpu-specific things 
+are in cpu_?{c|s} files under lpc2000/samsung/arm7pid directories.
+I took this separation approach to make it easier to add more
+cpu variants, if someone is interested (I currently have only philips CPUs).
 
-File List:
-    types.h
-       some type define.
-       
-    interrupt.h
-       interrupt.c function declare.
+The files in samsung directory are converted from older arm port
+made for pico]OS. Also, the files in arm7pid directory are converted
+from port submitted as patch to sf.net. These ports compile, but are
+currently untested, since I don't have the necessary hardware to test them.
 
-    mem.h
-       mem.c function declare.  
+Compiling for your board
+------------------------
+Directory "test" contains a small "blink leds" example,
+which can be compiled for boards mentioned above (just
+define LD_SCRIPT and BOARD depending on which board
+you have).
 
-    port.h
-    poscfg.h
-       picoos port.
+Port includes gnu ld linker scripts for some cpus.
+If your CPU has different flash / ram sizes, you can
+still compile for it by making a copy of existing linker
+script (these live in ports/arm/boot directory)
+and editing memory sizes at beginning of
+it to match yours. Remember to adjust the makefile too to
+use new script. You can place the modified linker script into
+your project directory.
 
-    Boot.s
-        ARM CPU boot code.
-        when boot from ROM, need modify it.
+Sizes for various arm stacks are controlled by 
+linker script also, so if you need to adjust interrupt
+stack size (or other arm stack size other than task stack)
+it is necessary to edit the script.
 
-    arch_arm_asm.s    
-        ARM CPU specific code.
-        include interrupt init, stack init, 
-        interrupt service, context save/restore function
-   
-   arch_arm_c.c
-        ARM CPU specific code.
-        include stack init.
+If you want to compile C code in THUMB mode (giving
+smaller code size) add THUMB=yes to your Makefile.
 
-   init.c
-        ARM C-Entry point and basic initialization
+Adding new arm CPU family
+---------------------
+If you have a different arm cpu than already included
+in this port, you can add support for it:
 
-   interrupt.c
-        ARM CPU interrupt service C file.
-        
-   mem.c
-        utils for mem manage.
-        
-   demo.c
-        example.
-        Two task, one sleep, other sleep also.
+- copy files from lpc2000 (or samsung, arm7pid) directory
+- modify p_pos_initArch in cpu_c.c (ie. initialize board & timer)
+- modify irq handler in cpu_a.s
+- if necessary, implement armSetDefaultIrqHandler in cpu_c.c
+- if there is a need to something in very early in boot,
+  look at boot/crt0.s (shoudn't normally be necessary)
 
+List of files
+-------------
 
-Memory use:
-   In this port, define
-     POSCFG_MAX_TASKS      =64
-     POSCFG_MAX_EVENTS     =64
-     POSCFG_MAX_MESSAGES   =1024
-     POSCFG_MAX_TIMER      =32 
-     POSCFG_SOFTINTERRUPTS =40
-     POSCFG_SOFTINTQUEUELEN=40
-     (all above feature is static memory declare)
-     
-   and include all
-     POSCFG_FEATURE_xxx
-   
-   and ARM interrupt service use 14Kbytes memory.
-   
-   This use memory 50K(task's stack not include).
-
-
-TODO
-   for boot from ROM, modify boot.s.
-   for other ARM CPU:
-       modify the source code between
-   /************ BEGIN TARGET SPECIFIC SECTION ************/ 
-    ..... 
-   /************ END TARGET SPECIFIC SECTION **************/ 
-
+arch_a.s		General arm assembly for context swicthing etc.
+arch_a_macros.h		Context switching macros
+arch_c.c		General arm support
+boot/*			General arm startup and linker support for gnu-ld
+lpc2000/*		Support for Philips LPC2000 arm chips
+samsung/*		Support for SAMSUNG S3C2510A CPU(ARM940T core)
+arm7pid/*		Support for arm7 pid cpu
+test/*			Example code for Embedded Artists Quickstart
+			ethernet board and Olimex LPC-E2129 board

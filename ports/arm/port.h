@@ -1,4 +1,5 @@
 /*
+ *  Copyright (c) 2006, Ari Suutari.
  *  Copyright (c) 2004, Dennis Kuschel.
  *  All rights reserved. 
  *
@@ -38,7 +39,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.5 2004/03/21 18:37:45 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.8 2006/03/21 07:53:24 ari Exp $
  */
 
 
@@ -110,12 +111,6 @@
  */
 #define POSCFG_ISR_INTERRUPTABLE 0
 
-/** Timer tick rate.
- * This define must be set to the tickrate of the timer
- * interrupt (= timer ticks per second).
- */
-#define HZ                   100  /* timer ticks per second */
-
 /** Set the mechanism of stack memory handling.
  * There are three types of stack memory handling defined.<br>
  *
@@ -177,7 +172,7 @@
  * since the multitasking system is not yet started when the function is
  * called.
  */
-#define POS_MEM_ALLOC(bytes)     osHeapAlloc(bytes)
+#define POS_MEM_ALLOC(bytes)     nosMemAlloc(bytes)
 
 /** @} */
 
@@ -245,21 +240,17 @@
  * code that stores the processor state and disables
  * the interrupts. See ::POSCFG_LOCK_FLAGSTYPE for more details.
  */
-#define POS_SCHED_LOCK           flags = _osEnterCritical(0,0)
+#define POS_SCHED_LOCK           flags = armEnterCritical()
 
 /** Scheduler unlocking.
  * This is the counterpart macro of ::POS_SCHED_LOCK. It restores
  * the saved processor flags and reenables the interrupts this way.
  */
-#define POS_SCHED_UNLOCK         _osExitCritical(flags)
+#define POS_SCHED_UNLOCK         armExitCritical(flags)
 
 
-unsigned int _osEnterCritical(int reserve1, int reserve2);
-void _osExitCritical(unsigned int old_int);
-
-#define osCriticalDeclare()     volatile unsigned int   old_cpsr
-#define osEnterCritical()       old_cpsr = _osEnterCritical(0,0)
-#define osExitCritical()        _osExitCritical(old_cpsr)
+unsigned int armEnterCritical(void);
+void armExitCritical(unsigned int old_int);
 
 /** @} */
 
@@ -336,12 +327,12 @@ void _osExitCritical(unsigned int old_int);
  * If the functions ::nosTaskCreate or ::nosInit are called with
  * a stack size of zero, this value is taken as the default stack size.
  */
-#define NOSCFG_DEFAULT_STACKSIZE 4096
+#define NOSCFG_DEFAULT_STACKSIZE 250
 
 /** Enable generic console output handshake.
  * Please see description of function ::c_nos_putcharReady for details.
  */
-#define NOSCFG_CONOUT_HANDSHAKE      0
+#define NOSCFG_CONOUT_HANDSHAKE      1
 
 /** Set the size of the console output FIFO.
  * If ::NOSCFG_CONOUT_HANDSHAKE is enabled, a FIFO buffer can be used
@@ -350,7 +341,7 @@ void _osExitCritical(unsigned int old_int);
  * not have a hardware FIFO. To enable the FIFO, set this define to
  * the FIFO size in bytes. A zero will disable the FIFO buffer.
  */
-#define NOSCFG_CONOUT_FIFOSIZE       20
+#define NOSCFG_CONOUT_FIFOSIZE       80
 
 /** @} */
 
@@ -369,18 +360,27 @@ void _osExitCritical(unsigned int old_int);
 #define POS_USERTASKDATA  void *stackptr;
 #else
 
-/* Define some user data below. Only types 0 and 2 are supported. */
+#if (POSCFG_TASKSTACKTYPE == 0)
 
-#if (POSCFG_TASKSTACKTYPE == 1)
+#define POS_USERTASKDATA \
+   void  *stackptr;
 
-#define POS_USERTASKDATA        \
+#elif (POSCFG_TASKSTACKTYPE == 1)
+
+#define POS_USERTASKDATA \
     void    *stackptr;          \
-    void    *stackstart;        \
-    void    *userdata;
+    void    *stackstart; 
 
-#else
+#elif (POSCFG_TASKSTACKTYPE == 2)
 
-#error Only POSCFG_TASKSTACKTYPE = 1 is supported by this port
+/* context switch (stack frame):   72 bytes
+ * runtime lib + application   :   100 bytes
+ */
+
+#define FIXED_STACK_SIZE 200
+#define POS_USERTASKDATA \
+   void  *stackptr; \
+   unsigned char stack[FIXED_STACK_SIZE];
 
 #endif
 
@@ -396,9 +396,14 @@ void _osExitCritical(unsigned int old_int);
 #define NULL ((void*)0)
 #endif
 
-/* Some compilers have a problem when a second main function
-   exist. So we rename our version of main() here to mainfunc(). */
-#define  main  mainfunc
+typedef void	(*ArmIrqHandlerFunction)(int irq);
 
+/** Set default interrupt handler, which is called when IRQ
+ * occurs and there is no handler within the port already.
+ * Handler is called with task context already saved and
+ * c_pos_intEnter called.
+ */
+
+void armSetDefaultIrqHandler(ArmIrqHandlerFunction func);
 
 #endif /* _PORT_H */

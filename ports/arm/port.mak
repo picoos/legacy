@@ -30,15 +30,29 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id:$
+#  $Id: port.mak,v 1.4 2006/04/11 09:38:13 ari Exp $
 
 
-# !!! This file is not working!  Who is able to complete this file???
+# Set default compiler.
+# Possible compilers are currently GCC (GNU C).
+ifeq '$(strip $(COMPILER))' ''
+COMPILER = GCC
+endif
+export COMPILER
 
+# Check if CPU is defined 
+ifeq '$(strip $(CPU))' '' 
+$(error Can't continue, CPU not defined. Please add parameter: CPU=your_cpu) 
+endif 
 
-# Location of compiler
-# (ARM's Software Development Toolkit (SDT) version 2.51)
-ARMCC = D:\ARM250
+ifeq '$(strip $(THUMB))' ''
+THUMB = no
+endif
+export THUMB
+
+ifeq '$(strip $(LD_SCRIPT))' ''
+LD_SCRIPT = lpc2129-rom.ld
+endif
 
 # Set to 1 to include generic pico]OS "findbit" function
 GENERIC_FINDBIT = 1
@@ -46,18 +60,27 @@ GENERIC_FINDBIT = 1
 # Define extensions
 EXT_C   = .c
 EXT_ASM = .s
+EXT_INT = .i
 EXT_OBJ = .o
 EXT_LIB = .a
-EXT_OUT = .out
+EXT_OUT = .elf
+
+
+#----------------------------------------------------------------------------
+#  GNU C
+#
 
 # Define tools: compiler, assembler, archiver, linker
-CC = armcc
-AS = armasm
-AR = ????  (archiever to generate a library from object files)
-LD = armlink
+CC = arm-elf-gcc
+AS = arm-elf-gcc
+AR = arm-elf-ar
+LD = arm-elf-gcc
 
 # Define to 1 if CC outputs an assembly file
 CC2ASM = 0
+
+# Define to 1 if assembler code must be preprocessed by the compiler
+A2C2A  = 0
 
 # Define general options
 OPT_CC_INC   = -I
@@ -65,42 +88,58 @@ OPT_CC_DEF   = -D
 OPT_AS_INC   = -I
 OPT_AS_DEF   = -D
 OPT_AR_ADD   =
-OPT_LD_SEP   = 
-OPT_LD_PFOBJ = 
-OPT_LD_PFLIB = 
+OPT_LD_SEP   =
+OPT_LD_PFOBJ =
+OPT_LD_PFLIB =
 OPT_LD_FIRST =
 OPT_LD_LAST  =
 
 # Set global defines for compiler / assembler
-CDEFINES =
-ADEFINES =
+CDEFINES = GCC
+ADEFINES = GCC
 
 # Set global includes
-CINCLUDES = $(ARMCC)\include .
-AINCLUDES = $(ARMCC)\include .
+CINCLUDES = .
+AINCLUDES = .
 
 # Distinguish between build modes
 ifeq '$(BUILD)' 'DEBUG'
-  CFLAGS   += -g
+  CFLAGS   += -O0 -g
   AFLAGS   += -g
   CDEFINES += _DBG
   ADEFINES += _DBG
 else
-  CFLAGS   += -O2
+  CFLAGS   += -Os -fomit-frame-pointer
   CDEFINES += _REL
   ADEFINES += _REL
 endif
 
+ifeq '$(THUMB)' 'yes'
+CFLAGS  += -mthumb -mthumb-interwork
+ASFLAGS += -mthumb-interwork
+LDFLAGS += -mthumb -mthumb-interwork
+endif
+
 # Define Compiler Flags
-CFLAGS += -c -cpu ARM9TM -o -D__TARGET_CPU_ARM9TM
+# TODO: extract -mcpu as constant
+CFLAGS += -mcpu=arm7tdmi
+CFLAGS += -Wcast-align -Wall -Wextra -Wshadow -Wpointer-arith -Wbad-function-cast -Waggregate-return -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wno-unused-parameter -Wno-unused-label
+CFLAGS += -c -o
+
 
 # Define Assembler Flags
-ASFLAGS += -cpu ARM9TM 
+# TODO: extract -mcpu as constant
+ASFLAGS += -c -mcpu=arm7tdmi -Wa,-gstabs -Wa,-I${CURDIR}/ports/arm
+ASFLAGS += -x assembler-with-cpp -o
+
 
 # Define Linker Flags
-LDFLAGS = -info total -ro-base 0x100 -libpath $(ARMCC)/lib/embedded \
-          -first Boot.o(Boot) -Output 
+#  -Wl   : pass arguments to the linker
+#  -Map  : create a map file
+#  --cref: add cross reference to the map file
+LDFLAGS += -L$(DIR_PORT)/boot -T$(LD_SCRIPT) -mcpu=arm7tdmi
+LDFLAGS += -nostartfiles -Wl,-Map,$(DIR_OUT)/$(TARGET).map,--cref -o 
 
 # Define archiver flags
-ARFLAGS = a   (which flag must be set to add objects to the archieve ?)
+ARFLAGS = r 
 
