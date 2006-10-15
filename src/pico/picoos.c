@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.14 2006/03/11 13:09:40 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.15 2006/04/16 08:48:26 dkuschel Exp $
  */
 
 
@@ -294,24 +294,24 @@ static UVAR_t  posNextRoundRobin_g[SYS_TASKTABSIZE_Y];
  * PROTOTYPES OF PRIVATE FUNCTIONS
  *-------------------------------------------------------------------------*/
 
-static void      pos_schedule(void);
-static void      pos_idletask(void *arg);
+static void  POSCALL     pos_schedule(void);
+static void              pos_idletask(void *arg);
 #if SYS_FEATURE_EVENTS != 0
-static VAR_t     pos_sched_event(EVENT_t ev);
+static VAR_t POSCALL     pos_sched_event(EVENT_t ev);
 #endif
 #if (POSCFG_FEATURE_MSGBOXES != 0) && (POSCFG_MSG_MEMORY == 0)
-static MSGBUF_t* pos_msgAlloc(void);
-static void      pos_msgFree(MSGBUF_t *mbuf);
+static MSGBUF_t* POSCALL pos_msgAlloc(void);
+static void  POSCALL     pos_msgFree(MSGBUF_t *mbuf);
 #endif
 #if POSCFG_FEATURE_SOFTINTS != 0
-static void      pos_execSoftIntQueue(void);
+static void  POSCALL     pos_execSoftIntQueue(void);
 #endif
 #if POSCFG_FEATURE_LISTS != 0
 #if POSCFG_FEATURE_LISTJOIN != 0
-static void      pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
-                              POSLIST_t *newlist);
+static void  POSCALL     pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
+                                      POSLIST_t *newlist);
 #endif
-static void      pos_listRemove(POSLIST_t *listelem);
+static void  POSCALL     pos_listRemove(POSLIST_t *listelem);
 #endif
 
 
@@ -423,8 +423,8 @@ static UVAR_t posZeroMask_g[7] = {0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80};
 #if SYS_FEATURE_EVENTS != 0
 #if ((POSCFG_FASTCODE==0) || defined(POS_DEBUGHELP)) && (SYS_EVENTS_USED!=0)
 
-static void pos_eventAddTask(EVENT_t ev, POSTASK_t task);
-static void pos_eventAddTask(EVENT_t ev, POSTASK_t task)
+static void POSCALL pos_eventAddTask(EVENT_t ev, POSTASK_t task);
+static void POSCALL pos_eventAddTask(EVENT_t ev, POSTASK_t task)
 {
 #ifdef POS_DEBUGHELP
   task->deb.event = &ev->e.deb;
@@ -432,8 +432,8 @@ static void pos_eventAddTask(EVENT_t ev, POSTASK_t task)
   pos_setTableBit(&ev->e.pend, task);
 }
 
-static void pos_eventRemoveTask(EVENT_t ev, POSTASK_t task);
-static void pos_eventRemoveTask(EVENT_t ev, POSTASK_t task)
+static void POSCALL pos_eventRemoveTask(EVENT_t ev, POSTASK_t task);
+static void POSCALL pos_eventRemoveTask(EVENT_t ev, POSTASK_t task)
 {
 #ifdef POS_DEBUGHELP
   task->deb.event = NULL;
@@ -472,41 +472,41 @@ static void pos_eventRemoveTask(EVENT_t ev, POSTASK_t task)
 
 #else /* POSCFG_FASTCODE */
 
-static void pos_disableTask(POSTASK_t task);
-static void pos_disableTask(POSTASK_t task)
+static void POSCALL pos_disableTask(POSTASK_t task);
+static void POSCALL pos_disableTask(POSTASK_t task)
 {
   pos_delTableBit(&posReadyTasks_g, task);
 }
 
-static void pos_enableTask(POSTASK_t task);
-static void pos_enableTask(POSTASK_t task)
+static void POSCALL pos_enableTask(POSTASK_t task);
+static void POSCALL pos_enableTask(POSTASK_t task)
 {
   pos_setTableBit(&posReadyTasks_g, task);
 }
 
 #if SYS_TASKDOUBLELINK != 0
-static void pos_addToSleepList(POSTASK_t task);
-static void pos_addToSleepList(POSTASK_t task)
+static void POSCALL pos_addToSleepList(POSTASK_t task);
+static void POSCALL pos_addToSleepList(POSTASK_t task)
 {
   pos_addToList(posSleepingTasks_g, task);
 }
 
-static void pos_removeFromSleepList(POSTASK_t task);
-static void pos_removeFromSleepList(POSTASK_t task)
+static void POSCALL pos_removeFromSleepList(POSTASK_t task);
+static void POSCALL pos_removeFromSleepList(POSTASK_t task)
 {
   pos_removeFromList(posSleepingTasks_g, task);
 }
 #endif  /* SYS_TASKDOUBLELINK */
 
 #if POSCFG_FEATURE_TIMER != 0
-static void pos_addToTimerList(TIMER_t *timer);
-static void pos_addToTimerList(TIMER_t *timer)
+static void POSCALL pos_addToTimerList(TIMER_t *timer);
+static void POSCALL pos_addToTimerList(TIMER_t *timer)
 {
   pos_addToList(posActiveTimers_g, timer);
 }
 
-static void pos_removeFromTimerList(TIMER_t *timer);
-static void pos_removeFromTimerList(TIMER_t *timer)
+static void POSCALL pos_removeFromTimerList(TIMER_t *timer);
+static void POSCALL pos_removeFromTimerList(TIMER_t *timer)
 {
   pos_removeFromList(posActiveTimers_g, timer);
   timer->prev = timer;
@@ -522,7 +522,7 @@ static void pos_removeFromTimerList(TIMER_t *timer)
  *-------------------------------------------------------------------------*/
 
 #ifdef POS_DEBUGHELP
-void posdeb_setEventName(void *event, const char *name)
+void POSCALL posdeb_setEventName(void *event, const char *name)
 {
   EVENT_t ev = (EVENT_t) event;
   if (ev != NULL) ev->e.deb.name = name;
@@ -531,8 +531,8 @@ void posdeb_setEventName(void *event, const char *name)
 
 #if POSCFG_FEATURE_LISTS != 0
 #if POSCFG_FEATURE_LISTJOIN != 0
-static void pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
-                         POSLIST_t *newlist)
+static void POSCALL pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
+                                 POSLIST_t *newlist)
 {
   next->prev          = newlist->prev;
   newlist->prev->next = next;
@@ -541,7 +541,7 @@ static void pos_listJoin(POSLIST_t *prev, POSLIST_t *next,
 }
 #endif
 
-static void pos_listRemove(POSLIST_t *listelem)
+static void POSCALL pos_listRemove(POSLIST_t *listelem)
 {
   register POSLIST_t *prev, *next;
   prev = listelem->prev;
@@ -585,7 +585,7 @@ static void pos_idletask(void *arg)
 
 #if POSCFG_FEATURE_SOFTINTS != 0
 
-static void pos_execSoftIntQueue(void)
+static void POSCALL pos_execSoftIntQueue(void)
 {
   register UVAR_t intno;
 #ifdef POS_DEBUGHELP
@@ -626,7 +626,7 @@ static void pos_execSoftIntQueue(void)
 
 /*-------------------------------------------------------------------------*/
 
-static void pos_schedule(void)
+static void POSCALL pos_schedule(void)
 {
   register UVAR_t ym, xt;
 
@@ -678,7 +678,7 @@ static void pos_schedule(void)
 
 #if SYS_FEATURE_EVENTS != 0
 
-static VAR_t pos_sched_event(EVENT_t ev)
+static VAR_t POSCALL pos_sched_event(EVENT_t ev)
 {
   register UVAR_t  ym, xt;
   register POSTASK_t task;
@@ -761,7 +761,7 @@ VAR_t* _errno_p(void)
  * EXPORTED FUNCTIONS:  INTERRUPT CONTROL
  *-------------------------------------------------------------------------*/
 
-void c_pos_intEnter(void)
+void POSCALL c_pos_intEnter(void)
 {
 #if POSCFG_ISR_INTERRUPTABLE != 0
   POS_LOCKFLAGS;
@@ -777,7 +777,7 @@ void c_pos_intEnter(void)
 
 /*-------------------------------------------------------------------------*/
 
-void c_pos_intExit(void)
+void POSCALL c_pos_intExit(void)
 {
   register UVAR_t ym, xt;
   POS_LOCKFLAGS;
@@ -850,7 +850,7 @@ void c_pos_intExit(void)
 
 /*-------------------------------------------------------------------------*/
 
-void c_pos_timerInterrupt(void)
+void POSCALL c_pos_timerInterrupt(void)
 {
   register POSTASK_t  task;
 #if SYS_TASKDOUBLELINK == 0
@@ -946,7 +946,7 @@ void c_pos_timerInterrupt(void)
 
 #if POSCFG_FEATURE_YIELD != 0
 
-void posTaskYield(void)
+void POSCALL posTaskYield(void)
 {
 #if (POSCFG_ROUNDROBIN == 0) || (SYS_TASKTABSIZE_Y == 1)
   POS_LOCKFLAGS;
@@ -1028,14 +1028,14 @@ void posTaskYield(void)
 /*-------------------------------------------------------------------------*/
 
 #if POSCFG_TASKSTACKTYPE == 0
-POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                        VAR_t priority, void *stackstart)
+POSTASK_t POSCALL posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                  ´             VAR_t priority, void *stackstart)
 #elif POSCFG_TASKSTACKTYPE == 1
-POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                        VAR_t priority, UINT_t stacksize)
+POSTASK_t POSCALL posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                                VAR_t priority, UINT_t stacksize)
 #else
-POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                        VAR_t priority)
+POSTASK_t POSCALL posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                                VAR_t priority)
 #endif
 {
   register POSTASK_t  task;
@@ -1049,6 +1049,9 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   if ((UVAR_t)priority >= POSCFG_MAX_PRIO_LEVEL)
     return NULL;
 
+#if POSCFG_PORTMUTEX != 0
+  p_pos_lock();
+#endif
   POS_SCHED_LOCK;
   task = posFreeTasks_g;
 #if SYS_POSTALLOCATE != 0
@@ -1058,8 +1061,12 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
     task = (POSTASK_t) POS_MEM_ALLOC(sizeof(struct POSTASK) +
                                      (POSCFG_ALIGNMENT - 1));
     if (task == NULL)
+    {
+#if POSCFG_PORTMUTEX != 0
+      p_pos_unlock();
+#endif
       return NULL;
-
+    }
     task = MEMALIGN(POSTASK_t, task);
     POS_SCHED_LOCK;
     task->next = posFreeTasks_g;
@@ -1077,18 +1084,12 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 #endif
 
   if ((b == 0) || (task == NULL))
-  {
-    POS_SCHED_UNLOCK;
-    return NULL;
-  }
+    goto retNull;
 
   b = POS_FINDBIT(b);
 #if (POSCFG_ROUNDROBIN != 0) && (SYS_TASKTABSIZE_X < MVAR_BITS)
   if (b >= SYS_TASKTABSIZE_X)
-  {
-    POS_SCHED_UNLOCK;
-    return NULL;
-  }
+    goto retNull;
 #endif
   posFreeTasks_g = task->next;
 
@@ -1113,16 +1114,14 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   {
     task->next = posFreeTasks_g;
     posFreeTasks_g = task;
-    POS_SCHED_UNLOCK;
-    return NULL;
+    goto retNull;
   }
 #else
   if (p_pos_initTask(task, funcptr, funcarg) != 0)
   {
     task->next = posFreeTasks_g;
     posFreeTasks_g = task;
-    POS_SCHED_UNLOCK;
-    return NULL;
+    goto retNull;
   }
 #endif
 
@@ -1144,20 +1143,33 @@ POSTASK_t posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
   if (posRunning_g != 0)
     posCurrentTask_g->deb.state = task_suspended;
 #endif
+#if POSCFG_PORTMUTEX != 0
+  p_pos_unlock();
+#endif
   pos_schedule();
   POS_SCHED_UNLOCK;
   return task;
+
+retNull:
+  POS_SCHED_UNLOCK;
+#if POSCFG_PORTMUTEX != 0
+  p_pos_unlock();
+#endif
+  return NULL;
 }
 
 /*-------------------------------------------------------------------------*/
 
 #if POSCFG_FEATURE_EXIT != 0
 
-void posTaskExit(void)
+void POSCALL posTaskExit(void)
 {
   register POSTASK_t task = posCurrentTask_g;
   POS_LOCKFLAGS;
 
+#if POSCFG_PORTMUTEX != 0
+  p_pos_lock();
+#endif
 #if POSCFG_TASKEXIT_HOOK != 0
   if (task->exithook != NULL)
     (task->exithook)(task, texh_exitcalled);
@@ -1208,6 +1220,9 @@ void posTaskExit(void)
 #endif
   task->next = posFreeTasks_g;
   posFreeTasks_g = task;
+#if POSCFG_PORTMUTEX != 0
+  p_pos_unlock();
+#endif
   pos_schedule();
   for(;;);
 }
@@ -1218,7 +1233,7 @@ void posTaskExit(void)
 
 #if POSCFG_FEATURE_GETTASK != 0
 
-POSTASK_t posTaskGetCurrent(void)
+POSTASK_t POSCALL posTaskGetCurrent(void)
 {
   return posCurrentTask_g;
 }
@@ -1229,7 +1244,7 @@ POSTASK_t posTaskGetCurrent(void)
 
 #if POSCFG_FEATURE_TASKUNUSED != 0
 
-VAR_t posTaskUnused(POSTASK_t taskhandle)
+VAR_t POSCALL posTaskUnused(POSTASK_t taskhandle)
 {
   P_ASSERT("posTaskUnused: task handle valid", taskhandle != NULL);
   POS_ARGCHECK_RET(taskhandle, taskhandle->magic, POSMAGIC_TASK, -E_ARG); 
@@ -1242,7 +1257,7 @@ VAR_t posTaskUnused(POSTASK_t taskhandle)
 
 #if POSCFG_FEATURE_SETPRIORITY != 0
 
-VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
+VAR_t POSCALL posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
 {
   register UVAR_t  b, p;
   POS_LOCKFLAGS;
@@ -1294,7 +1309,7 @@ VAR_t posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
 
 #if POSCFG_FEATURE_GETPRIORITY != 0
 
-VAR_t posTaskGetPriority(POSTASK_t taskhandle)
+VAR_t POSCALL posTaskGetPriority(POSTASK_t taskhandle)
 {
   register VAR_t p;
   POS_LOCKFLAGS;
@@ -1320,7 +1335,7 @@ VAR_t posTaskGetPriority(POSTASK_t taskhandle)
 
 #if POSCFG_FEATURE_SLEEP != 0
 
-void posTaskSleep(UINT_t ticks)
+void POSCALL posTaskSleep(UINT_t ticks)
 {
   register POSTASK_t task;
   POS_LOCKFLAGS;
@@ -1351,7 +1366,7 @@ void posTaskSleep(UINT_t ticks)
 
 #if POSCFG_FEATURE_INHIBITSCHED != 0
 
-void posTaskSchedLock(void)
+void POSCALL posTaskSchedLock(void)
 {
   POS_LOCKFLAGS;
 
@@ -1362,7 +1377,7 @@ void posTaskSchedLock(void)
 
 /*-------------------------------------------------------------------------*/
 
-void posTaskSchedUnlock(void)
+void POSCALL posTaskSchedUnlock(void)
 {
   POS_LOCKFLAGS;
 
@@ -1385,7 +1400,7 @@ void posTaskSchedUnlock(void)
 
 #if POSCFG_TASKCB_USERSPACE > 0
 
-void*  posTaskGetUserspace(void)
+void* POSCALL posTaskGetUserspace(void)
 {
   return (void*) &posCurrentTask_g->usrspace[0];
 }
@@ -1400,7 +1415,7 @@ void*  posTaskGetUserspace(void)
 
 #if SYS_FEATURE_EVENTS != 0
 
-POSSEMA_t posSemaCreate(INT_t initcount)
+POSSEMA_t POSCALL posSemaCreate(INT_t initcount)
 {
   register EVENT_t ev;
   register UVAR_t i;
@@ -1484,7 +1499,7 @@ POSSEMA_t posSemaCreate(INT_t initcount)
 
 #if SYS_FEATURE_EVENTFREE != 0
 
-void posSemaDestroy(POSSEMA_t sema)
+void POSCALL posSemaDestroy(POSSEMA_t sema)
 {
   register EVENT_t ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
@@ -1525,7 +1540,7 @@ void posSemaDestroy(POSSEMA_t sema)
 /*-------------------------------------------------------------------------*/
 
 #if (POSCFG_SMALLCODE == 0) || (POSCFG_FEATURE_SEMAWAIT == 0)
-VAR_t posSemaGet(POSSEMA_t sema)
+VAR_t POSCALL posSemaGet(POSSEMA_t sema)
 {
   register EVENT_t  ev = (EVENT_t) sema;
   register POSTASK_t task = posCurrentTask_g;
@@ -1568,7 +1583,7 @@ VAR_t posSemaGet(POSSEMA_t sema)
 
 #if POSCFG_FEATURE_SEMAWAIT != 0
 
-VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
+VAR_t POSCALL posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
 {
   register EVENT_t   ev = (EVENT_t) sema;
   register POSTASK_t task = posCurrentTask_g;
@@ -1644,7 +1659,7 @@ VAR_t posSemaWait(POSSEMA_t sema, UINT_t timeoutticks)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posSemaSignal(POSSEMA_t sema)
+VAR_t POSCALL posSemaSignal(POSSEMA_t sema)
 {
   register EVENT_t  ev = (EVENT_t) sema;
   POS_LOCKFLAGS;
@@ -1691,7 +1706,7 @@ VAR_t posSemaSignal(POSSEMA_t sema)
 
 #if POSCFG_FEATURE_MUTEXES != 0
 
-POSMUTEX_t posMutexCreate(void)
+POSMUTEX_t POSCALL posMutexCreate(void)
 {
 #ifdef POS_DEBUGHELP
   EVENT_t ev = (EVENT_t) posSemaCreate(1);
@@ -1706,7 +1721,7 @@ POSMUTEX_t posMutexCreate(void)
 
 #if POSCFG_FEATURE_MUTEXDESTROY != 0
 
-void posMutexDestroy(POSMUTEX_t mutex)
+void POSCALL posMutexDestroy(POSMUTEX_t mutex)
 {
   P_ASSERT("posMutexDestroy: mutex valid", mutex != NULL);
   posSemaDestroy((POSSEMA_t) mutex);
@@ -1718,7 +1733,7 @@ void posMutexDestroy(POSMUTEX_t mutex)
 
 #if POSCFG_FEATURE_MUTEXTRYLOCK != 0
 
-VAR_t posMutexTryLock(POSMUTEX_t mutex)
+VAR_t POSCALL posMutexTryLock(POSMUTEX_t mutex)
 {
   register EVENT_t  ev = (EVENT_t) mutex;
   register POSTASK_t task = posCurrentTask_g;
@@ -1760,7 +1775,7 @@ VAR_t posMutexTryLock(POSMUTEX_t mutex)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posMutexLock(POSMUTEX_t mutex)
+VAR_t POSCALL posMutexLock(POSMUTEX_t mutex)
 {
   register EVENT_t  ev = (EVENT_t) mutex;
   register POSTASK_t task = posCurrentTask_g;
@@ -1808,7 +1823,7 @@ VAR_t posMutexLock(POSMUTEX_t mutex)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posMutexUnlock(POSMUTEX_t mutex)
+VAR_t POSCALL posMutexUnlock(POSMUTEX_t mutex)
 {
   register EVENT_t  ev = (EVENT_t) mutex;
   POS_LOCKFLAGS;
@@ -1854,9 +1869,9 @@ VAR_t posMutexUnlock(POSMUTEX_t mutex)
 #if POSCFG_FEATURE_MSGBOXES != 0
 
 #if POSCFG_MSG_MEMORY == 0
-static MSGBUF_t* pos_msgAlloc(void)
+static MSGBUF_t* POSCALL pos_msgAlloc(void)
 #else
-void* posMessageAlloc(void)
+void* POSCALL posMessageAlloc(void)
 #endif
 {
   register MSGBUF_t *mbuf;
@@ -1940,12 +1955,12 @@ void* posMessageAlloc(void)
 /*-------------------------------------------------------------------------*/
 
 #if POSCFG_MSG_MEMORY == 0
-static void pos_msgFree(MSGBUF_t *mbuf)
+static void POSCALL pos_msgFree(MSGBUF_t *mbuf)
 {
   POS_LOCKFLAGS;
   P_ASSERT("posMessageFree: buffer valid", mbuf != NULL);
 #else
-void posMessageFree(void *buf)
+void POSCALL posMessageFree(void *buf)
 {
   MSGBUF_t *mbuf = (MSGBUF_t*) buf;
   POS_LOCKFLAGS;
@@ -1967,7 +1982,7 @@ void posMessageFree(void *buf)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posMessageSend(void *buf, POSTASK_t taskhandle)
+VAR_t POSCALL posMessageSend(void *buf, POSTASK_t taskhandle)
 {
   register MSGBUF_t *mbuf;
   POS_LOCKFLAGS;
@@ -2052,7 +2067,7 @@ VAR_t posMessageSend(void *buf, POSTASK_t taskhandle)
 /*-------------------------------------------------------------------------*/
 
 #if (POSCFG_SMALLCODE == 0) || (POSCFG_FEATURE_MSGWAIT == 0)
-void* posMessageGet(void)
+void* POSCALL posMessageGet(void)
 {
   register POSTASK_t task = posCurrentTask_g;
   register MSGBUF_t *mbuf;
@@ -2118,7 +2133,7 @@ void* posMessageGet(void)
 
 #if POSCFG_FEATURE_MSGWAIT != 0
 
-void* posMessageWait(UINT_t timeoutticks)
+void* POSCALL posMessageWait(UINT_t timeoutticks)
 {
   register POSTASK_t task = posCurrentTask_g;
   register MSGBUF_t *mbuf;
@@ -2211,7 +2226,7 @@ void* posMessageWait(UINT_t timeoutticks)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posMessageAvailable(void)
+VAR_t POSCALL posMessageAvailable(void)
 {
   return (posCurrentTask_g->firstmsg != NULL) ? 1 : 0;
 }
@@ -2225,7 +2240,7 @@ VAR_t posMessageAvailable(void)
  *-------------------------------------------------------------------------*/
 
 #if (POSCFG_FEATURE_JIFFIES != 0) && (POSCFG_FEATURE_LARGEJIFFIES != 0)
-JIF_t posGetJiffies(void)
+JIF_t POSCALL posGetJiffies(void)
 {
   register JIF_t  jif;
   POS_LOCKFLAGS;
@@ -2241,7 +2256,7 @@ JIF_t posGetJiffies(void)
 
 #if POSCFG_FEATURE_TIMER != 0
 
-POSTIMER_t posTimerCreate(void)
+POSTIMER_t POSCALL posTimerCreate(void)
 {
   register TIMER_t  *t;
   POS_LOCKFLAGS;
@@ -2296,7 +2311,7 @@ POSTIMER_t posTimerCreate(void)
 
 #if POSCFG_FEATURE_TIMERDESTROY != 0
 
-void posTimerDestroy(POSTIMER_t tmr)
+void POSCALL posTimerDestroy(POSTIMER_t tmr)
 {
   register TIMER_t  *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
@@ -2317,8 +2332,8 @@ void posTimerDestroy(POSTIMER_t tmr)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
-                  UINT_t waitticks, UINT_t periodticks)
+VAR_t POSCALL posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
+                          UINT_t waitticks, UINT_t periodticks)
 {
   register TIMER_t  *t = (TIMER_t*) tmr;
   register EVENT_t  ev = (EVENT_t) sema;
@@ -2344,7 +2359,7 @@ VAR_t posTimerSet(POSTIMER_t tmr, POSSEMA_t sema,
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posTimerStart(POSTIMER_t tmr)
+VAR_t POSCALL posTimerStart(POSTIMER_t tmr)
 {
   register TIMER_t *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
@@ -2366,7 +2381,7 @@ VAR_t posTimerStart(POSTIMER_t tmr)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posTimerStop(POSTIMER_t tmr)
+VAR_t POSCALL posTimerStop(POSTIMER_t tmr)
 {
   register TIMER_t *t = (TIMER_t*) tmr;
   POS_LOCKFLAGS;
@@ -2386,7 +2401,7 @@ VAR_t posTimerStop(POSTIMER_t tmr)
 
 #if POSCFG_FEATURE_TIMERFIRED != 0
 
-VAR_t posTimerFired(POSTIMER_t tmr)
+VAR_t POSCALL posTimerFired(POSTIMER_t tmr)
 {
   register TIMER_t *t = (TIMER_t*) tmr;
   register VAR_t  f;
@@ -2413,7 +2428,7 @@ VAR_t posTimerFired(POSTIMER_t tmr)
 
 #if POSCFG_FEATURE_FLAGS != 0
 
-POSFLAG_t posFlagCreate(void)
+POSFLAG_t POSCALL posFlagCreate(void)
 {
   register EVENT_t ev;
 
@@ -2432,7 +2447,7 @@ POSFLAG_t posFlagCreate(void)
 
 #if POSCFG_FEATURE_FLAGDESTROY != 0
 
-void posFlagDestroy(POSFLAG_t flg)
+void POSCALL posFlagDestroy(POSFLAG_t flg)
 {
   P_ASSERT("posFlagDestroy: flag valid", flg != NULL);
   posSemaDestroy((POSSEMA_t) flg);
@@ -2442,7 +2457,7 @@ void posFlagDestroy(POSFLAG_t flg)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
+VAR_t POSCALL posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
 {
   register EVENT_t  ev = (EVENT_t) flg;
   POS_LOCKFLAGS;
@@ -2466,7 +2481,7 @@ VAR_t posFlagSet(POSFLAG_t flg, UVAR_t flgnum)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode)
+VAR_t POSCALL posFlagGet(POSFLAG_t flg, UVAR_t mode)
 {
   register EVENT_t  ev = (EVENT_t) flg;
   register POSTASK_t task = posCurrentTask_g;
@@ -2517,7 +2532,7 @@ VAR_t posFlagGet(POSFLAG_t flg, UVAR_t mode)
 
 #if POSCFG_FEATURE_FLAGWAIT != 0
 
-VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
+VAR_t POSCALL posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
 {
   register EVENT_t  ev = (EVENT_t) flg;
   register POSTASK_t task = posCurrentTask_g;
@@ -2585,7 +2600,7 @@ VAR_t posFlagWait(POSFLAG_t flg, UINT_t timeoutticks)
 
 #if POSCFG_FEATURE_SOFTINTS != 0
 
-void posSoftInt(UVAR_t intno, UVAR_t param)
+void POSCALL posSoftInt(UVAR_t intno, UVAR_t param)
 {
   UVAR_t next;
   POS_LOCKFLAGS;
@@ -2609,7 +2624,7 @@ void posSoftInt(UVAR_t intno, UVAR_t param)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler)
+VAR_t POSCALL posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler)
 {
   POS_LOCKFLAGS;
 
@@ -2632,7 +2647,7 @@ VAR_t posSoftIntSetHandler(UVAR_t intno, POSINTFUNC_t inthandler)
 
 #if POSCFG_FEATURE_SOFTINTDEL != 0
 
-VAR_t posSoftIntDelHandler(UVAR_t intno)
+VAR_t POSCALL posSoftIntDelHandler(UVAR_t intno)
 {
   POS_LOCKFLAGS;
 
@@ -2658,7 +2673,7 @@ VAR_t posSoftIntDelHandler(UVAR_t intno)
 
 #if POSCFG_FEATURE_ATOMICVAR != 0
 
-void posAtomicSet(POSATOMIC_t *var, INT_t value)
+void POSCALL posAtomicSet(POSATOMIC_t *var, INT_t value)
 {
   POS_LOCKFLAGS;
 
@@ -2673,7 +2688,7 @@ void posAtomicSet(POSATOMIC_t *var, INT_t value)
 
 /*-------------------------------------------------------------------------*/
 
-INT_t posAtomicGet(POSATOMIC_t *var)
+INT_t POSCALL posAtomicGet(POSATOMIC_t *var)
 {
   INT_t value;
   POS_LOCKFLAGS;
@@ -2690,7 +2705,7 @@ INT_t posAtomicGet(POSATOMIC_t *var)
 
 /*-------------------------------------------------------------------------*/
 
-INT_t posAtomicAdd(POSATOMIC_t *var, INT_t value)
+INT_t POSCALL posAtomicAdd(POSATOMIC_t *var, INT_t value)
 {
   INT_t lastval;
   POS_LOCKFLAGS;
@@ -2708,7 +2723,7 @@ INT_t posAtomicAdd(POSATOMIC_t *var, INT_t value)
 
 /*-------------------------------------------------------------------------*/
 
-INT_t posAtomicSub(POSATOMIC_t *var, INT_t value)
+INT_t POSCALL posAtomicSub(POSATOMIC_t *var, INT_t value)
 {
   INT_t lastval;
   POS_LOCKFLAGS;
@@ -2734,7 +2749,7 @@ INT_t posAtomicSub(POSATOMIC_t *var, INT_t value)
 
 #if POSCFG_FEATURE_LISTS != 0
 
-void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
+void POSCALL posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
 {
   register POSLIST_t *next, *prev;
   POS_LOCKFLAGS;
@@ -2777,8 +2792,8 @@ void posListAdd(POSLISTHEAD_t *listhead, UVAR_t pos, POSLIST_t *new)
 
 /*-------------------------------------------------------------------------*/
 
-POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
-                      UINT_t timeout)
+POSLIST_t* POSCALL posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
+                              UINT_t timeout)
 {
   register POSLIST_t *elem;
 #if POSCFG_FEATURE_SEMAWAIT != 0
@@ -2858,7 +2873,7 @@ POSLIST_t* posListGet(POSLISTHEAD_t *listhead, UVAR_t pos,
 
 /*-------------------------------------------------------------------------*/
 
-void posListRemove(POSLIST_t *listelem)
+void POSCALL posListRemove(POSLIST_t *listelem)
 {
   POS_LOCKFLAGS;
 
@@ -2879,8 +2894,8 @@ void posListRemove(POSLIST_t *listelem)
 
 #if POSCFG_FEATURE_LISTJOIN != 0
 
-void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
-                 POSLISTHEAD_t *joinlisthead)
+void POSCALL posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
+                         POSLISTHEAD_t *joinlisthead)
 {
   register POSLIST_t *elem;
   POS_LOCKFLAGS;
@@ -2938,7 +2953,7 @@ void posListJoin(POSLISTHEAD_t *baselisthead, UVAR_t pos,
 
 #if POSCFG_FEATURE_LISTLEN != 0
 
-UINT_t posListLen(POSLISTHEAD_t *listhead)
+UINT_t POSCALL posListLen(POSLISTHEAD_t *listhead)
 {
   UINT_t len;
   POS_LOCKFLAGS;
@@ -2958,7 +2973,7 @@ UINT_t posListLen(POSLISTHEAD_t *listhead)
 
 /*-------------------------------------------------------------------------*/
 
-void posListInit(POSLISTHEAD_t *listhead)
+void POSCALL posListInit(POSLISTHEAD_t *listhead)
 {
   if (listhead != NULL)
   {
@@ -2974,7 +2989,7 @@ void posListInit(POSLISTHEAD_t *listhead)
 
 /*-------------------------------------------------------------------------*/
 
-void posListTerm(POSLISTHEAD_t *listhead)
+void POSCALL posListTerm(POSLISTHEAD_t *listhead)
 {
   POSSEMA_t sema;
   POS_LOCKFLAGS;
@@ -3005,7 +3020,7 @@ void posListTerm(POSLISTHEAD_t *listhead)
 
 #if POSCFG_FEATURE_IDLETASKHOOK != 0
 
-POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc)
+POSIDLEFUNC_t  POSCALL posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc)
 {
   POSIDLEFUNC_t  prevhook;
   POS_LOCKFLAGS;
@@ -3026,13 +3041,13 @@ POSIDLEFUNC_t  posInstallIdleTaskHook(POSIDLEFUNC_t idlefunc)
  *-------------------------------------------------------------------------*/
 
 #if POSCFG_TASKSTACKTYPE == 0
-void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-              void *stackFirstTask, void *stackIdleTask)
+void  POSCALL posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
+                      void *stackFirstTask, void *stackIdleTask)
 #elif POSCFG_TASKSTACKTYPE == 1
-void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-              UINT_t taskStackSize, UINT_t idleStackSize)
+void  POSCALL posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
+                      UINT_t taskStackSize, UINT_t idleStackSize)
 #else
-void  posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
+void  POSCALL posInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority)
 #endif
 {
   POSTASK_t  task;
