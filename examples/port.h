@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.7 2005/01/17 21:21:28 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.8 2006/03/14 18:39:27 dkuschel Exp $
  */
 
 
@@ -142,6 +142,15 @@
  * the architecture specific portion of the operating system.
  */
 #define POSCFG_CALLINITARCH      1
+
+/** Enable the call of the functions ::p_pos_lock and ::p_pos_unlock.
+ * In some really rare and special cases it may be required that
+ * Pico]OS must acquire a mutex before it can call the functions
+ * ::p_pos_initTask and ::p_pos_freeStack. If you need such a mutex
+ * for your port please define this option to 1 and implement the
+ * appropriate functions.
+ */
+#define POSCFG_PORTMUTEX         0
 
 /** Enable dynamic memory.
  * If this define is set to 1, the memory for internal data structures
