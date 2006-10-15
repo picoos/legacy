@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: common.mak,v 1.5 2005/02/07 22:10:07 dkuschel Exp $
+#  $Id: common.mak,v 1.6 2006/03/14 18:45:40 dkuschel Exp $
 
 
 # Include configuration
@@ -181,6 +181,10 @@ endif
 ifeq '$(strip $(EXT_LIB))' ''
 EXT_LIB := .a
 endif
+
+# Set pico]OS package flag
+CDEFINES += _POSPACK
+ADEFINES += _POSPACK
 
 # ---------------------------------------------------------------------------
 
