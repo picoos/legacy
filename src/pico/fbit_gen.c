@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id:$
+ * CVS-ID $Id: fbit_gen.c,v 1.1.1.1 2004/02/16 20:11:41 smocz Exp $
  */
 
 
@@ -104,7 +104,7 @@ VAR_t const p_pos_fbittbl[256] =
 
 /* Round Robin generic finbit() -function using a look-up table.
  */
-UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
+UVAR_t POSCALL p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
 {
   UVAR_t bf, bit;
   bf = (bitfield << (MVAR_BITS - rrOffset)) | (bitfield >> rrOffset); 
@@ -226,14 +226,14 @@ VAR_t const p_pos_fbittbl_rr[8][256] =
 
 #if (POSCFG_ROUNDROBIN == 0)
 
-UVAR_t p_pos_findbit(const UVAR_t bitfield)
+UVAR_t POSCALL p_pos_findbit(const UVAR_t bitfield)
 {
   UVAR_t bf = bitfield;
   UVAR_t bit;
 
 #else /* POSCFG_ROUNDROBIN */
 
-UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
+UVAR_t POSCALL p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
 {
   UVAR_t bf;
   UVAR_t bit;
@@ -302,14 +302,14 @@ UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
 
 #if (POSCFG_ROUNDROBIN == 0)
 
-UVAR_t p_pos_findbit(const UVAR_t bitfield)
+UVAR_t POSCALL p_pos_findbit(const UVAR_t bitfield)
 {
   UVAR_t bf = bitfield;
   UVAR_t bit;
 
 #else /* POSCFG_ROUNDROBIN */
 
-UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
+UVAR_t POSCALL p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
 {
   UVAR_t bf;
   UVAR_t bit;
@@ -469,7 +469,7 @@ UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
  *
  */
 
-UVAR_t p_pos_findbit(const UVAR_t bitfield)
+UVAR_t POSCALL p_pos_findbit(const UVAR_t bitfield)
 {
   UVAR_t bf = bitfield;
   UVAR_t bit;
@@ -492,7 +492,7 @@ UVAR_t p_pos_findbit(const UVAR_t bitfield)
  *
  */
 
-UVAR_t p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
+UVAR_t POSCALL p_pos_findbit(const UVAR_t bitfield, UVAR_t rrOffset)
 {
   UVAR_t bf;
   UVAR_t bit;
