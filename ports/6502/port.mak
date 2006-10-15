@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2006, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,15 +30,11 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.2 2004/03/13 19:33:26 dkuschel Exp $
+#  $Id: port.mak,v 1.3 2006/03/11 13:04:33 dkuschel Exp $
 
-
-# Compiler: Define place of compiler
-CC65 = h:/cc65
 
 # Compiler: Define target type
 TG = c64
-
 
 # Set to 1 to include generic pico]OS "findbit" function
 GENERIC_FINDBIT = 0
@@ -51,10 +47,10 @@ EXT_LIB = .lib
 EXT_OUT = .$(TG)
 
 # Define tools: compiler, assembler, archiver, linker
-CC = $(CC65)/bin/cc65
-AS = $(CC65)/bin/ca65
-AR = $(CC65)/bin/ar65
-LD = $(CC65)/bin/ld65
+CC = cc65
+AS = ca65
+AR = ar65
+LD = ld65
 
 # Define to 1 if CC outputs an assembly file
 CC2ASM = 1
@@ -68,16 +64,16 @@ OPT_AR_ADD   =
 OPT_LD_SEP   = 
 OPT_LD_PFOBJ = 
 OPT_LD_PFLIB = 
-OPT_LD_FIRST = $(CC65)/lib/$(TG).o
-OPT_LD_LAST  = $(CC65)/lib/$(TG).lib
+OPT_LD_FIRST = $(TG).o
+OPT_LD_LAST  = $(TG).lib
 
 # Set global defines for compiler / assembler
 CDEFINES =
 ADEFINES =
 
 # Set global includes
-CINCLUDES = $(CC65)\include .
-AINCLUDES = $(CC65)\include .
+CINCLUDES = .
+AINCLUDES = .
 
 # Distinguish between build modes
 ifeq '$(BUILD)' 'DEBUG'
