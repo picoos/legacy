@@ -31,14 +31,14 @@
 
 
 /**
- * @file    poscfg.h
- * @brief   pico]OS configuration file
+ * @file    arch_c.c
+ * @brief   pico]OS port for C64 (6502)
  * @author  Dennis Kuschel
  *
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.3 2004/03/16 21:37:01 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.4 2006/03/11 13:04:02 dkuschel Exp $
  */
 
 
