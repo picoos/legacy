@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.7 2006/04/14 09:04:15 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.8 2006/04/29 15:58:17 dkuschel Exp $
  */
 
 #define _N_CONIO_C
@@ -74,17 +74,20 @@
  *-------------------------------------------------------------------------*/
 
 /* exported */
-void nos_initConIO(void);
+void POSCALL nos_initConIO(void);
 
 /* private */
 #if FEAT_XPRINTF != 0
-static void n_printf(const char *fmt, NOSARG_t *args);
+static void POSCALL n_printf(const char *fmt, NOSARG_t *args);
 #endif
 #if NOSCFG_FEATURE_SPRINTF != 0
-static UVAR_t n_updstr(char c);
+static UVAR_t POSCALL n_updstr(char c);
+#endif
+#if NOSCFG_FEATURE_CONIN != 0
+static void n_keyinput(UVAR_t key);
 #endif
 #if (NOSCFG_FEATURE_CONOUT != 0) && (NOSCFG_CONOUT_HANDSHAKE != 0)
-static UVAR_t nos_putchar(char c);
+static UVAR_t POSCALL nos_putchar(char c);
 #endif
 
 
@@ -135,7 +138,7 @@ static POSSEMA_t    cin_sema_g;
  *-------------------------------------------------------------------------*/
 
 #if (NOSCFG_FEATURE_PRINTF != 0) && (NOSCFG_FEATURE_SPRINTF != 0)
-typedef UVAR_t (*NPRINTFUNC_t)(char c);
+typedef UVAR_t POSCALL (*NPRINTFUNC_t)(char c);
 static NPRINTFUNC_t       prf_g;
 #define SET_PRFUNC(func)  prf_g = &(func)
 #define CALL_PRFUNC(c)    (prf_g)(c)
@@ -162,7 +165,7 @@ static NPRINTFUNC_t       prf_g;
 
 #if NOSCFG_CONOUT_HANDSHAKE != 0
 
-void  c_nos_putcharReady(void)
+void POSCALL c_nos_putcharReady(void)
 {
   register UVAR_t f;
   POS_LOCKFLAGS;
@@ -219,7 +222,7 @@ void  c_nos_putcharReady(void)
 
 /*-------------------------------------------------------------------------*/
 
-static UVAR_t nos_putchar(char c)
+static UVAR_t POSCALL nos_putchar(char c)
 {
   POS_LOCKFLAGS;
 
@@ -279,7 +282,7 @@ static UVAR_t nos_putchar(char c)
 
 /*-------------------------------------------------------------------------*/
 
-void nosPrintChar(char c)
+void POSCALL nosPrintChar(char c)
 {
   posSemaGet(printsema_g);
 #if NOSCFG_CONOUT_HANDSHAKE != 0
@@ -292,7 +295,7 @@ void nosPrintChar(char c)
 
 /*-------------------------------------------------------------------------*/
 
-void nosPrint(const char *str)
+void POSCALL nosPrint(const char *str)
 {
 #if NOSCFG_FEATURE_PRINTF != 0
   NOSARG_t arg;
@@ -331,7 +334,7 @@ void nosPrint(const char *str)
 
 #if FEAT_XPRINTF != 0
 
-void n_printf(const char *fmt, NOSARG_t *args)
+void POSCALL n_printf(const char *fmt, NOSARG_t *args)
 {
   char   b, c, *s;
   UVAR_t base;
@@ -501,7 +504,7 @@ void n_printf(const char *fmt, NOSARG_t *args)
 
 #if NOSCFG_FEATURE_PRINTF != 0
 
-void n_printFormattedN(const char *fmt, NOSARG_t args)
+void POSCALL n_printFormattedN(const char *fmt, NOSARG_t args)
 {
   posSemaGet(printsema_g);
 #if NOSCFG_CONOUT_HANDSHAKE != 0
@@ -521,13 +524,13 @@ void n_printFormattedN(const char *fmt, NOSARG_t args)
 
 static char *sprptr_g;
 
-static UVAR_t n_updstr(char c)
+static UVAR_t POSCALL n_updstr(char c)
 {
   *sprptr_g++ = c;
   return 1;
 }
 
-void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args)
+void POSCALL n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args)
 {
   posSemaGet(printsema_g);
   SET_PRFUNC(n_updstr);
@@ -547,7 +550,7 @@ void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args)
 
 #if NOSCFG_FEATURE_CONIN != 0
 
-void c_nos_keyinput(UVAR_t key)
+void POSCALL c_nos_keyinput(UVAR_t key)
 {
   UVAR_t n;
   POS_LOCKFLAGS;
@@ -567,9 +570,14 @@ void c_nos_keyinput(UVAR_t key)
     posSemaSignal(cin_sema_g);
 }
 
+static void n_keyinput(UVAR_t key)
+{
+  c_nos_keyinput(key);
+}
+
 /*-------------------------------------------------------------------------*/
 
-char nosKeyGet(void)
+char POSCALL nosKeyGet(void)
 {
   char c;
   POS_LOCKFLAGS;
@@ -596,7 +604,7 @@ char nosKeyGet(void)
 
 /*-------------------------------------------------------------------------*/
 
-UVAR_t nosKeyPressed(void)
+UVAR_t POSCALL nosKeyPressed(void)
 {
   return (cin_inptr_g != cin_outptr_g) ? 1 : 0;
 }
@@ -611,7 +619,7 @@ UVAR_t nosKeyPressed(void)
 
 #if (NOSCFG_FEATURE_CONIN != 0) || (FEAT_PRINTOUT != 0)
 
-void nos_initConIO(void)
+void POSCALL nos_initConIO(void)
 {
 #if NOSCFG_FEATURE_CONIN != 0
   cin_inptr_g   = 0;
@@ -620,7 +628,7 @@ void nos_initConIO(void)
   cin_sema_g    = posSemaCreate(0);
   POS_SETEVENTNAME(cin_sema_g, "conio key wait");
 #if (POSCFG_FEATURE_SOFTINTS != 0)
-  posSoftIntSetHandler(0, c_nos_keyinput);
+  posSoftIntSetHandler(0, n_keyinput);
 #endif
 #endif
 
@@ -643,6 +651,6 @@ void nos_initConIO(void)
 #else
 
 /* this is just a dummy function */
-void nos_initConIO(void) {}
+void POSCALL nos_initConIO(void) {}
 
 #endif

@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_bhalf.c,v 1.5 2005/01/15 21:18:22 dkuschel Exp $
+ * CVS-ID $Id: n_bhalf.c,v 1.6 2006/04/16 08:48:27 dkuschel Exp $
  */
 
 #define _N_BHALF_C
@@ -81,7 +81,7 @@ static UVAR_t       bhexecmask_g;
  *-------------------------------------------------------------------------*/
 
 /* exported */
-void nos_initBottomHalfs(void);
+void POSCALL nos_initBottomHalfs(void);
 
 /* private */
 static void nos_bhtask(void *arg);
@@ -147,7 +147,7 @@ static void nos_bhtrigger(UVAR_t arg)
  *-------------------------------------------------------------------------*/
 
 
-void nosBottomHalfStart(UVAR_t number)
+void POSCALL nosBottomHalfStart(UVAR_t number)
 {
   UVAR_t m;
   POS_LOCKFLAGS;
@@ -178,7 +178,8 @@ void nosBottomHalfStart(UVAR_t number)
 
 /*-------------------------------------------------------------------------*/
 
-VAR_t nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func, void *arg)
+VAR_t POSCALL nosBottomHalfRegister(UVAR_t number,
+                                    NOSBHFUNC_t func, void *arg)
 {
   POS_LOCKFLAGS;
 
@@ -199,7 +200,7 @@ VAR_t nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func, void *arg)
 
 /*-------------------------------------------------------------------------*/
 
-void nos_initBottomHalfs(void)
+void POSCALL nos_initBottomHalfs(void)
 {
   UVAR_t i;
 
@@ -217,8 +218,8 @@ void nos_initBottomHalfs(void)
 #else  /* NOSCFG_FEATURE_BOTTOMHALF */
 
 /* this is just a dummy function */
-void nos_initBottomHalfs(void);
-void nos_initBottomHalfs(void) {}
+void POSCALL nos_initBottomHalfs(void);
+void POSCALL nos_initBottomHalfs(void) {}
 
 #endif /* NOSCFG_FEATURE_BOTTOMHALF */
 

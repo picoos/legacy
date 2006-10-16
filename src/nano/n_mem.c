@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_mem.c,v 1.6 2006/04/14 13:46:05 dkuschel Exp $
+ * CVS-ID $Id: n_mem.c,v 1.7 2006/04/16 08:48:27 dkuschel Exp $
  */
 
 #define _N_MEM_C
@@ -64,7 +64,7 @@
 #endif
 
 /* function prototypes */
-void nos_initMem(void);
+void POSCALL nos_initMem(void);
 
 /* we need nosMemCopy for nosRealloc */
 #if (NOSCFG_FEATURE_REALLOC != 0) && (NOSCFG_FEATURE_MEMCOPY == 0)
@@ -81,7 +81,7 @@ void nosMemCopy(void *dst, void *src, UINT_t count);
 
 #if NOSCFG_FEATURE_MEMSET != 0
 
-void nosMemSet(void *buf, char val, UINT_t count)
+void POSCALL nosMemSet(void *buf, char val, UINT_t count)
 {
   char   *cb = (char*) buf;
 
@@ -153,7 +153,7 @@ void nosMemSet(void *buf, char val, UINT_t count)
 
 #if NOSCFG_FEATURE_MEMCOPY != 0
 
-void nosMemCopy(void *dst, void *src, UINT_t count)
+void POSCALL nosMemCopy(void *dst, void *src, UINT_t count)
 {
   char   *cd = (char*) dst;
   char   *cs = (char*) src;
@@ -247,7 +247,7 @@ static BLOCK_t  freeBlockList_g;
 
 /*-------------------------------------------------------------------------*/
 
-void* nos_malloc(UINT_t size)
+void* POSCALL nos_malloc(UINT_t size)
 {
   BLOCK_t  bp, bl, l, p;
   UINT_t   s;
@@ -308,7 +308,7 @@ void* nos_malloc(UINT_t size)
 
 /*-------------------------------------------------------------------------*/
 
-void nos_free(void *mp)
+void POSCALL nos_free(void *mp)
 {
   BLOCK_t b, p;
 #ifdef MEMFREE_CHECK_INTENSIVE
@@ -406,7 +406,7 @@ void nos_free(void *mp)
 
 #if NOSCFG_FEATURE_REALLOC != 0
 
-static void* nos_realloc(void *memblock, UINT_t size)
+static void* POSCALL nos_realloc(void *memblock, UINT_t size)
 {
   BLOCK_t b, l, n, p;
   UINT_t  s, asize;
@@ -493,7 +493,7 @@ static void* nos_realloc(void *memblock, UINT_t size)
 
 /*-------------------------------------------------------------------------*/
 
-void nos_initMem(void)
+void POSCALL nos_initMem(void)
 {
   freeBlockList_g = (BLOCK_t)(void*)MEM_ALIGN((MEMPTR_t)(__heap_start));
   freeBlockList_g->h.next = NULL;
@@ -506,7 +506,7 @@ void nos_initMem(void)
 
 /*-------------------------------------------------------------------------*/
 
-void* nosMemAlloc(UINT_t size)
+void* POSCALL nosMemAlloc(UINT_t size)
 {
   void *p;
   if (posRunning_g == 0)
@@ -519,7 +519,7 @@ void* nosMemAlloc(UINT_t size)
 
 /*-------------------------------------------------------------------------*/
 
-void  nosMemFree(void *p)
+void POSCALL nosMemFree(void *p)
 {
   posTaskSchedLock();
   NOS_MEM_FREE(p);
@@ -530,7 +530,7 @@ void  nosMemFree(void *p)
 
 #if NOSCFG_FEATURE_REALLOC != 0
 
-void* nosMemRealloc(void *memblock, UINT_t size)
+void* POSCALL nosMemRealloc(void *memblock, UINT_t size)
 {
   void *p;
   posTaskSchedLock();
@@ -546,8 +546,8 @@ void* nosMemRealloc(void *memblock, UINT_t size)
 #else  /* NOSCFG_FEATURE_MEMALLOC != 0 */
 
 /* this is just a dummy function */
-void nos_initMem(void);
-void nos_initMem(void) {}
+void POSCALL nos_initMem(void);
+void POSCALL nos_initMem(void) {}
 
 #endif
 

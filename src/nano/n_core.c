@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2006, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.7 2005/02/01 21:13:11 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.8 2005/02/22 20:39:27 dkuschel Exp $
  */
 
 #define _N_CORE_C
@@ -70,16 +70,16 @@
 
 /* imports */
 #if (NOSCFG_FEATURE_MEMALLOC != 0) && (NOSCFG_MEM_MANAGER_TYPE == 1)
-extern void nos_initMem(void);
+extern void POSCALL nos_initMem(void);
 #endif
 #if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0)
-extern void nos_initConIO(void);
+extern void POSCALL nos_initConIO(void);
 #endif
 #if NOSCFG_FEATURE_BOTTOMHALF != 0
-extern void nos_initBottomHalfs(void);
+extern void POSCALL nos_initBottomHalfs(void);
 #endif
 #if NOSCFG_FEATURE_REGISTRY != 0
-extern void nos_initRegistry(void);
+extern void POSCALL nos_initRegistry(void);
 #endif
 
 /* private */
@@ -88,7 +88,7 @@ static void nano_init(void *arg);
 #if NOSCFG_FEATURE_CPUUSAGE != 0
 
 static void nano_idlehook(void);
-static void nano_initCpuUsage(void);
+static void POSCALL nano_initCpuUsage(void);
 
 static unsigned long  idle_counter_g = 0;
 static unsigned long  idle_loops_g;
@@ -147,7 +147,7 @@ static void nano_idlehook(void)
 
 /*-------------------------------------------------------------------------*/
 
-static void nano_initCpuUsage(void)
+static void POSCALL nano_initCpuUsage(void)
 {
   (void) posInstallIdleTaskHook(nano_idlehook);
   posTaskSleep(1);
@@ -170,7 +170,7 @@ static void nano_initCpuUsage(void)
 
 /*-------------------------------------------------------------------------*/
 
-UVAR_t nosCpuUsage(void)
+UVAR_t POSCALL nosCpuUsage(void)
 {
   unsigned long tmp;
   UINT_t  p;
@@ -208,7 +208,8 @@ UVAR_t nosCpuUsage(void)
 #if NOSCFG_FEATURE_SEMAPHORES != 0
 #if NOSCFG_FEATURE_REGISTRY != 0
 
-NOSSEMA_t nosSemaCreate(INT_t initcount, UVAR_t options, const char *name)
+NOSSEMA_t POSCALL nosSemaCreate(INT_t initcount, UVAR_t options, 
+                                const char *name)
 {
   POSSEMA_t sem;
   REGELEM_t re;
@@ -235,7 +236,7 @@ NOSSEMA_t nosSemaCreate(INT_t initcount, UVAR_t options, const char *name)
 
 #if POSCFG_FEATURE_SEMADESTROY != 0
 
-void nosSemaDestroy(NOSSEMA_t sema)
+void POSCALL nosSemaDestroy(NOSSEMA_t sema)
 {
   if (sema != NULL)
   {
@@ -258,7 +259,7 @@ void nosSemaDestroy(NOSSEMA_t sema)
 #if NOSCFG_FEATURE_MUTEXES != 0
 #if NOSCFG_FEATURE_REGISTRY != 0
 
-NOSMUTEX_t nosMutexCreate(UVAR_t options, const char *name)
+NOSMUTEX_t POSCALL nosMutexCreate(UVAR_t options, const char *name)
 {
   POSMUTEX_t mtx;
   REGELEM_t re;
@@ -285,7 +286,7 @@ NOSMUTEX_t nosMutexCreate(UVAR_t options, const char *name)
 
 #if POSCFG_FEATURE_MUTEXDESTROY != 0
 
-void nosMutexDestroy(NOSMUTEX_t mutex)
+void POSCALL nosMutexDestroy(NOSMUTEX_t mutex)
 {
   if (mutex != NULL)
   {
@@ -307,7 +308,7 @@ void nosMutexDestroy(NOSMUTEX_t mutex)
 
 #if NOSCFG_FEATURE_MSGBOXES != 0
 
-void* nosMessageAlloc(UINT_t msgSize)
+void* POSCALL nosMessageAlloc(UINT_t msgSize)
 {
   void *buf;
 #if POSCFG_MSG_MEMORY != 0
@@ -323,7 +324,7 @@ void* nosMessageAlloc(UINT_t msgSize)
   return buf;
 }
 
-void nosMessageFree(void *buf)
+void POSCALL nosMessageFree(void *buf)
 {
 #if POSCFG_MSG_MEMORY != 0
   posMessageFree(buf);
@@ -332,7 +333,7 @@ void nosMessageFree(void *buf)
 #endif
 }
 
-VAR_t nosMessageSend(void *buf, NOSTASK_t taskhandle)
+VAR_t POSCALL nosMessageSend(void *buf, NOSTASK_t taskhandle)
 {
   VAR_t rc;
   rc = posMessageSend(buf, (POSTASK_t) taskhandle);
@@ -353,7 +354,7 @@ VAR_t nosMessageSend(void *buf, NOSTASK_t taskhandle)
 #if NOSCFG_FEATURE_FLAGS != 0
 #if NOSCFG_FEATURE_REGISTRY != 0
 
-NOSFLAG_t nosFlagCreate(const char* name)
+NOSFLAG_t POSCALL nosFlagCreate(const char* name)
 {
   POSFLAG_t flg;
   REGELEM_t re;
@@ -378,7 +379,7 @@ NOSFLAG_t nosFlagCreate(const char* name)
 
 #if POSCFG_FEATURE_FLAGDESTROY != 0
 
-void nosFlagDestroy(NOSFLAG_t flg)
+void POSCALL nosFlagDestroy(NOSFLAG_t flg)
 {
   if (flg != NULL)
   {
@@ -401,7 +402,7 @@ void nosFlagDestroy(NOSFLAG_t flg)
 #if NOSCFG_FEATURE_TIMER != 0
 #if NOSCFG_FEATURE_REGISTRY != 0
 
-NOSTIMER_t nosTimerCreate(const char *name)
+NOSTIMER_t POSCALL nosTimerCreate(const char *name)
 {
   POSTIMER_t tmr;
   REGELEM_t re;
@@ -423,7 +424,7 @@ NOSTIMER_t nosTimerCreate(const char *name)
   return (NOSTIMER_t) tmr;
 }
 
-void nosTimerDestroy(NOSTIMER_t tmr)
+void POSCALL nosTimerDestroy(NOSTIMER_t tmr)
 {
   if (tmr != NULL)
   {
@@ -468,9 +469,9 @@ static void nos_taskExitHook(POSTASK_t task, texhookevent_t event)
 #endif
 #endif
 
-NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                        VAR_t priority, UINT_t stacksize,
-                        const char* name)
+NOSTASK_t POSCALL nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
+                                VAR_t priority, UINT_t stacksize,
+                                const char* name)
 {
   POSTASK_t task;
 #if NOSCFG_FEATURE_REGISTRY != 0
@@ -637,8 +638,8 @@ static void nano_init(void *arg)
 
 /*-------------------------------------------------------------------------*/
 
-void  nosInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-              UINT_t taskStackSize, UINT_t idleStackSize)
+void POSCALL nosInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
+                     UINT_t taskStackSize, UINT_t idleStackSize)
 {
 #if POSCFG_TASKSTACKTYPE == 0
   void *stk_task1, *stk_idle;

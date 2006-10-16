@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_reg.c,v 1.3 2006/04/14 09:03:12 dkuschel Exp $
+ * CVS-ID $Id: n_reg.c,v 1.4 2006/04/16 08:48:27 dkuschel Exp $
  */
 
 
@@ -127,26 +127,28 @@ static REGELEM_t  reglist_syselem_g[MAX_REGTYPE+1];
  *-------------------------------------------------------------------------*/
 
 /* exports */
-void      nos_initRegistry(void);
-REGELEM_t nos_regNewSysKey(NOSREGTYPE_t type, const char* name);
-void      nos_regEnableSysKey(REGELEM_t re, NOSGENERICHANDLE_t handle);
-void      nos_regDelSysKey(NOSREGTYPE_t type, NOSGENERICHANDLE_t handle,
-                           REGELEM_t delre);
+void      POSCALL nos_initRegistry(void);
+REGELEM_t POSCALL nos_regNewSysKey(NOSREGTYPE_t type, const char* name);
+void      POSCALL nos_regEnableSysKey(REGELEM_t re, NOSGENERICHANDLE_t handle);
+void      POSCALL nos_regDelSysKey(NOSREGTYPE_t type,
+                                   NOSGENERICHANDLE_t handle, REGELEM_t delre);
 
 /* imports */
 
 /* private */
-static VAR_t     n_strlen(const char *buf);
-static REGELEM_t n_regAlloc(void);
-static void      n_regFree(REGELEM_t re);
-static void      n_remove(REGELEM_t re, REGELEM_t rl, NOSREGTYPE_t type);
-static REGELEM_t n_findKeyByName(NOSREGTYPE_t type, const char *keyname);
-static REGELEM_t n_findKeyByHandle(NOSREGTYPE_t type,
-                                   NOSGENERICHANDLE_t handle);
-static void      n_buildKeyName(char *dest, const char *basename,
-                                VAR_t basenlen, INT_t nbr);
-static VAR_t     n_newKey(NOSREGTYPE_t type, 
-                          const char* name, REGELEM_t *reret);
+static VAR_t     POSCALL n_strlen(const char *buf);
+static REGELEM_t POSCALL n_regAlloc(void);
+static void      POSCALL n_regFree(REGELEM_t re);
+static void      POSCALL n_remove(REGELEM_t re, REGELEM_t rl,
+                                  NOSREGTYPE_t type);
+static REGELEM_t POSCALL n_findKeyByName(NOSREGTYPE_t type,
+                                         const char *keyname);
+static REGELEM_t POSCALL n_findKeyByHandle(NOSREGTYPE_t type,
+                                           NOSGENERICHANDLE_t handle);
+static void      POSCALL n_buildKeyName(char *dest, const char *basename,
+                                        VAR_t basenlen, INT_t nbr);
+static VAR_t     POSCALL n_newKey(NOSREGTYPE_t type, 
+                                  const char* name, REGELEM_t *reret);
 
 
 
@@ -155,7 +157,7 @@ static VAR_t     n_newKey(NOSREGTYPE_t type,
  *-------------------------------------------------------------------------*/
 
 
-static VAR_t n_strlen(const char *buf)
+static VAR_t POSCALL n_strlen(const char *buf)
 {
   VAR_t l;
   for (l=0; buf[l]!=0; ++l);
@@ -163,7 +165,7 @@ static VAR_t n_strlen(const char *buf)
 }
 
 
-static REGELEM_t n_regAlloc(void)
+static REGELEM_t POSCALL n_regAlloc(void)
 {
   REGELEM_t re;
 #if NOS_REGKEY_PREALLOC > 1
@@ -201,14 +203,14 @@ static REGELEM_t n_regAlloc(void)
 }
 
 
-static void n_regFree(REGELEM_t re)
+static void POSCALL n_regFree(REGELEM_t re)
 {
   re->next = reglist_free_g;
   reglist_free_g = re;
 }
 
 
-static void n_remove(REGELEM_t re, REGELEM_t rl, NOSREGTYPE_t type)
+static void POSCALL n_remove(REGELEM_t re, REGELEM_t rl, NOSREGTYPE_t type)
 {
 #ifdef HAVE_REGREFCOUNT
   if (IS_REFERENCED(re))
@@ -253,7 +255,8 @@ static void n_remove(REGELEM_t re, REGELEM_t rl, NOSREGTYPE_t type)
 /*-------------------------------------------------------------------------*/
 
 
-static REGELEM_t n_findKeyByName(NOSREGTYPE_t type, const char *keyname)
+static REGELEM_t POSCALL n_findKeyByName(NOSREGTYPE_t type,
+                                         const char *keyname)
 {
   REGELEM_t re;
   VAR_t i;
@@ -275,8 +278,8 @@ static REGELEM_t n_findKeyByName(NOSREGTYPE_t type, const char *keyname)
 }
 
 
-static REGELEM_t n_findKeyByHandle(NOSREGTYPE_t type,
-                                   NOSGENERICHANDLE_t handle)
+static REGELEM_t POSCALL n_findKeyByHandle(NOSREGTYPE_t type,
+                                           NOSGENERICHANDLE_t handle)
 
 {
   REGELEM_t re;
@@ -290,8 +293,8 @@ static REGELEM_t n_findKeyByHandle(NOSREGTYPE_t type,
 }
 
 
-static void n_buildKeyName(char *dest, const char *basename,
-                           VAR_t baselen, INT_t nbr)
+static void POSCALL n_buildKeyName(char *dest, const char *basename,
+                                   VAR_t baselen, INT_t nbr)
 {
   char buf[5];
   VAR_t l, i;
@@ -318,8 +321,8 @@ static void n_buildKeyName(char *dest, const char *basename,
 }
 
 
-static VAR_t n_newKey(NOSREGTYPE_t type,
-                      const char* name, REGELEM_t *reret)
+static VAR_t POSCALL n_newKey(NOSREGTYPE_t type,
+                              const char* name, REGELEM_t *reret)
 {
   REGELEM_t re;
 #if NOSCFG_FEATURE_REGQUERY != 0
@@ -398,7 +401,7 @@ static VAR_t n_newKey(NOSREGTYPE_t type,
 
 #if NOSCFG_FEATURE_USERREG != 0
 
-VAR_t nosRegGet(const char *keyname, KEYVALUE_t *keyvalue)
+VAR_t POSCALL nosRegGet(const char *keyname, KEYVALUE_t *keyvalue)
 {
   REGELEM_t re;
 
@@ -422,7 +425,7 @@ VAR_t nosRegGet(const char *keyname, KEYVALUE_t *keyvalue)
 }
 
 
-VAR_t nosRegSet(const char *keyname, KEYVALUE_t keyvalue)
+VAR_t POSCALL nosRegSet(const char *keyname, KEYVALUE_t keyvalue)
 {
   REGELEM_t re;
   VAR_t  status = E_OK;
@@ -448,7 +451,7 @@ VAR_t nosRegSet(const char *keyname, KEYVALUE_t keyvalue)
 }
 
 
-VAR_t nosRegDel(const char *keyname)
+VAR_t POSCALL nosRegDel(const char *keyname)
 {
   REGELEM_t re, rl;
   VAR_t i;
@@ -487,7 +490,7 @@ VAR_t nosRegDel(const char *keyname)
 
 #if NOSCFG_FEATURE_REGQUERY != 0
 
-NOSREGQHANDLE_t  nosRegQueryBegin(NOSREGTYPE_t type)
+NOSREGQHANDLE_t POSCALL nosRegQueryBegin(NOSREGTYPE_t type)
 {
   REGQUERY_t  rq;
 
@@ -504,8 +507,8 @@ NOSREGQHANDLE_t  nosRegQueryBegin(NOSREGTYPE_t type)
 }
 
 
-VAR_t nosRegQueryElem(NOSREGQHANDLE_t qh, NOSGENERICHANDLE_t *genh,
-                      char* namebuf, VAR_t bufsize)
+VAR_t POSCALL nosRegQueryElem(NOSREGQHANDLE_t qh, NOSGENERICHANDLE_t *genh,
+                              char* namebuf, VAR_t bufsize)
 {
   REGQUERY_t rq = (REGQUERY_t) qh;
   REGELEM_t re;
@@ -557,7 +560,7 @@ VAR_t nosRegQueryElem(NOSREGQHANDLE_t qh, NOSGENERICHANDLE_t *genh,
 }
 
 
-void nosRegQueryEnd(NOSREGQHANDLE_t qh)
+void POSCALL nosRegQueryEnd(NOSREGQHANDLE_t qh)
 {
   REGQUERY_t rq = (REGQUERY_t) qh;
 
@@ -579,8 +582,8 @@ void nosRegQueryEnd(NOSREGQHANDLE_t qh)
 /*-------------------------------------------------------------------------*/
 
 
-NOSGENERICHANDLE_t  nosGetHandleByName(NOSREGTYPE_t objtype, 
-                                        const char *objname)
+NOSGENERICHANDLE_t POSCALL nosGetHandleByName(NOSREGTYPE_t objtype, 
+                                              const char *objname)
 {
   REGELEM_t re;
 
@@ -599,9 +602,9 @@ NOSGENERICHANDLE_t  nosGetHandleByName(NOSREGTYPE_t objtype,
 }
 
 
-VAR_t nosGetNameByHandle(NOSGENERICHANDLE_t handle,
-                         char *buffer, VAR_t bufsize,
-                         NOSREGTYPE_t what)
+VAR_t POSCALL nosGetNameByHandle(NOSGENERICHANDLE_t handle,
+                                 char *buffer, VAR_t bufsize,
+                                 NOSREGTYPE_t what)
 {
   NOSREGTYPE_t  rt;
   REGELEM_t re = NULL;
@@ -661,8 +664,8 @@ VAR_t nosGetNameByHandle(NOSGENERICHANDLE_t handle,
 /*-------------------------------------------------------------------------*/
 
 
-void nos_regDelSysKey(NOSREGTYPE_t type, NOSGENERICHANDLE_t handle,
-                      REGELEM_t re)
+void POSCALL nos_regDelSysKey(NOSREGTYPE_t type, NOSGENERICHANDLE_t handle,
+                              REGELEM_t re)
 {
   REGELEM_t rl = REEUNKNOWN;
 
@@ -688,7 +691,7 @@ void nos_regDelSysKey(NOSREGTYPE_t type, NOSGENERICHANDLE_t handle,
 }
 
 
-REGELEM_t nos_regNewSysKey(NOSREGTYPE_t type, const char* name)
+REGELEM_t POSCALL nos_regNewSysKey(NOSREGTYPE_t type, const char* name)
 {
   REGELEM_t re = NULL;
   posSemaGet(reglist_sema_g);
@@ -698,14 +701,14 @@ REGELEM_t nos_regNewSysKey(NOSREGTYPE_t type, const char* name)
 }
 
 
-void nos_regEnableSysKey(REGELEM_t re, NOSGENERICHANDLE_t handle)
+void POSCALL nos_regEnableSysKey(REGELEM_t re, NOSGENERICHANDLE_t handle)
 {
   re->handle.generic = handle;
   MARK_VISIBLE(re);
 }
 
 
-void nos_initRegistry(void)
+void POSCALL nos_initRegistry(void)
 {
   NOSREGTYPE_t  rt;
 
@@ -720,8 +723,8 @@ void nos_initRegistry(void)
 
 #else /* NOSCFG_FEATURE_REGISTRY */
 
-void nos_initRegistry(void);
-void nos_initRegistry(void)
+void POSCALL nos_initRegistry(void);
+void POSCALL nos_initRegistry(void)
 {
 }
 

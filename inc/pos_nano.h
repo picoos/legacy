@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: pos_nano.h,v 1.6 2006/04/14 08:57:33 dkuschel Exp $
+ * CVS-ID $Id: pos_nano.h,v 1.7 2006/04/14 09:33:52 dkuschel Exp $
  */
 
 #ifndef _POS_NANO_H
@@ -289,7 +289,7 @@ typedef void (*NOSBHFUNC_t)(void* arg, UVAR_t bh);
  *          to have this function compiled in.
  * @sa      nosMemRealloc, nosMemFree, NOSCFG_MEM_MANAGER_TYPE
  */
-NANOEXT void* nosMemAlloc(UINT_t size);
+NANOEXT void* POSCALL nosMemAlloc(UINT_t size);
 
 /**
  * Free a block of memory to the heap.
@@ -299,7 +299,7 @@ NANOEXT void* nosMemAlloc(UINT_t size);
  *          to have this function compiled in.
  * @sa      nosMemAlloc, nosMemRealloc, NOSCFG_MEM_MANAGER_TYPE
  */
-NANOEXT void  nosMemFree(void *p);
+NANOEXT void POSCALL nosMemFree(void *p);
 
 
 #if DOX!=0 || NOSCFG_FEATURE_REALLOC != 0
@@ -319,7 +319,7 @@ NANOEXT void  nosMemFree(void *p);
  *          ::NOSCFG_MEM_MANAGE_MODE is set to 1
  * @sa      nosMemAlloc, nosMemFree, NOSCFG_MEM_MANAGER_TYPE
  */
-NANOEXT void *nosMemRealloc(void *memblock, UINT_t size);
+NANOEXT void POSCALL *nosMemRealloc(void *memblock, UINT_t size);
 #endif
 
 /* overwrite standard memory allocation functions */
@@ -369,7 +369,7 @@ void    nos_free(void *mp);
  *          to have this function compiled in.
  * @sa      nosMemAlloc, nosMemCopy
  */
-NANOEXT void nosMemSet(void *buf, char val, UINT_t count);
+NANOEXT void POSCALL nosMemSet(void *buf, char val, UINT_t count);
 
 #if NOSCFG_MEM_OVWR_STANDARD != 0
 #ifdef memset
@@ -393,7 +393,7 @@ NANOEXT void nosMemSet(void *buf, char val, UINT_t count);
  *          to have this function compiled in.
  * @sa      nosMemAlloc, nosMemSet
  */
-NANOEXT void nosMemCopy(void *dst, void *src, UINT_t count);
+NANOEXT void POSCALL nosMemCopy(void *dst, void *src, UINT_t count);
 
 #if NOSCFG_MEM_OVWR_STANDARD != 0
 #ifdef memcpy
@@ -451,7 +451,7 @@ NANOEXT void nosMemCopy(void *dst, void *src, UINT_t count);
  *          software interrupt 0 to feed keyboard data into the nano layer.
  * @sa      nosKeyGet, nosKeyPressed, NOSCFG_CONIO_KEYBUFSIZE
  */
-NANOEXT void  c_nos_keyinput(UVAR_t key);
+NANOEXT void POSCALL c_nos_keyinput(UVAR_t key);
 
 /**
  * Wait and get the code of the next pressed key.
@@ -462,7 +462,7 @@ NANOEXT void  c_nos_keyinput(UVAR_t key);
  *          to have this function compiled in.
  * @sa      nosKeyPressed, c_nos_keyinput, NOSCFG_CONIO_KEYBUFSIZE
  */
-NANOEXT char  nosKeyGet(void);
+NANOEXT char POSCALL nosKeyGet(void);
 
 /**
  * Test if a key was pressed.
@@ -473,7 +473,7 @@ NANOEXT char  nosKeyGet(void);
  *          to have this function compiled in.
  * @sa      nosKeyGet, c_nos_keyinput, NOSCFG_CONIO_KEYBUFSIZE
  */
-NANOEXT UVAR_t  nosKeyPressed(void);
+NANOEXT UVAR_t POSCALL nosKeyPressed(void);
 
 #endif  /* NOSCFG_FEATURE_CONIN */
 
@@ -500,7 +500,7 @@ NANOEXT UVAR_t  nosKeyPressed(void);
  *          value of this function is ignored.
  * @sa      c_nos_putcharReady, c_nos_keyinput
  */
-NANOEXT UVAR_t  p_putchar(char c); 
+NANOEXT UVAR_t POSCALL p_putchar(char c); 
 #endif
 
 
@@ -526,7 +526,7 @@ NANOEXT UVAR_t  p_putchar(char c);
  * @note To enable this handshake function, the define
  *       ::NOSCFG_CONOUT_HANDSHAKE must be set to 1.
  */
-NANOEXT void  c_nos_putcharReady(void);
+NANOEXT void POSCALL c_nos_putcharReady(void);
 #endif
 
 
@@ -540,7 +540,7 @@ NANOEXT void  c_nos_putcharReady(void);
  *          to have this function compiled in.
  * @sa      nosPrint, p_putchar
  */
-NANOEXT void  nosPrintChar(char c);
+NANOEXT void POSCALL nosPrintChar(char c);
 
 /**
  * Print a character string to the console or terminal.
@@ -551,7 +551,7 @@ NANOEXT void  nosPrintChar(char c);
  *          to have this function compiled in.
  * @sa      nosPrintChar, p_putchar
  */
-NANOEXT void  nosPrint(const char *s);
+NANOEXT void POSCALL nosPrint(const char *s);
 
 #endif
 
@@ -569,7 +569,7 @@ typedef void* NOSARG_t;
 
 #if DOX!=0 || ((NOSCFG_FEATURE_CONOUT != 0)&&(NOSCFG_FEATURE_PRINTF != 0))
 
-NANOEXT void n_printFormattedN(const char *fmt, NOSARG_t args);
+NANOEXT void POSCALL n_printFormattedN(const char *fmt, NOSARG_t args);
 
 #if DOX
 /**
@@ -587,7 +587,7 @@ NANOEXT void n_printFormattedN(const char *fmt, NOSARG_t args);
  *          nosPrintf2 (2 arguments) to nosPrintf6 (6 arguments).
  * @sa      nosPrintChar, nosPrint
  */
-NANOEXT void nosPrintf1(const char *fmt, arg a1);
+NANOEXT void POSCALL nosPrintf1(const char *fmt, arg a1);
 
 #else /* DOX!=0 */
 #define nosPrintf1(fmt, a1)  \
@@ -656,11 +656,12 @@ NANOEXT void nosPrintf1(const char *fmt, arg a1);
  *          nosSPrintf2 (2 arguments) to nosSPrintf6 (6 arguments).
  * @sa      nosPrintf1, nosPrint
  */
-NANOEXT void nosSPrintf1(char *buf, const char *fmt, arg a1);
+NANOEXT void POSCALL nosSPrintf1(char *buf, const char *fmt, arg a1);
 
 #else /* DOX!=0 */
 
-NANOEXT void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args);
+NANOEXT void POSCALL n_sprintFormattedN(char *buf, const char *fmt,
+                                        NOSARG_t args);
 
 #define nosSPrintf1(buf, fmt, a1)  \
   do { \
@@ -762,8 +763,8 @@ NANOEXT void n_sprintFormattedN(char *buf, const char *fmt, NOSARG_t args);
  *          nosSemaGet, nosSemaWait, nosMutexLock).
  * @sa      nosBottomHalfUnregister, nosBottomHalfStart
  */
-NANOEXT VAR_t  nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func,
-                                     void *arg);
+NANOEXT VAR_t POSCALL nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func,
+                                            void *arg);
 
 /**
  * Bottom half function. Unregisters a bottom half.
@@ -789,7 +790,7 @@ NANOEXT VAR_t  nosBottomHalfRegister(UVAR_t number, NOSBHFUNC_t func,
  *          to enable bottom half support.
  * @sa      nosBottomHalfRegister, nosBottomHalfUnregister
  */
-NANOEXT void nosBottomHalfStart(UVAR_t number);
+NANOEXT void POSCALL nosBottomHalfStart(UVAR_t number);
 
 #endif /* NOSCFG_FEATURE_BOTTOMHALF */
 #undef NANOEXT
@@ -883,7 +884,7 @@ typedef enum {
  *          the registry and this function.@n
  * @sa nosGetNameByHandle
  */
-NANOEXT NOSGENERICHANDLE_t  nosGetHandleByName(
+NANOEXT NOSGENERICHANDLE_t POSCALL nosGetHandleByName(
                                  NOSREGTYPE_t objtype, const char *objname);
 
 
@@ -906,9 +907,9 @@ NANOEXT NOSGENERICHANDLE_t  nosGetHandleByName(
  *          the registry and this function.@n
  * @sa nosGetHandleByName
  */
-NANOEXT VAR_t nosGetNameByHandle(NOSGENERICHANDLE_t handle,
-                                 char *buffer, VAR_t bufsize,
-                                 NOSREGTYPE_t what);
+NANOEXT VAR_t POSCALL nosGetNameByHandle(NOSGENERICHANDLE_t handle,
+                                         char *buffer, VAR_t bufsize,
+                                         NOSREGTYPE_t what);
 
 #if DOX!=0  ||  NOSCFG_FEATURE_USERREG != 0
 /**
@@ -928,7 +929,7 @@ NANOEXT VAR_t nosGetNameByHandle(NOSGENERICHANDLE_t handle,
  *          The maximum length of a registry key string is ::NOS_MAX_REGKEYLEN.
  * @sa nosRegGet, nosRegDel
  */
-NANOEXT VAR_t nosRegSet(const char *keyname, KEYVALUE_t keyvalue);
+NANOEXT VAR_t POSCALL nosRegSet(const char *keyname, KEYVALUE_t keyvalue);
 
 /**
  * Registry function. Returns the binary value that is assigned to a
@@ -943,7 +944,7 @@ NANOEXT VAR_t nosRegSet(const char *keyname, KEYVALUE_t keyvalue);
  *          must be defined to 1 to enable the registry and this function.
  * @sa nosRegSet, nosRegDel
  */
-NANOEXT VAR_t nosRegGet(const char *keyname, KEYVALUE_t *keyvalue);
+NANOEXT VAR_t POSCALL nosRegGet(const char *keyname, KEYVALUE_t *keyvalue);
 
 /**
  * Registry function. Deletes a registry key string.
@@ -953,7 +954,7 @@ NANOEXT VAR_t nosRegGet(const char *keyname, KEYVALUE_t *keyvalue);
  *          must be defined to 1 to enable the registry and this function.
  * @sa nosRegSet, nosRegGet
  */
-NANOEXT VAR_t nosRegDel(const char *keyname);
+NANOEXT VAR_t POSCALL nosRegDel(const char *keyname);
 #endif
 
 #if DOX!=0 || NOSCFG_FEATURE_REGQUERY != 0
@@ -977,7 +978,7 @@ NANOEXT VAR_t nosRegDel(const char *keyname);
  *          must be defined to 1 to enable the registry and this function.
  * @sa nosRegQueryElem, nosRegQueryEnd
  */
-NANOEXT NOSREGQHANDLE_t  nosRegQueryBegin(NOSREGTYPE_t type);
+NANOEXT NOSREGQHANDLE_t POSCALL nosRegQueryBegin(NOSREGTYPE_t type);
 
 /**
  * Registry function. Returns the next found element in a query.
@@ -998,8 +999,9 @@ NANOEXT NOSREGQHANDLE_t  nosRegQueryBegin(NOSREGTYPE_t type);
  *          must be defined to 1 to enable the registry and this function.
  * @sa nosRegQueryBegin, nosRegQueryEnd
  */
-NANOEXT VAR_t nosRegQueryElem(NOSREGQHANDLE_t qh, NOSGENERICHANDLE_t *genh,
-                              char* namebuf, VAR_t bufsize);
+NANOEXT VAR_t POSCALL nosRegQueryElem(NOSREGQHANDLE_t qh,
+                                      NOSGENERICHANDLE_t *genh,
+                                      char* namebuf, VAR_t bufsize);
 
 /**
  * Registry function. Finnishes a query.
@@ -1011,7 +1013,7 @@ NANOEXT VAR_t nosRegQueryElem(NOSREGQHANDLE_t qh, NOSGENERICHANDLE_t *genh,
  *          must be defined to 1 to enable the registry and this function.
  * @sa nosRegQueryBegin, nosRegQueryElem
  */
-NANOEXT void nosRegQueryEnd(NOSREGQHANDLE_t qh);
+NANOEXT void POSCALL nosRegQueryEnd(NOSREGQHANDLE_t qh);
 #endif
 
 #endif /* NOSCFG_FEATURE_REGISTRY */
@@ -1039,7 +1041,7 @@ NANOEXT void nosRegQueryEnd(NOSREGQHANDLE_t qh);
  * @note    ::NOSCFG_FEATURE_CPUUSAGE must be defined to 1
  *          to have this function compiled in.
  */
-UVAR_t nosCpuUsage(void);
+UVAR_t POSCALL nosCpuUsage(void);
 #endif
 /** @} */
 
@@ -1099,9 +1101,11 @@ typedef  POSTASK_t  NOSTASK_t;
  *          to have this function compiled in.
  * @sa      nosTaskExit
  */
-NANOEXT NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                                VAR_t priority, UINT_t stacksize,
-                                const char* name);
+NANOEXT NOSTASK_t POSCALL nosTaskCreate(POSTASKFUNC_t funcptr,
+                                        void *funcarg,
+                                        VAR_t priority,
+                                        UINT_t stacksize,
+                                        const char* name);
 
 
 #if (DOX!=0) || (POSCFG_FEATURE_YIELD != 0)
@@ -1116,7 +1120,7 @@ NANOEXT NOSTASK_t nosTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
  * @sa      nosTaskSleep
  */
 #if DOX
-NANOEXT void nosTaskYield(void);
+NANOEXT void POSCALL nosTaskYield(void);
 #else
 #define nosTaskYield()  posTaskYield()
 #endif
@@ -1140,7 +1144,7 @@ NANOEXT void nosTaskYield(void);
  * @sa      nosTaskYield, HZ, MS
  */
 #if DOX
-NANOEXT void nosTaskSleep(UINT_t ticks);
+NANOEXT void POSCALL nosTaskSleep(UINT_t ticks);
 #else
 #define nosTaskSleep(ticks)  posTaskSleep(ticks)
 #endif
@@ -1157,7 +1161,7 @@ NANOEXT void nosTaskSleep(UINT_t ticks);
  * @sa      nosTaskCreate
  */
 #if DOX
-NANOEXT void nosTaskExit(void);
+NANOEXT void POSCALL nosTaskExit(void);
 #else
 #define nosTaskExit()  posTaskExit()
 #endif
@@ -1175,7 +1179,7 @@ NANOEXT void nosTaskExit(void);
  * @sa      nosTaskCreate, nosTaskSetPriority
  */
 #if DOX
-NANOEXT NOSTASK_t nosTaskGetCurrent(void);
+NANOEXT NOSTASK_t POSCALL nosTaskGetCurrent(void);
 #else
 #define nosTaskGetCurrent()  (NOSTASK_t)posTaskGetCurrent()
 #endif
@@ -1198,7 +1202,7 @@ NANOEXT NOSTASK_t nosTaskGetCurrent(void);
  * @sa      nosTaskCreate, nosTaskExit
  */
 #if DOX
-NANOEXT VAR_t nosTaskUnused(NOSTASK_t taskhandle);
+NANOEXT VAR_t POSCALL nosTaskUnused(NOSTASK_t taskhandle);
 #else
 #define nosTaskUnused(th)  posTaskUnused((POSTASK_t)(th))
 #endif
@@ -1221,7 +1225,8 @@ NANOEXT VAR_t nosTaskUnused(NOSTASK_t taskhandle);
  * @sa      nosTaskGetPriority, nosTaskGetCurrent, nosTaskCreate
  */
 #if DOX
-NANOEXT VAR_t nosTaskSetPriority(NOSTASK_t taskhandle, VAR_t priority);
+NANOEXT VAR_t POSCALL nosTaskSetPriority(NOSTASK_t taskhandle,
+                                         VAR_t priority);
 #else
 #define nosTaskSetPriority(th, prio) posTaskSetPriority((POSTASK_t)(th),prio)
 #endif
@@ -1240,7 +1245,7 @@ NANOEXT VAR_t nosTaskSetPriority(NOSTASK_t taskhandle, VAR_t priority);
  * @sa      nosTaskSetPriority, nosTaskGetCurrent, nosTaskCreate
  */
 #if DOX
-NANOEXT VAR_t nosTaskGetPriority(NOSTASK_t taskhandle);
+NANOEXT VAR_t POSCALL nosTaskGetPriority(NOSTASK_t taskhandle);
 #else
 #define nosTaskGetPriority(th)  posTaskGetPriority((POSTASK_t)(th))
 #endif
@@ -1261,7 +1266,7 @@ NANOEXT VAR_t nosTaskGetPriority(NOSTASK_t taskhandle);
  * @sa      nosTaskSchedUnlock
  */
 #if DOX
-NANOEXT void nosTaskSchedLock(void);
+NANOEXT void POSCALL nosTaskSchedLock(void);
 #else
 #define nosTaskSchedLock()  posTaskSchedLock()
 #endif
@@ -1278,7 +1283,7 @@ NANOEXT void nosTaskSchedLock(void);
  * @sa      nosTaskSchedLock
  */
 #if DOX
-NANOEXT void nosTaskSchedUnlock(void);
+NANOEXT void POSCALL nosTaskSchedUnlock(void);
 #else
 #define nosTaskSchedUnlock()  posTaskSchedUnlock()
 #endif
@@ -1296,7 +1301,7 @@ NANOEXT void nosTaskSchedUnlock(void);
  * @return  pointer to user memory space.
  */
 #if DOX
-NANOEXT void* nosTaskGetUserspace(void);
+NANOEXT void* POSCALL nosTaskGetUserspace(void);
 #else
 #define nosTaskGetUserspace()  posTaskGetUserspace()
 #endif
@@ -1326,7 +1331,7 @@ typedef POSIDLEFUNC_t NOSIDLEFUNC_t;
  *          be defined as macro to decrease code size.
  */
 #if DOX
-NANOEXT NOSIDLEFUNC_t nosInstallIdleTaskHook(NOSIDLEFUNC_t idlefunc);
+NANOEXT NOSIDLEFUNC_t POSCALL nosInstallIdleTaskHook(NOSIDLEFUNC_t idlefunc);
 #else
 #define nosInstallIdleTaskHook(ifunc)  posInstallIdleTaskHook(ifunc)
 #endif
@@ -1371,8 +1376,8 @@ typedef  POSSEMA_t  NOSSEMA_t;
  * @sa      nosSemaDestroy, nosSemaGet, nosSemaWait, nosSemaSignal
  */
 #if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
-NANOEXT NOSSEMA_t nosSemaCreate(INT_t initcount, UVAR_t options,
-                                const char *name);
+NANOEXT NOSSEMA_t POSCALL nosSemaCreate(INT_t initcount, UVAR_t options,
+                                        const char *name);
 #else
 #define nosSemaCreate(i, o, n)  (NOSSEMA_t) posSemaCreate(i);
 #endif
@@ -1391,7 +1396,7 @@ NANOEXT NOSSEMA_t nosSemaCreate(INT_t initcount, UVAR_t options,
  * @sa      nosSemaCreate
  */
 #if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
-NANOEXT void nosSemaDestroy(NOSSEMA_t sema);
+NANOEXT void POSCALL nosSemaDestroy(NOSSEMA_t sema);
 #else
 #define nosSemaDestroy(sema)  posSemaDestroy((POSSEMA_t)(sema))
 #endif
@@ -1411,7 +1416,7 @@ NANOEXT void nosSemaDestroy(NOSSEMA_t sema);
  *          be defined as macro to decrease code size.
  * @sa      nosSemaGet, nosSemaWait, nosSemaCreate
  */
-NANOEXT  VAR_t nosSemaSignal(NOSSEMA_t sema);
+NANOEXT VAR_t POSCALL nosSemaSignal(NOSSEMA_t sema);
 #else
 #define nosSemaSignal(sem)  posSemaSignal((POSSEMA_t)(sem))
 #endif
@@ -1431,7 +1436,7 @@ NANOEXT  VAR_t nosSemaSignal(NOSSEMA_t sema);
  *          be defined as macro to decrease code size.
  * @sa      nosSemaWait, nosSemaSignal, nosSemaCreate
  */
-NANOEXT VAR_t nosSemaGet(NOSSEMA_t sema);
+NANOEXT VAR_t POSCALL nosSemaGet(NOSSEMA_t sema);
 #else
 #define nosSemaGet(sem)  posSemaGet((POSSEMA_t)(sem))
 #endif
@@ -1459,7 +1464,7 @@ NANOEXT VAR_t nosSemaGet(NOSSEMA_t sema);
  *          be defined as macro to decrease code size.
  * @sa      nosSemaGet, nosSemaSignal, nosSemaCreate, HZ, MS
  */
-NANOEXT VAR_t nosSemaWait(NOSSEMA_t sema, UINT_t timeoutticks);
+NANOEXT VAR_t POSCALL nosSemaWait(NOSSEMA_t sema, UINT_t timeoutticks);
 #else
 #if POSCFG_FEATURE_SEMAWAIT
 #define nosSemaWait(sem, to)  posSemaWait((POSSEMA_t)(sem), to)
@@ -1502,7 +1507,7 @@ typedef  POSMUTEX_t  NOSMUTEX_t;
  * @sa      nosMutexDestroy, nosMutexLock, nosMutexTryLock, nosMutexUnlock
  */
 #if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
-NANOEXT NOSMUTEX_t nosMutexCreate(UVAR_t options, const char *name);
+NANOEXT NOSMUTEX_t POSCALL nosMutexCreate(UVAR_t options, const char *name);
 #else
 #define nosMutexCreate(opt, name)  (NOSMUTEX_t) posMutexCreate()
 #endif
@@ -1521,7 +1526,7 @@ NANOEXT NOSMUTEX_t nosMutexCreate(UVAR_t options, const char *name);
  * @sa      nosMutexCreate
  */
 #if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
-NANOEXT void nosMutexDestroy(NOSMUTEX_t mutex);
+NANOEXT void POSCALL nosMutexDestroy(NOSMUTEX_t mutex);
 #else
 #define nosMutexDestroy(mutex)  posMutexDestroy((POSMUTEX_t)(mutex))
 #endif
@@ -1546,7 +1551,7 @@ NANOEXT void nosMutexDestroy(NOSMUTEX_t mutex);
  * @sa      nosMutexLock, nosMutexUnlock, nosMutexCreate
  */
 #if DOX
-NANOEXT VAR_t nosMutexTryLock(NOSMUTEX_t mutex);
+NANOEXT VAR_t POSCALL nosMutexTryLock(NOSMUTEX_t mutex);
 #else
 #define nosMutexTryLock(mutex)  posMutexTryLock((POSMUTEX_t)(mutex))
 #endif
@@ -1567,7 +1572,7 @@ NANOEXT VAR_t nosMutexTryLock(NOSMUTEX_t mutex);
  * @sa      nosMutexTryLock, nosMutexUnlock, nosMutexCreate
  */
 #if DOX
-NANOEXT VAR_t nosMutexLock(NOSMUTEX_t mutex);
+NANOEXT VAR_t POSCALL nosMutexLock(NOSMUTEX_t mutex);
 #else
 #define nosMutexLock(mutex)  posMutexLock((POSMUTEX_t)(mutex))
 #endif
@@ -1585,7 +1590,7 @@ NANOEXT VAR_t nosMutexLock(NOSMUTEX_t mutex);
  * @sa      nosMutexLock, nosMutexTryLock, nosMutexCreate
  */
 #if DOX
-NANOEXT VAR_t nosMutexUnlock(NOSMUTEX_t mutex);
+NANOEXT VAR_t POSCALL nosMutexUnlock(NOSMUTEX_t mutex);
 #else
 #define nosMutexUnlock(mutex)  posMutexUnlock((POSMUTEX_t)(mutex))
 #endif
@@ -1624,7 +1629,7 @@ NANOEXT VAR_t nosMutexUnlock(NOSMUTEX_t mutex);
  *          ::NOSCFG_FEATURE_MEMALLOC to 1.
  * @sa      nosMessageSend, nosMessageGet, nosMessageFree
  */
-NANOEXT void* nosMessageAlloc(UINT_t msgSize);
+NANOEXT void* POSCALL nosMessageAlloc(UINT_t msgSize);
 
 /**
  * Message box function. Frees a message buffer again.
@@ -1635,7 +1640,7 @@ NANOEXT void* nosMessageAlloc(UINT_t msgSize);
  *          to have message box support compiled in.
  * @sa      nosMessageGet, nosMessageSend, nosMessageAlloc
  */
-NANOEXT void nosMessageFree(void *buf);
+NANOEXT void POSCALL nosMessageFree(void *buf);
 
 /**
  * Message box function. Sends a message to a task.
@@ -1649,7 +1654,7 @@ NANOEXT void nosMessageFree(void *buf);
  *          to have message box support compiled in.
  * @sa      nosMessageAlloc, nosMessageGet
  */
-NANOEXT VAR_t nosMessageSend(void *buf, NOSTASK_t taskhandle);
+NANOEXT VAR_t POSCALL nosMessageSend(void *buf, NOSTASK_t taskhandle);
 
 /**
  * Message box function. Gets a new message from the message box.
@@ -1666,7 +1671,7 @@ NANOEXT VAR_t nosMessageSend(void *buf, NOSTASK_t taskhandle);
  *          nosMessageWait, nosMessageSend
  */
 #if DOX
-NANOEXT void* nosMessageGet(void);
+NANOEXT void* POSCALL nosMessageGet(void);
 #else
 #define  nosMessageGet()  posMessageGet()
 #endif
@@ -1697,7 +1702,7 @@ NANOEXT void* nosMessageGet(void);
  *          nosMessageSend, HZ, MS
  */
 #if DOX
-NANOEXT void* nosMessageWait(UINT_t timeoutticks);
+NANOEXT void* POSCALL nosMessageWait(UINT_t timeoutticks);
 #else
 #define nosMessageWait(to)  posMessageWait(to)
 #endif
@@ -1718,7 +1723,7 @@ NANOEXT void* nosMessageWait(UINT_t timeoutticks);
  * @sa      nosMessageGet, nosMessageWait
  */
 #if DOX
-NANOEXT VAR_t nosMessageAvailable(void);
+NANOEXT VAR_t POSCALL nosMessageAvailable(void);
 #else
 #define nosMessageAvailable()  posMessageAvailable()
 #endif
@@ -1763,7 +1768,7 @@ typedef  POSFLAG_t  NOSFLAG_t;
  * @sa      nosFlagGet, nosFlagSet, nosFlagDestroy
  */
 #if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
-NANOEXT NOSFLAG_t nosFlagCreate(const char* name);
+NANOEXT NOSFLAG_t POSCALL nosFlagCreate(const char* name);
 #else
 #define nosFlagCreate(name)  (NOSFLAG_t) posFlagCreate()
 #endif
@@ -1782,7 +1787,7 @@ NANOEXT NOSFLAG_t nosFlagCreate(const char* name);
  * @sa      nosFlagCreate
  */
 #if (DOX!=0) || (NOSCFG_FEATURE_REGISTRY != 0)
-NANOEXT void nosFlagDestroy(NOSFLAG_t flg);
+NANOEXT void POSCALL nosFlagDestroy(NOSFLAG_t flg);
 #else
 #define nosFlagDestroy(flg)  posFlagDestroy((POSFLAG_t)(flg))
 #endif
@@ -1803,7 +1808,7 @@ NANOEXT void nosFlagDestroy(NOSFLAG_t flg);
  * @sa      nosFlagCreate, nosFlagGet, nosFlagWait
  */
 #if DOX
-NANOEXT VAR_t nosFlagSet(NOSFLAG_t flg, UVAR_t flgnum);
+NANOEXT VAR_t POSCALL nosFlagSet(NOSFLAG_t flg, UVAR_t flgnum);
 #else
 #define nosFlagSet(flg, num)  posFlagSet((POSFLAG_t)(flg), num)
 #endif
@@ -1825,7 +1830,7 @@ NANOEXT VAR_t nosFlagSet(NOSFLAG_t flg, UVAR_t flgnum);
  * @sa      nosFlagCreate, nosFlagSet, nosFlagWait
  */
 #if DOX
-NANOEXT VAR_t nosFlagGet(NOSFLAG_t flg, UVAR_t mode);
+NANOEXT VAR_t POSCALL nosFlagGet(NOSFLAG_t flg, UVAR_t mode);
 #else
 #define nosFlagGet(flg, mode)  posFlagGet((POSFLAG_t)(flg), mode)
 #endif
@@ -1853,7 +1858,7 @@ NANOEXT VAR_t nosFlagGet(NOSFLAG_t flg, UVAR_t mode);
  * @sa      nosFlagCreate, nosFlagSet, nosFlagGet, HZ, MS
  */
 #if DOX
-NANOEXT VAR_t nosFlagWait(NOSFLAG_t flg, UINT_t timeoutticks);
+NANOEXT VAR_t POSCALL nosFlagWait(NOSFLAG_t flg, UINT_t timeoutticks);
 #else
 #define nosFlagWait(flg, to)  posFlagWait((POSFLAG_t)(flg), to)
 #endif
@@ -1904,7 +1909,7 @@ typedef  POSTIMER_t  NOSTIMER_t;
  * @sa      nosTimerSet, nosTimerStart, nosTimerDestroy
  */
 #if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
-NANOEXT NOSTIMER_t  nosTimerCreate(const char *name);
+NANOEXT NOSTIMER_t POSCALL nosTimerCreate(const char *name);
 #else
 #define nosTimerCreate(name)  (NOSTIMER_t) posTimerCreate()
 #endif
@@ -1929,8 +1934,8 @@ NANOEXT NOSTIMER_t  nosTimerCreate(const char *name);
  * @sa      nosTimerCreate, nosTimerStart
  */
 #if DOX
-NANOEXT VAR_t nosTimerSet(NOSTIMER_t tmr, NOSSEMA_t sema,
-                          UINT_t waitticks, UINT_t periodticks);
+NANOEXT VAR_t POSCALL nosTimerSet(NOSTIMER_t tmr, NOSSEMA_t sema,
+                                  UINT_t waitticks, UINT_t periodticks);
 #else
 #define nosTimerSet(t, s, w, p) \
           posTimerSet((POSTIMER_t)(t), (POSSEMA_t)(s), w, p)
@@ -1950,7 +1955,7 @@ NANOEXT VAR_t nosTimerSet(NOSTIMER_t tmr, NOSSEMA_t sema,
  * @sa      nosTimerStop, nosTimerFired
  */
 #if DOX
-NANOEXT VAR_t nosTimerStart(NOSTIMER_t tmr);
+NANOEXT VAR_t POSCALL nosTimerStart(NOSTIMER_t tmr);
 #else
 #define nosTimerStart(tmr)  posTimerStart((POSTIMER_t)(tmr))
 #endif
@@ -1968,7 +1973,7 @@ NANOEXT VAR_t nosTimerStart(NOSTIMER_t tmr);
  * @sa      nosTimerStart, nosTimerDestroy
  */
 #if DOX
-NANOEXT VAR_t nosTimerStop(NOSTIMER_t tmr);
+NANOEXT VAR_t POSCALL nosTimerStop(NOSTIMER_t tmr);
 #else
 #define nosTimerStop(tmr)  posTimerStop((POSTIMER_t)(tmr))
 #endif
@@ -1987,7 +1992,7 @@ NANOEXT VAR_t nosTimerStop(NOSTIMER_t tmr);
  * @sa      nosTimerCreate
  */
 #if DOX!=0 || NOSCFG_FEATURE_REGISTRY != 0
-NANOEXT void nosTimerDestroy(NOSTIMER_t tmr);
+NANOEXT void POSCALL nosTimerDestroy(NOSTIMER_t tmr);
 #else
 #define nosTimerDestroy(tmr)  posTimerDestroy((POSTIMER_t)(tmr))
 #endif
@@ -2009,7 +2014,7 @@ NANOEXT void nosTimerDestroy(NOSTIMER_t tmr);
  * @sa      nosTimerCreate, nosTimerSet, nosTimerStart
  */
 #if DOX
-NANOEXT VAR_t nosTimerFired(NOSTIMER_t tmr);
+NANOEXT VAR_t POSCALL nosTimerFired(NOSTIMER_t tmr);
 #else
 #define nosTimerFired(tmr)  posTimerFired((POSTIMER_t)(tmr))
 #endif
@@ -2058,8 +2063,9 @@ NANOEXT VAR_t nosTimerFired(NOSTIMER_t tmr);
  * @note    This function replaces the function ::posInit if the nano
  *          layer is enabled and linked to the destination application.
  */
-NANOEXT void  nosInit(POSTASKFUNC_t firstfunc, void *funcarg, VAR_t priority,
-                      UINT_t taskStackSize, UINT_t idleStackSize);
+NANOEXT void POSCALL nosInit(POSTASKFUNC_t firstfunc,
+                             void *funcarg, VAR_t priority,
+                             UINT_t taskStackSize, UINT_t idleStackSize);
 
 #ifndef _N_CORE_C
 #ifndef _POSCORE_C

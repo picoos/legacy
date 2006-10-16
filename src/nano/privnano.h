@@ -29,7 +29,7 @@
  *
  *  This file is part of the pico]OS realtime operating system.
  *
- *  $Id: privnano.h,v 1.2 2005/01/03 16:36:09 dkuschel Exp $
+ *  $Id: privnano.h,v 1.3 2005/01/15 21:15:56 dkuschel Exp $
  *
  */
 
@@ -90,10 +90,13 @@ typedef struct regelem* REGELEM_t;
 
 #ifndef _N_REG_C
 
-extern REGELEM_t nos_regNewSysKey(NOSREGTYPE_t type, const char* name);
-extern void nos_regDelSysKey(NOSREGTYPE_t type, NOSGENERICHANDLE_t handle,
-                             REGELEM_t delre);
-extern void  nos_regEnableSysKey(REGELEM_t re, NOSGENERICHANDLE_t handle);
+extern REGELEM_t POSCALL nos_regNewSysKey(NOSREGTYPE_t type,
+                                          const char* name);
+extern void POSCALL nos_regDelSysKey(NOSREGTYPE_t type,
+                                     NOSGENERICHANDLE_t handle,
+                                     REGELEM_t delre);
+extern void  POSCALL nos_regEnableSysKey(REGELEM_t re,
+                                         NOSGENERICHANDLE_t handle);
 
 #endif /* _N_REG_C */
 
