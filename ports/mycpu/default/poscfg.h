@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.4 2006/03/14 18:39:32 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
  */
 
 
@@ -394,7 +394,7 @@
  * If this definition is set to 1, the function ::posTaskUnused will
  * be included into the pico]OS kernel.
  */
-#define POSCFG_FEATURE_TASKUNUSED    1
+#define POSCFG_FEATURE_TASKUNUSED    0
 
 /** Include message box functions.
  * If this definition is set to 1, the message box functions are
@@ -495,21 +495,21 @@
  * If this definition is set to 1, the list functions are
  * added to the user API.
  */
-#define POSCFG_FEATURE_LISTS         1
+#define POSCFG_FEATURE_LISTS         0
 
 /** Include function ::posListJoin.
  * If this definition is set to 1, the function ::posListJoin will
  * be included into the pico]OS kernel. Note that also
  * ::POSCFG_FEATURE_LISTS must be set to 1.
  */
-#define POSCFG_FEATURE_LISTJOIN      1
+#define POSCFG_FEATURE_LISTJOIN      0
 
 /** Include function ::posListLen.
  * If this definition is set to 1, the function ::posListLen will
  * be included into the pico]OS kernel. Note that also
  * ::POSCFG_FEATURE_LISTS must be set to 1.
  */
-#define POSCFG_FEATURE_LISTLEN       1
+#define POSCFG_FEATURE_LISTLEN       0
 
 /** Enable the debug help.
  * If this definition is set to 1, pico]OS exports the global
