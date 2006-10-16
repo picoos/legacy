@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.7 2006/03/14 18:39:24 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
  */
 
 
@@ -387,6 +387,11 @@
    unsigned char zeropage;    \
    void          *datastack;  \
    unsigned char savedzp[26];
+
+/* Set idle task hook function (this tests for Ctrl+C)
+ */
+extern void __fastcall__  handleCtrlC(void);
+#define HOOK_IDLETASK     handleCtrlC();
 
 
 #endif /* DOX */

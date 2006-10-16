@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.4 2006/03/11 13:04:02 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
  */
 
 
@@ -91,6 +91,7 @@ extern void  __fastcall__  useZSPage( unsigned char page );
 extern void  __fastcall__  freeAllZSPages( void );
 extern void  __fastcall__  pPrintErr( char *s );
 extern char* __fastcall__  getDataStackPtr( void );
+extern void  __fastcall__  testForCTRLC( void );
 
 
 
@@ -122,6 +123,10 @@ void timerInterruptHandler(void)
     c_pos_intEnter();
     c_pos_timerInterrupt();
     c_pos_intExit();
+  }
+  else
+  {
+    testForCTRLC();
   }
   inInterruptFlag_g = 0;
 }

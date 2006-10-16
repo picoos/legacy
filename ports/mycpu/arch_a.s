@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id: arch_a.s,v 1.4 2005/01/03 16:32:29 dkuschel Exp $
+; CVS-ID $Id: arch_a.s,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
 ;
 
 
@@ -53,6 +53,7 @@
     .export     doRtlibLock, doRtlibUnlock
     .export     _dropZSPage, _useZSPage, _freeAllZSPages
     .export     _getDataStackPtr, _p_pos_initArch
+    .export     _testForCTRLC, _handleCtrlC, _p_putchar
     .import     _posTaskExit
     .import     _posSemaCreate, _p_pos_sleep
     .import     _posSemaSignal, _p_pos_semaGet
@@ -60,7 +61,7 @@
     .import     rtlibLock, rtlibUnlock
     .import     sleephook, tsrHook, doneLibHook
     .import     __dint, __eint, __eintl
-    .import     k_multiplex, _exit
+    .import     k_multiplex, checkCtrlC, _exit
     .import     k_spinlock, k_spinunlock, k_setIdleFunc
     .import     k_getContext, k_setContext, k_restoreContext
     .import     k_allocFreeZSpage, k_allocFreeRamPage
@@ -68,9 +69,12 @@
     .import     k_prchar, incsp6, popa, popax
     .import     _posCurrentTask_g, _posNextTask_g
     .import     __errno, _inInterruptFlag_g
+    .import     kernelLocked, pusha
+    .import     ctrlcHandler, crt0brkFlag
     .importzp   sp, ptr1
 
     zpspace = 26   ; copied from asminc/zeropage.inc
+    KERN_TESTCTRLC = $0240  ;check for control+C
 
 
 
@@ -106,6 +110,8 @@ memstrp:  .res 2   ;ptr to memory info structure of TSR
 hkernel:  .res 2   ;handle to task that executes the kernel
 exitflag: .res 1   ;set when kernel task shall terminate the program
 donelibf: .res 2   ;pointer to donelib function
+inIdleHk: .res 1   ;flag: nonzero while the MyCPU is in the idle hook
+ctrlC:    .res 1   ;nonzero when ctrl+C was pressed
 
 rtsem:    .res 2   ;runtime library locking semaphore
 rtactr:   .res 1   ;how often a task has got the lock
@@ -136,6 +142,7 @@ ktask:    .res 2   ;handle of the task that has the lock
 .endproc
 
 
+
 ; ---------------------------------------------------------------
 ; unsigned char setupZeropage(
 ;                  unsigned char page, void *datastack );
@@ -162,6 +169,7 @@ ktask:    .res 2   ;handle of the task that has the lock
     rts
 
 .endproc
+
 
 
 ; ---------------------------------------------------------------
@@ -267,6 +275,50 @@ L2: dex
 
 
 ; ---------------------------------------------------------------
+; void testForCTRLC(void)
+; ---------------------------------------------------------------
+
+.proc _testForCTRLC
+
+    lda     kernelLocked
+    jnz     L1
+    jsr     k_spinlock
+    jsr     (KERN_TESTCTRLC)
+    php
+    jsr     k_spinunlock
+    plp
+    jnc     L1
+    inc     ctrlC
+L1: rts
+
+.endproc
+
+
+
+; ---------------------------------------------------------------
+; void _handleCtrlC(UVAR_t arg)
+; ---------------------------------------------------------------
+
+.proc _handleCtrlC
+
+    lda     ctrlC
+    jpz     L1
+    lda     _inInterruptFlag_g
+    ora     inIdleHk
+    jnz     L1  ;called from wrong task, delay execution of ctrl+C
+    lda     ctrlcHandler
+    ora     ctrlcHandler+1
+    jpz     L2
+    jmp     (ctrlcHandler)
+L2: inc     crt0brkFlag
+    jmp     _exit
+L1: rts
+
+.endproc
+
+
+
+; ---------------------------------------------------------------
 ; void p_pos_startFirstContext(void)
 ; ---------------------------------------------------------------
 
@@ -280,7 +332,7 @@ L2: dex
 
     ;install hooks for cc65 runtime lib
     jsr     installHooks
-
+    
     ;disable interrupts in kernel
     jsr     __dint
 
@@ -534,6 +586,10 @@ L1: jpz     L1
     spt     donelibf
     lpt     #stopRTOS
     spt     doneLibHook
+    
+    ;install Ctrl-C checker
+    lpt     #_handleCtrlC
+    spt     checkCtrlC
 
     rts
 
@@ -614,12 +670,11 @@ L2: inc     kwctr
     sei     ;we want the interrupts to be enabled here!
     lda     ksem
     ldx     ksem+1
-  .byte $63  ;test: interrupts must be enabled here!
+;  .byte $63  ;test: interrupts must be enabled here!
     jsr     _p_pos_semaGet
-    cli  ;jsr     __dint
+    cli
     jsr     restoreZeropage
-    sei  ;jsr     __eint
-  .byte $63  ;test: interrupts must be enabled here!
+    sei
     lpt     _posCurrentTask_g
     spt     ktask
     plr
@@ -686,7 +741,7 @@ L2: inc     rtwctr
     jsr     __eint
     lda     rtsem
     ldx     rtsem+1
-  .byte $63  ;test: interrupts must be enabled here!
+;  .byte $63  ;test: interrupts must be enabled here!
     jsr     _p_pos_semaGet
     lpt     _posCurrentTask_g
     spt     rttask
@@ -723,7 +778,7 @@ L1: jsr     __eint
 
 .proc idlehook
 
-  .byte $63  ;test: interrupts must be enabled here!
+;  .byte $63  ;test: interrupts must be enabled here!
 
     ;set correct RAMPAGE
     lda     $3800  ;REG_RAMPAGE
@@ -735,6 +790,10 @@ L1: jsr     __eint
     lda     kwctr
     ora     exitflag
     jpz     L2
+
+    ;do nothing when the idle hook was called from within an interrupt
+    lda     _inInterruptFlag_g
+    jnz     L2
 
     ;get posCurrentTask_g->zeropage into accu
     lpt     _posCurrentTask_g
@@ -754,6 +813,7 @@ L1: lpa
     ;now we have set up rompage, rampage, zeropage, datastack
 
     ;unlock the kernel for a short moment!
+    inc     inIdleHk
     ldx     kactr
     jpz     L5
     phx
@@ -762,8 +822,6 @@ L3: jsr     doKernelUnlock
     
     ;we want the interrupts enabled here!
     sei
-
-  .byte $63  ;test: interrupts must be enabled here!
 
     ;test if the program shall be exited (only if we ran as TSR)
     lda     exitflag
@@ -775,13 +833,13 @@ L3: jsr     doKernelUnlock
     jnz     L6
     plx
     jsr     exitFromTSR
-  .byte $63  ;test: interrupts must be enabled here!
     jmp     L5
 L6:
     ;lock the kernel again
     plx
 L4: jsr     doKernelLock
     dxjp    L4
+    stz     inIdleHk
 
     ;we want the interrupts enabled here!
     sei
@@ -790,7 +848,7 @@ L4: jsr     doKernelLock
 L5: rbk     $3A00  ;REG_ZEROPAGE
 L2: rbk     $3800  ;REG_RAMPAGE
 
-  .byte $63  ;test: interrupts must be enabled here!
+;  .byte $63  ;test: interrupts must be enabled here!
 
     rts
 
@@ -864,15 +922,18 @@ _rts:
 
     jpc     L1  ;Are we running as TSR and need special handling?
 
+    ;check if exit() was called from interrupt or from idle hook
+    lda     _inInterruptFlag_g
+    ora     inIdleHk
+    jnz     L2
+
     ;switch to single threaded mode
     jsr     goSingleThreaded
 
-  .byte $63  ;test: interrupts must be enabled here!
+;  .byte $63  ;test: interrupts must be enabled here!
 
     ;call library destructors
     jsr     (donelibf)
-
-  .byte $63  ;test: interrupts must be enabled here!
 
     ;clean all common resources
     jsr     _freeAllZSPages
@@ -894,6 +955,12 @@ L1: ;This is tricky: We are running as TSR and must silently quit.
     inc     exitflag
     jmp     _posTaskExit
 
+L2: ;We can not exit because we are at interrupt level or in the idle hook.
+    pla    ;remove return address from stack (2 bytes)
+    pla
+    pla    ;get return value for exit() from stack
+    rts    ;this will jump back to the user's program behind the exit()-call
+
 .endproc
 
 
@@ -903,14 +970,13 @@ L1: ;This is tricky: We are running as TSR and must silently quit.
 
     ;stop the RTOS
     clc
+    stz     inIdleHk
     jsr     stopRTOS
 
-  .byte $63  ;test: interrupts must be enabled here!
+;  .byte $63  ;test: interrupts must be enabled here!
 
     ;clean all common resources
     jsr     _freeAllZSPages
-
-  .byte $63  ;test: interrupts must be enabled here!
 
     ;clean all memory that is associated with the TSR
     lpt     memstrp
@@ -929,13 +995,25 @@ L1: lpa     ;get and free stack-page
     clc
     jsr     k_allocFreeZSpage
 L2: pla     ;get and free ROM-Page
-  .byte $63  ;test: interrupts must be enabled here!
     clc
     jsr     k_allocFreeRamPage  ;Note: This function can also be used
                                 ;      to free a ROM-Page.
+;  .byte $63  ;test: interrupts must be enabled here!
     ;all done
-  .byte $63  ;test: interrupts must be enabled here!
     rts
+
+.endproc
+
+
+
+; ---------------------------------------------------------------
+; Minimal Nano-Layer Support
+; ---------------------------------------------------------------
+
+.proc _p_putchar
+
+    jsr     k_prchar
+    jmp     _handleCtrlC
 
 .endproc
 
@@ -948,18 +1026,20 @@ L2: pla     ;get and free ROM-Page
 _pPrintErr:
     txy
     tax
+pPrintErr:
 @L2:
     lpa
-    jpz  @L1
+    jpz     @L1
     phr
-    jsr  k_prchar
+    jsr     k_prchar
     plr
-    jmp  @L2
+    jmp     @L2
 @L1:
     rts
 
 
 _getDataStackPtr:
-    lda  sp
-    ldx  sp+1
+    lda     sp
+    ldx     sp+1
     rts
+
