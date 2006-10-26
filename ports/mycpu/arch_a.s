@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id: arch_a.s,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
+; CVS-ID $Id: arch_a.s,v 1.2 2006/10/16 19:44:42 dkuschel Exp $
 ;
 
 
@@ -207,14 +207,14 @@ L2: dex
     sta     $FF
     stx     $FE
     
+    ;flags
+    stz     $FD
+
     ;ptr to task function
     lda     temp+4
     ldx     temp+5
-    sta     $FD
-    stx     $FC
-
-    ;flags
-    stz     $FB
+    sta     $FC
+    stx     $FB
 
     ;registers (function argument)
     lda     temp+6
@@ -409,17 +409,19 @@ L1: rts
     lda     __errno+1
     spa
 
-    ;push program address to stack
+    ;get program address from stack
     ply
     plx
     iny
     jnz     L2
     inx
-L2: phx
-    phy
-
+L2:
     ;push flags
     php
+
+    ;push program address to stack
+    phx
+    phy
 
     ;push registers
     phr
