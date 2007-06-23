@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id: arch_a.s,v 1.2 2006/10/16 19:44:42 dkuschel Exp $
+; CVS-ID $Id: arch_a.s,v 1.3 2006/10/26 17:00:44 dkuschel Exp $
 ;
 
 
@@ -48,7 +48,7 @@
     .export     _p_pos_intContextSwitch
     .export     _p_pos_softContextSwitch
     .export     _p_pos_lock, _p_pos_unlock
-    .export     _saveContext, _pPrintErr
+    .export     _saveContext, _pPrintErr, _getCurrentOS
     .export     doKernelLock, doKernelUnlock
     .export     doRtlibLock, doRtlibUnlock
     .export     _dropZSPage, _useZSPage, _freeAllZSPages
@@ -127,15 +127,29 @@ ktask:    .res 2   ;handle of the task that has the lock
 
 
 ; ---------------------------------------------------------------
-; void _p_pos_initArch( void );
+; char getCurrentOS( void );
+; ---------------------------------------------------------------
+
+.proc _getCurrentOS
+
+    ;get the ID of the currently running Operating System
+    lda     #4
+    jsr     k_multiplex
+    txa
+    rts
+    
+.endproc
+
+
+
+; ---------------------------------------------------------------
+; void p_pos_initArch( void );
 ; ---------------------------------------------------------------
 
 .proc _p_pos_initArch
 
     ;Test if an other OS is running. If so, exit now.
-    lda     #4
-    jsr     k_multiplex
-    txa
+    jsr     _getCurrentOS
     jnz     _exit
     rts
 
