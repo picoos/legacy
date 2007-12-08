@@ -1,4 +1,10 @@
 
+Version 1.0.1:
+  o  define "POSCALL" added to every function prototype
+  o  port specific functions p_pos_lock() / p_pos_unlock() added
+  o  port for MyCPU (http://www.mycpu.eu) added
+
+
 Version 1.0.0:
   o  ARM port re-structured, new processors added
   o  function nosMemRealloc() added
