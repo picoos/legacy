@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id: arch_a.s,v 1.3 2006/10/26 17:00:44 dkuschel Exp $
+; CVS-ID $Id: arch_a.s,v 1.4 2007/06/23 11:08:10 dkuschel Exp $
 ;
 
 
@@ -114,14 +114,14 @@ inIdleHk: .res 1   ;flag: nonzero while the MyCPU is in the idle hook
 ctrlC:    .res 1   ;nonzero when ctrl+C was pressed
 
 rtsem:    .res 2   ;runtime library locking semaphore
-rtactr:   .res 1   ;how often a task has got the lock
-rtwctr:   .res 1   ;how many tasks are waiting for the lock
-rttask:   .res 2   ;handle of the task that has the lock
+rtactr:   .res 1   ;how often a task has got the rtlib lock
+rtwctr:   .res 1   ;how many tasks are waiting for the rtlib lock
+rttask:   .res 2   ;handle of the task that has the rtlib lock
 
 ksem:     .res 2   ;kernel locking semaphore
-kactr:    .res 1   ;how often a task has got the lock
-kwctr:    .res 1   ;how many tasks are waiting for the lock
-ktask:    .res 2   ;handle of the task that has the lock
+kactr:    .res 1   ;how often a task has got the kernel lock
+kwctr:    .res 1   ;how many tasks are waiting for the kernel lock
+ktask:    .res 2   ;handle of the task that has the kernel lock
 
 .code
 
@@ -230,12 +230,11 @@ L2: dex
     sta     $FC
     stx     $FB
 
-    ;registers (function argument)
+    ;registers (function argument in AX)
     lda     temp+6
     ldx     temp+7
     sta     $FA     ;A
     stx     $F9     ;X
-;    stz     $F8     ;Y
 
     ;REG_RAMPAGE
     lda     $3800   ;REG_RAMPAGE
@@ -512,39 +511,39 @@ _dropZSPage:
     ; void useZSPage( unsigned char page )
 _useZSPage:
     sec
-    jsr  getXYfromA
-    lda   bitval,y
-    jpc   @L
-    eor   #$ff
-    and   pages,x
+    jsr     getXYfromA
+    lda     bitval,y
+    jpc     @L
+    eor     #$ff
+    and     pages,x
     skc
-@L: ora   pages,x
-    sta   pages,x
+@L: ora     pages,x
+    sta     pages,x
     rts
 
     ; void freeAllZSPages( void )
 _freeAllZSPages:
     cla
 @N: pha
-    jsr   getXYfromA
-    lda   pages,x
-    and   bitval,y
-    jpz   @L
+    jsr     getXYfromA
+    lda     pages,x
+    and     bitval,y
+    jpz     @L
     pla
     pha
     clc
-    jsr   k_allocFreeZSpage
+    jsr     k_allocFreeZSpage
 @L: pla
     inc
-    jnz   @N
+    jnv     @N
     rts
 
 getXYfromA:
     tax
-    and   #7
+    and     #7
     tay
     txa
-    div   #8
+    div     #8
     tax
     rts
 
@@ -633,14 +632,14 @@ L2: sta     $ffff,y
 
 .proc restoreZeropage
 
-    lpt   _posCurrentTask_g
-    spt   L1+1
-    ldy   #TASKDATA::savedzp + zpspace - 1
-    ldx   #zpspace
-L1: lda   $ffff,y
-L2: sta   sp-1,x
+    lpt     _posCurrentTask_g
+    spt     L1+1
+    ldy     #TASKDATA::savedzp + zpspace - 1
+    ldx     #zpspace
+L1: lda     $ffff,y
+L2: sta     sp-1,x
     dey
-    dxjp  L1
+    dxjp    L1
     rts
 
 .endproc
@@ -686,7 +685,6 @@ L2: inc     kwctr
     sei     ;we want the interrupts to be enabled here!
     lda     ksem
     ldx     ksem+1
-;  .byte $63  ;test: interrupts must be enabled here!
     jsr     _p_pos_semaGet
     cli
     jsr     restoreZeropage
@@ -757,7 +755,6 @@ L2: inc     rtwctr
     jsr     __eint
     lda     rtsem
     ldx     rtsem+1
-;  .byte $63  ;test: interrupts must be enabled here!
     jsr     _p_pos_semaGet
     lpt     _posCurrentTask_g
     spt     rttask
@@ -793,8 +790,6 @@ L1: jsr     __eint
 
 
 .proc idlehook
-
-;  .byte $63  ;test: interrupts must be enabled here!
 
     ;set correct RAMPAGE
     lda     $3800  ;REG_RAMPAGE
@@ -863,9 +858,6 @@ L4: jsr     doKernelLock
     ;restore pages and return
 L5: rbk     $3A00  ;REG_ZEROPAGE
 L2: rbk     $3800  ;REG_RAMPAGE
-
-;  .byte $63  ;test: interrupts must be enabled here!
-
     rts
 
 .endproc
@@ -898,13 +890,22 @@ L2: rbk     $3800  ;REG_RAMPAGE
 
 .proc goSingleThreaded
 
-    ;ensure that no task is in the runtime library
+    ;check if this function is called by a "kernel task"
+    lda     kactr
+    jpz     L1
+    lpt     _posCurrentTask_g
+    cpx     ktask
+    jnz     L1
+    cpy     ktask+1
+    jpz     L2  ;yes, skip locking because it is already locked
+
+L1: ;ensure that no task is in the runtime library
     jsr     doRtlibLock
 
     ;ensure that no task is in the kernel
     jsr     doKernelLock
 
-    ;disable interrupts
+L2: ;disable interrupts
     jsr     k_spinlock
 
     ;uninstall idle handler
@@ -946,8 +947,6 @@ _rts:
     ;switch to single threaded mode
     jsr     goSingleThreaded
 
-;  .byte $63  ;test: interrupts must be enabled here!
-
     ;call library destructors
     jsr     (donelibf)
 
@@ -972,10 +971,10 @@ L1: ;This is tricky: We are running as TSR and must silently quit.
     jmp     _posTaskExit
 
 L2: ;We can not exit because we are at interrupt level or in the idle hook.
-    pla    ;remove return address from stack (2 bytes)
+    pla     ;remove return address from stack (2 bytes)
     pla
-    pla    ;get return value for exit() from stack
-    rts    ;this will jump back to the user's program behind the exit()-call
+    pla     ;get return value for exit() from stack
+    rts     ;this will jump back to the user's program behind the exit()-call
 
 .endproc
 
@@ -988,8 +987,6 @@ L2: ;We can not exit because we are at interrupt level or in the idle hook.
     clc
     stz     inIdleHk
     jsr     stopRTOS
-
-;  .byte $63  ;test: interrupts must be enabled here!
 
     ;clean all common resources
     jsr     _freeAllZSPages
@@ -1014,7 +1011,6 @@ L2: pla     ;get and free ROM-Page
     clc
     jsr     k_allocFreeRamPage  ;Note: This function can also be used
                                 ;      to free a ROM-Page.
-;  .byte $63  ;test: interrupts must be enabled here!
     ;all done
     rts
 
