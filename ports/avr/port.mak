@@ -30,15 +30,14 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.2 2004/03/13 19:33:26 dkuschel Exp $
+#  $Id: port.mak,v 1.3 2004/05/15 19:16:32 smocz Exp $
 
 
-# Set default compiler.
-# Possible compilers are currently GCC (GNU C).
-ifeq '$(strip $(COMPILER))' ''
-COMPILER = GCC
+# Define the MCU
+ifeq '$(strip $(MCU))' ''
+$(warning MCU not specified. Now using MCU=atmega32)
+MCU = atmega32
 endif
-export COMPILER
 
 # Set to 1 to include generic pico]OS "findbit" function
 GENERIC_FINDBIT = 0
@@ -101,15 +100,13 @@ else
 endif
 
 # Define Compiler Flags
-# TODO: extract -mcpu as constant
-CFLAGS += -mmcu=atmega32
+CFLAGS += -mmcu=$(MCU)
 CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 CFLAGS += -Wall -Wstrict-prototypes -c -o
 
 
 # Define Assembler Flags
-# TODO: extract -mcpu as constant
-ASFLAGS = -c -mmcu=atmega32 -Wa,-gstabs 
+ASFLAGS = -c -mmcu=$(MCU) -Wa,-gstabs 
 ASFLAGS += -x assembler-with-cpp -o
 
 
@@ -117,9 +114,8 @@ ASFLAGS += -x assembler-with-cpp -o
 #  -Wl   : pass arguments to the linker
 #  -Map  : create a map file
 #  --cref: add cross reference to the map file
-LDFLAGS  = -mmcu=atmega32
+LDFLAGS  = -mmcu=$(MCU)
 LDFLAGS += -Wl,-Map,$(DIR_OUT)/$(TARGET).map,--cref -o 
 
 # Define archiver flags
 ARFLAGS = r 
-
