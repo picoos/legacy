@@ -1,6 +1,6 @@
 /*
  *  Copyright (c) 2004, Swen Moczarski.
- *  All rights reserved. 
+ *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *      documentation and/or other materials provided with the distribution.
  *   3. The name of the author may not be used to endorse or promote
  *      products derived from this software without specific prior written
- *      permission. 
+ *      permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  *  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: timerdef.h,v 1.2 2004/06/15 16:25:12 smocz Exp $
+ * CVS-ID $Id: timerdef.h,v 1.3 2004/06/15 16:56:15 smocz Exp $
  */
 
 #ifndef TIMERDEF_H
@@ -42,50 +42,49 @@
 
 /**
  * In this file, the configuration for the timer will be defined.
- * 
+ *
  * To support a easy way to adapt the pico]OS AVR Port on other
- * cpu types, the configuration for the timer can be done with 
- * some defines. 
+ * cpu types, the configuration for the timer can be done with
+ * some defines.
  * The timer will be used as counter.
- * 
+ *
  * TIMER_CONFIG_REG:
  *      The configuraion register of the timer.
  * TIMER_CONFIG_VALUE:
  *      The value for the configuraion register.
- * 
+ *
  * TIMER_COUNTER_REG:
  *      The register for the counter of the timer.
  * TIMER_COUNTER_VALUE
  *      The value, which will be reloaded in the counter register.
- * 
+ *
  * TIMER_INTERRUPT_REG
  *      The interrupt configuration register for the timer.
  * TIMER_INTERRUPT_ENABLE_BIT
  *      The bit to enable the interrupt for the timer.
- * 
- * For calculating the value for TIMER_COUNTER_VALUE, two external 
+ *
+ * For calculating the value for TIMER_COUNTER_VALUE, two external
  * defines from "port.h" are needed:
- *      HZ:             The scheduling rate 
+ *      HZ:             The scheduling rate
  *      CRYSTAL_CLOCK:  The clock of the crystal
- * 
- */     
+ *
+ */
 
-
-#if defined (__AVR_ATmega32__) || defined (__AVR_ATmega323__)
+#if defined (__AVR_ATmega32__) || defined (__AVR_ATmega323__) || defined (__AVR_ATmega2561__)
 
 /**
  * The flags for the prescaler in the TCCR1B register.
- * 
+ *
  *  CS12  CS11  CS10            prescaler value
  *    0     0     1    (0x01)   CRYSTAL_CLOCK / 1
  *    0     1     0    (0x02)   CRYSTAL_CLOCK / 8
  *    0     1     1    (0x03)   CRYSTAL_CLOCK / 64
  *    1     0     0    (0x04)   CRYSTAL_CLOCK / 256
  *    1     0     1    (0x05)   CRYSTAL_CLOCK / 1024
- * 
+ *
  * This value defines the possible range for the timer tick (HZ).
  */
- 
+
 // set WGM12 for Clear Timer on Compare match (CTC) mode
 #  define TIMER_CONFIG_REG             TCCR1B
 #  define TIMER_CONFIG_VALUE           _BV(WGM12) | 0x04
@@ -94,7 +93,12 @@
 #  define TIMER_COUNTER_REG            OCR1A
 #  define TIMER_COUNTER_VALUE          ((CRYSTAL_CLOCK / 256) / HZ)
 
+#if defined (__AVR_ATmega2561__)
+#  define TIMER_INTERRUPT_REG          TIMSK1
+#else
 #  define TIMER_INTERRUPT_REG          TIMSK
+#endif
+
 #  define TIMER_INTERRUPT_ENABLE_BIT   OCIE1A
 
 #else
