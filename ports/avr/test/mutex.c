@@ -1,6 +1,6 @@
 /*
  *  Copyright (c) 2004, Swen Moczarski.
- *  All rights reserved. 
+ *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *      documentation and/or other materials provided with the distribution.
  *   3. The name of the author may not be used to endorse or promote
  *      products derived from this software without specific prior written
- *      permission. 
+ *      permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  *  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,12 +33,12 @@
 /*
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
- * 
- * This example schow the usage of a mutex. For a correct run the EXIT_FEATURE
- * has to be activated in the port.
- * 
  *
- * CVS-ID $Id:$
+ * This example shows the usage of a mutex. For a correct run the EXIT_FEATURE
+ * has to be activated in poscfg.h.
+ *
+ *
+ * CVS-ID $Id: mutex.c,v 1.1.1.1 2004/02/16 20:11:31 smocz Exp $
  */
 #include <stdio.h>
 #include <inttypes.h>
@@ -55,17 +55,17 @@ static POSMUTEX_t    mutex;
 
 
 static void workerTask(void *arg) {
-   
+
     // this static variable will be used by all threads
     static uint_8 counter = 0;
 
-    for (;;) {  
+    for (;;) {
         posMutexLock(mutex);    // try to get the mutex
 
         counter++;
         posTaskSleep(HZ/6);     // sleep one second
         counter--;
-        
+
         if (counter != 0) {
             // print an error
         }
@@ -76,9 +76,9 @@ static void workerTask(void *arg) {
 
 
 static void initialTask(void *arg) {
-  
+
     mutex = posMutexAlloc();
-  
+
     if (mutex != NULL) {
         posTaskCreate(workerTask, NULL, 1);
         posTaskCreate(workerTask, NULL, 1);
@@ -86,13 +86,13 @@ static void initialTask(void *arg) {
     } else {
         // print an error
     }
-    
+
 }
 
 
 int main(void) {
-    
+
     posInit(initialTask, NULL, 2);
-  
+
     return 0;
 }

@@ -1,6 +1,6 @@
 /*
  *  Copyright (c) 2004-2006, Dennis Kuschel.
- *  All rights reserved. 
+ *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *      documentation and/or other materials provided with the distribution.
  *   3. The name of the author may not be used to endorse or promote
  *      products derived from this software without specific prior written
- *      permission. 
+ *      permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  *  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.9 2004/05/15 19:07:03 smocz Exp $
+ * CVS-ID $Id: port.h,v 1.10 2006/03/14 18:39:22 dkuschel Exp $
  */
 
 
@@ -57,7 +57,7 @@
  */
 
 /** Machine variable type.
- * This define is set to the variable type that best 
+ * This define is set to the variable type that best
  * matches the target architecture. For example, define this
  * to @e char if the architecture has 8 bit, or to
  * @e int / @e long for a 32 bit architecture.
@@ -118,7 +118,7 @@
  * The stack memory is allocated by the user and a pointer
  * to the stack memory is passed to the functions
  * ::posTaskCreate, ::posInit and ::p_pos_initTask.<br>
- * 
+ *
  * <b>Type 1 </b><br>
  * The stack memory will be allocated by the platform port when a
  * new task is created. The memory will be freed when the task is
@@ -126,12 +126,12 @@
  * are called with a parameter that specifies the stack size.
  * The function ::p_pos_freeStack is used to free the stack memory
  * again when the task is destroyed.<br>
- * 
+ *
  * <b>Type 2 </b><br>
  * Like type 1, but the size of the stack is fixed.
  * The functions ::posTaskCreate, ::posInit and ::p_pos_initTask do
  * not take any stack parameters.<br>
- * 
+ *
  * @note the functions ::posTaskCreate, ::posInit and ::p_pos_initTask
  * have different prototypes for each stack handling type.
  */
@@ -156,7 +156,7 @@
 
 /** Dynamic memory management.
  * If this define is set to 1, the system will refill its volume of
- * system structures for tasks, events, timers and messages when the 
+ * system structures for tasks, events, timers and messages when the
  * user requests more structures than the amount that was preallocated
  * (see defines ::POSCFG_MAX_TASKS, ::POSCFG_MAX_EVENTS,
  * ::POSCFG_MAX_MESSAGES and ::POSCFG_MAX_TIMER ).  To be able to use
@@ -181,7 +181,7 @@
 
 
 /*---------------------------------------------------------------------------
- *  LOCKING (DISABLE INTERRUPTS IN CRITICAL SECTIONS) 
+ *  LOCKING (DISABLE INTERRUPTS IN CRITICAL SECTIONS)
  *-------------------------------------------------------------------------*/
 
 /** @defgroup lock Configuration: Disable / Enable Interrupts
@@ -261,10 +261,10 @@
 
 
 /*---------------------------------------------------------------------------
- *  INTERRUPT SERVICE ROUTINE FRAME 
+ *  INTERRUPT SERVICE ROUTINE FRAME
  *-------------------------------------------------------------------------*/
 
-// Interrupt service routine stack size (in bytes) 
+// Interrupt service routine stack size (in bytes)
 #define ISR_STACK_SIZE     80
 
 // The variable is declared in the file arch_c.c
@@ -318,11 +318,11 @@ void interruptReturn(void) __attribute__ ((naked));
         "push   r31"    "\n\t" \
     ::  \
     )
-    
+
 
 /**
  * Macro for restoring the context during an interrupt service.
- */ 
+ */
 #define RESTORE_CONTEXT(void) \
     __asm__ __volatile__ ( \
         "pop    r31"    "\n\t" \
@@ -365,24 +365,24 @@ void interruptReturn(void) __attribute__ ((naked));
 /**
  * This macro is used to define an interrupt service routine for using
  * API functions from picoos.
- * The macro generate the apropriated frame for that and delegates
+ * The macro generate the appropriated frame for that and delegates
  * to an handler.
  * See an example for handle a interrupt from the UART:
- * 
+ *
  * @code
  *      static void handleUartRecive( void );
  *      static void handleUartRecive( void ) {
  *          posSemaSignal(semaReceive);
  *      }
- * 
+ *
  *      PICOOS_SIGNAL( SIG_UART_RECV, handleUartRecive )
- * 
+ *
  * @endcode
- * 
+ *
  * @param signalname The name of the signal for generate this frame.
- * 
+ *
  * @param handler The function to handle the interrupt.
- * 
+ *
  */
 #define PICOOS_SIGNAL(signame, handler)   \
 void signame (void) __attribute__ ((signal, naked));        \

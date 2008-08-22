@@ -1,6 +1,6 @@
 /*
  *  Copyright (c) 2004, Swen Moczarski.
- *  All rights reserved. 
+ *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *      documentation and/or other materials provided with the distribution.
  *   3. The name of the author may not be used to endorse or promote
  *      products derived from this software without specific prior written
- *      permission. 
+ *      permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  *  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,30 +35,30 @@
  * (http://picoos.sourceforge.net).
  *
  * This file is a simple test program to validate if pico]OS will work.
- * 
- * The program starts two threads. Each thread write a diferent value
- * to the port pin PB0. The scheduler switch between the two tasks. 
- * With a oscilloscope you sould see a rectangle signal on PB0. The
- * frequence is 2 x HZ (see picocfg.h). The rectangel is a little bit
- * asymetric, because the idle task also work in the background.
- * 
+ *
+ * The program starts two threads. Each thread write a different value
+ * to the port pin PB0. The scheduler switch between the two tasks.
+ * With a oscilloscope you should see a rectangle signal on PB0. The
+ * frequency is 2 x HZ (see picocfg.h). The rectangle is a little bit
+ * asymmetric, because the idle task also work in the background.
+ *
  * --- build ---
- * 
+ *
  * 1. Set in the makefile in directory $(picoos-root)/ports/avr/test
  *    SRC_TXT = rectangle.c
- * 
- * 2. You can build the test by navigate to $(picoos-root)/ports/avr/test 
- *    directory an type "make". 
- * 
- * 3. Now, in the directory $(picoos-root)/out/avr/deb should be a .elf, 
- *    .cof and a .hex file. 
- * 
- * 4. You can open the .cof file with AvrStudio and watch, how pico]OS 
- *    work. 
+ *
+ * 2. You can build the test by navigate to $(picoos-root)/ports/avr/test
+ *    directory an type "make".
+ *
+ * 3. Now, in the directory $(picoos-root)/out/avr/deb should be a .elf,
+ *    .cof and a .hex file.
+ *
+ * 4. You can open the .cof file with AvrStudio and watch, how pico]OS
+ *    work.
  *    With the hex-file you can program the target device and run the
  *    program in the real world :-)
  *
- * CVS-ID $Id: rectangle.c,v 1.1.1.1 2004/02/16 20:11:31 smocz Exp $
+ * CVS-ID $Id: rectangle.c,v 1.2 2004/02/18 22:30:03 smocz Exp $
  */
 #include <stdio.h>
 #include <inttypes.h>
@@ -75,12 +75,12 @@ static void pollTask(void *arg);
 static uint8_t t1 = 0x01;
 static uint8_t t2 = 0x00;
 
-/* The start task for the initialisation of the 2 other tasks.
- * This task will be destroyed, wenn the program runs out of the
- * block 
+/* The start task for the initialization of the 2 other tasks.
+ * This task will be destroyed, when the program runs out of the
+ * block
  */
 static void initialTask(void *arg) {
-  
+
     posTaskCreate(pollTask, &t1, 1);
     posTaskCreate(pollTask, &t2, 1);
 }
@@ -96,10 +96,10 @@ static void pollTask(void *arg) {
 }
 
 int main(void) {
-    
+
     DDRB = 0x01;
-    
+
     posInit(initialTask, NULL, 2);
-  
+
     return 0;
 }

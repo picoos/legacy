@@ -1,6 +1,6 @@
 /*
  *  Copyright (c) 2004, Swen Moczarski.
- *  All rights reserved. 
+ *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
@@ -13,7 +13,7 @@
  *      documentation and/or other materials provided with the distribution.
  *   3. The name of the author may not be used to endorse or promote
  *      products derived from this software without specific prior written
- *      permission. 
+ *      permission.
  *
  *  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  *  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -35,28 +35,28 @@
  * (http://picoos.sourceforge.net).
  *
  * This is a simple test program, that demonstrate the use of mutexes.
- * Three tasks read a global summe, wait and write then the summe + 1 
- * back. This critical block is protected by a mutex. 
- * If you comment the mutex out, at the end you will see, that summe 
- * has a wong value.
- * 
+ * Three tasks read a global summe, wait and write then the summe + 1
+ * back. This critical block is protected by a mutex.
+ * If you comment the mutex out, at the end you will see, that summe
+ * has a wrong value.
+ *
  * --- build ---
- * 
+ *
  * 1. Set in the makefile in directory $(picoos-root)/ports/avr/test
  *    SRC_TXT = mutexSumme.c
- * 
- * 2. You can then build the test by navigate to $(picoos-root)/ports/avr/test 
- *    directory an type "make". 
- * 
- * 3. Now, in the directory $(picoos-root)/out/avr/deb should be a .elf, 
- *    .cof and a .hex file. 
- * 
- * 4. You can open the .cof file with AvrStudio and watch, how pico]OS 
- *    work. 
+ *
+ * 2. You can then build the test by navigate to $(picoos-root)/ports/avr/test
+ *    directory an type "make".
+ *
+ * 3. Now, in the directory $(picoos-root)/out/avr/deb should be a .elf,
+ *    .cof and a .hex file.
+ *
+ * 4. You can open the .cof file with AvrStudio and watch, how pico]OS
+ *    work.
  *    With the hex-file you can program the target device and run the
  *    program in the real world :-)
- * 
- * CVS-ID $Id:$
+ *
+ * CVS-ID $Id: mutex_summe.c,v 1.1 2004/02/23 19:45:45 smocz Exp $
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,18 +82,18 @@ static uint8_t summe = 0;
  * ten times the global variable summe.
  */
 static void workerTask(void *arg) {
-    
+
     uint8_t i;
-    
+
     for (i=0; i < 10; i++) {
-      
+
         // get the mutex
         posMutexLock(mutex);
 
         uint8_t localSumme = summe;
-        
+
         posTaskSleep(HZ/1000);
-        
+
         localSumme++;
         summe = localSumme;
 
@@ -108,9 +108,9 @@ static void workerTask(void *arg) {
  * summe will be controlled.
  */
 static void initialTask(void *arg) {
-  
+
     mutex = posMutexAlloc();
-  
+
     if (mutex == NULL) {
         // error, can't get a mutex
         exit(1);
@@ -120,10 +120,10 @@ static void initialTask(void *arg) {
     POSTASK_t taskHandle2 = posTaskCreate(workerTask, NULL, 1);
     posTaskSleep(HZ/700);
     POSTASK_t taskHandle3 = posTaskCreate(workerTask, NULL, 1);
-    
+
     // wait until all tasks have been terminated
-    while (!(posTaskUnused(taskHandle1) 
-            & posTaskUnused(taskHandle2) 
+    while (!(posTaskUnused(taskHandle1)
+            & posTaskUnused(taskHandle2)
             & posTaskUnused(taskHandle3))) {
 
         posTaskSleep(HZ/100);
@@ -140,8 +140,8 @@ static void initialTask(void *arg) {
 
 
 int main(void) {
-    
+
     posInit(initialTask, NULL, 2);
-  
+
     return 0;
 }

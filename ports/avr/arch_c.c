@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.5 2004/06/15 16:55:21 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.6 2008/08/22 18:14:32 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -55,7 +55,7 @@
 #define GP_REGISTER_AMOUNT 32
 
 // The number of the gp-register, for passing the argument
-// to the called function. In the current gcc implementation (gcc 3.3)
+// to the called function. In the current gcc implementation (gcc 4.3)
 // is this R25:R24 for an pointer
 #define ARGUMENT_REGISTER_NUM 24
 
@@ -64,7 +64,7 @@
  *  GLOBAL VARIABLES
  *-------------------------------------------------------------------------*/
 
-// Reserve memory for the stack for the interrupt service routienes.
+// Reserve memory for the stack for the interrupt service routines.
 // The stack size is defined in port.h
 uint8_t isrStackMem_g[ ISR_STACK_SIZE ];
 
@@ -271,13 +271,13 @@ void constructStackFrame(POSTASK_t task, uint8_t* stackPtr,
 
     uint8_t i;
     // ARGUMENT_REGISTER_NUM - 2
-    // We have alredy initialize R0, therefor sub 1!
+    // We have already initialize R0, therefore sub 1!
     for (i = 0; i < (ARGUMENT_REGISTER_NUM - 1); i++) {
         *stackPtr = 0;
         stackPtr--;
     }
     // Put funcarg of the stack. If the context will be start the
-    // first time, the argument will be loaded in apropriated
+    // first time, the argument will be loaded in appropriated
     // register and is interpreted as a pointer parameter.
     stackPtr = PUT_DATA_POINTER(stackPtr, funcarg);
 
@@ -387,7 +387,7 @@ void interruptReturn(void) {
 /**
  * Use the picoos signal macro to handle the timer interrupt for
  * the timer tick.
- * In the interrupt the kernal routine c_pos_timerInterrupt() will
+ * In the interrupt the kernel routine c_pos_timerInterrupt() will
  * be called.
  */
 PICOOS_SIGNAL(SIG_OUTPUT_COMPARE1A, c_pos_timerInterrupt)
