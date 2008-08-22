@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: timerdef.h,v 1.3 2004/06/15 16:56:15 smocz Exp $
+ * CVS-ID $Id: timerdef.h,v 1.4 2008/08/22 18:11:58 smocz Exp $
  */
 
 #ifndef TIMERDEF_H
@@ -70,7 +70,35 @@
  *
  */
 
-#if defined (__AVR_ATmega32__) || defined (__AVR_ATmega323__) || defined (__AVR_ATmega2561__)
+// defined(__AVR_ATmega164P__)
+// defined(__AVR_ATmega328P__)
+// defined(__AVR_ATmega162__) : stack overflow, aber funktioniert
+// defined(__AVR_ATmega406__) : register name?
+#if	defined(__AVR_ATmega323__) || \
+	defined(__AVR_ATmega48__) || \
+	defined(__AVR_ATmega640__) || \
+	defined(__AVR_ATmega128__) || \
+	defined(__AVR_ATmega1280__) || \
+	defined(__AVR_ATmega1281__) || \
+	defined(__AVR_ATmega2560__) || \
+	defined(__AVR_ATmega2561__) || \
+	defined(__AVR_ATmega324P__) || \
+	defined(__AVR_ATmega325__) || \
+	defined(__AVR_ATmega325P__) || \
+	defined(__AVR_ATmega3250__) || \
+	defined(__AVR_ATmega3250P__) || \
+	defined(__AVR_ATmega329__) || \
+	defined(__AVR_ATmega329P__) || \
+	defined(__AVR_ATmega3290__) || \
+	defined(__AVR_ATmega3290P__) || \
+	defined(__AVR_ATmega64__) || \
+	defined(__AVR_ATmega640__) || \
+	defined(__AVR_ATmega644__) || \
+	defined(__AVR_ATmega644P__) || \
+	defined(__AVR_ATmega645__) || \
+	defined(__AVR_ATmega6450__) || \
+	defined(__AVR_ATmega649__) || \
+	defined(__AVR_ATmega6490__)
 
 /**
  * The flags for the prescaler in the TCCR1B register.
@@ -87,13 +115,35 @@
 
 // set WGM12 for Clear Timer on Compare match (CTC) mode
 #  define TIMER_CONFIG_REG             TCCR1B
+
 #  define TIMER_CONFIG_VALUE           _BV(WGM12) | 0x04
 
 // the resulting value for the presacler is 256, see TIMER_CONFIG_VALUE
 #  define TIMER_COUNTER_REG            OCR1A
 #  define TIMER_COUNTER_VALUE          ((CRYSTAL_CLOCK / 256) / HZ)
 
-#if defined (__AVR_ATmega2561__)
+#if defined(__AVR_ATmega640__) || \
+	defined(__AVR_ATmega1280__) || \
+	defined(__AVR_ATmega1281__) || \
+	defined(__AVR_ATmega2560__) || \
+	defined(__AVR_ATmega2561__) || \
+	defined(__AVR_ATmega324P__) || \
+	defined(__AVR_ATmega325__) || \
+	defined(__AVR_ATmega325P__) || \
+	defined(__AVR_ATmega3250__) || \
+	defined(__AVR_ATmega3250P__) || \
+	defined(__AVR_ATmega329__) || \
+	defined(__AVR_ATmega329P__) || \
+	defined(__AVR_ATmega3290__) || \
+	defined(__AVR_ATmega3290P__) || \
+	defined(__AVR_ATmega640__) || \
+	defined(__AVR_ATmega644__) || \
+	defined(__AVR_ATmega644P__) || \
+	defined(__AVR_ATmega645__) || \
+	defined(__AVR_ATmega6450__) || \
+	defined(__AVR_ATmega649__) || \
+	defined(__AVR_ATmega6490__)
+
 #  define TIMER_INTERRUPT_REG          TIMSK1
 #else
 #  define TIMER_INTERRUPT_REG          TIMSK
