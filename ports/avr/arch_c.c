@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.6 2008/08/22 18:14:32 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.7 2008/08/22 21:41:09 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -100,20 +100,21 @@ void  free(void *p);
 
 
 void mem_init(void) {
-
+	// nothing to do for avr-libc
 }
 
 
 void* my_malloc(UINT_t size) {
     POS_SCHED_LOCK;
-    // TODO: call the malloc() from avr-lib here?
+    void* ptr = malloc(size);
     POS_SCHED_UNLOCK;
+	return ptr;
 }
 
 
 void my_free(void *p) {
     POS_SCHED_LOCK;
-    // TODO: call the free() from avr-lib here?
+    free(p);
     POS_SCHED_UNLOCK;
 }
 
