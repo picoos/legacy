@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.7 2008/08/22 21:41:09 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.8 2008/08/23 19:00:00 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -72,17 +72,21 @@ uint8_t isrStackMem_g[ ISR_STACK_SIZE ];
 
 // Map the approbate function to put an pointer on the stack.
 #if defined (__AVR_3_BYTE_PC__)
+
 #define PUT_FUNCTION_POINTER put24BitPointerOnStack
+
+static uint8_t* put24BitPointerOnStack(uint8_t* stackPtr, void* pointer);
+
 #else
+
 #define PUT_FUNCTION_POINTER put16BitPointerOnStack
+
 #endif
 
 /*---------------------------------------------------------------------------
  *  LOCAL PROTOTYPES
  *-------------------------------------------------------------------------*/
 static uint8_t* put16BitPointerOnStack(uint8_t* stackPtr, void* pointer);
-
-static uint8_t* put24BitPointerOnStack(uint8_t* stackPtr, void* pointer);
 
 static void constructStackFrame(POSTASK_t task, uint8_t* stackPtr, POSTASKFUNC_t funcptr, void *funcarg);
 
@@ -323,6 +327,8 @@ uint8_t* put16BitPointerOnStack(uint8_t* stackPtr, void* pointer) {
     return stackPtr;
 }
 
+#if defined (__AVR_3_BYTE_PC__)
+
 /**
  * Helper to put a 24-bit pointer on the stack (for 3 byte PC, avr6 architectures)
  *
@@ -355,6 +361,8 @@ uint8_t* put24BitPointerOnStack(uint8_t* stackPtr, void* pointer) {
 
     return nextStackPtr;
 }
+
+#endif
 
 void p_pos_softContextSwitch(void) __attribute__ ((naked));
 void p_pos_softContextSwitch(void) {
