@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.15 2006/04/16 08:48:26 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.16 2006/10/15 08:59:43 dkuschel Exp $
  */
 
 
@@ -1029,7 +1029,7 @@ void POSCALL posTaskYield(void)
 
 #if POSCFG_TASKSTACKTYPE == 0
 POSTASK_t POSCALL posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
-                  ´             VAR_t priority, void *stackstart)
+                                VAR_t priority, void *stackstart)
 #elif POSCFG_TASKSTACKTYPE == 1
 POSTASK_t POSCALL posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
                                 VAR_t priority, UINT_t stacksize)
