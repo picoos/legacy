@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: timerdef.h,v 1.4 2008/08/22 18:11:58 smocz Exp $
+ * CVS-ID $Id: timerdef.h,v 1.5 2008/08/22 21:42:34 smocz Exp $
  */
 
 #ifndef TIMERDEF_H
@@ -74,7 +74,8 @@
 // defined(__AVR_ATmega328P__)
 // defined(__AVR_ATmega162__) : stack overflow, aber funktioniert
 // defined(__AVR_ATmega406__) : register name?
-#if	defined(__AVR_ATmega323__) || \
+#if	defined(__AVR_ATmega32__) || \
+	defined(__AVR_ATmega323__) || \
 	defined(__AVR_ATmega48__) || \
 	defined(__AVR_ATmega640__) || \
 	defined(__AVR_ATmega128__) || \
