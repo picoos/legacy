@@ -1,7 +1,9 @@
 Version 1.x:
   o  AVR port: Memory mode 1 added (POSCFG_TASKSTACKTYPE = 1) for dynamic memory access.
   o  AVR port: Support for the avr6 architecture with 3 byte PC added (for example ATmega2561,..)
-  o  AVR port: Timer mapping in timerdef.h added for several AVR devices. 
+  o  AVR port: Timer mapping in timerdef.h added for several AVR devices.
+  o  AVR port: Save RAMPZ and EIND for MCUs with >=128 KB ROM. This is needed if ELPM/SPM 
+     and EICALL/EIJMP are used. 
 
 Version 1.0.1:
   o  define "POSCALL" added to every function prototype
