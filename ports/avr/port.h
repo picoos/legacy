@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.10 2006/03/14 18:39:22 dkuschel Exp $
+ * CVS-ID $Id: port.h,v 1.11 2008/08/22 21:41:09 smocz Exp $
  */
 
 
@@ -275,6 +275,36 @@ extern uint8_t isrStackMem_g[];
  */
 void interruptReturn(void) __attribute__ ((naked));
 
+
+#if defined(RAMPZ)
+
+#define SAVE_RAMPZ      "in     r0, 0x3b" "\n\t" \
+                        "push   r0"     "\n\t"
+
+#define RESTORE_RAMPZ   "pop    r0" "\n\t" \
+                        "out    0x3b, r0"     "\n\t"
+#else
+
+#define SAVE_RAMPZ    ""
+#define RESTORE_RAMPZ ""
+
+#endif
+
+#if defined(EIND)
+
+#define SAVE_EIND       "in     r0, 0x3c" "\n\t" \
+                        "push   r0"     "\n\t"
+
+#define RESTORE_EIND    "pop    r0" "\n\t" \
+                        "out    0x3c, r0"     "\n\t"
+
+#else
+
+#define SAVE_EIND    ""
+#define RESTORE_EIND ""
+
+#endif
+
 /**
  * Macro for saving the context during an interrupt service.
  */
@@ -283,8 +313,10 @@ void interruptReturn(void) __attribute__ ((naked));
         "push   r0"     "\n\t" \
         "in     r0, __SREG__" "\n\t" \
         "cli"           "\n\t" \
-        "push   r0"     "\n\t" \
-        "push   r1"     "\n\t" \
+		"push   r0"     "\n\t" \
+        SAVE_RAMPZ \
+		SAVE_EIND \
+		"push   r1"     "\n\t" \
         "clr    __zero_reg__"   "\n\t" \
         "push   r2"     "\n\t" \
         "push   r3"     "\n\t" \
@@ -356,6 +388,8 @@ void interruptReturn(void) __attribute__ ((naked));
         "pop    r3"     "\n\t" \
         "pop    r2"     "\n\t" \
         "pop    r1"     "\n\t" \
+		RESTORE_EIND \
+        RESTORE_RAMPZ \
         "pop    r0"     "\n\t" \
         "out    __SREG__, r0" "\n\t" \
         "pop    r0"    "\n\t" \

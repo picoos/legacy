@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.8 2008/08/23 19:00:00 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.9 2008/08/24 15:12:11 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -74,7 +74,6 @@ uint8_t isrStackMem_g[ ISR_STACK_SIZE ];
 #if defined (__AVR_3_BYTE_PC__)
 
 #define PUT_FUNCTION_POINTER put24BitPointerOnStack
-
 static uint8_t* put24BitPointerOnStack(uint8_t* stackPtr, void* pointer);
 
 #else
@@ -273,6 +272,19 @@ void constructStackFrame(POSTASK_t task, uint8_t* stackPtr,
     stackPtr--;
     *stackPtr = INITIAL_SREG;       // initialize SREG
     stackPtr--;
+
+    // Extended AVR architectures have an additional RAMPZ and EIND register
+    // for addressing, which also have to save on the stack frame (see SAVE_CONTEXT macro
+    // in port.h)
+#if defined(RAMPZ)
+    *stackPtr = 0x0;       // initialize RAMPZ
+    stackPtr--;
+#endif
+#if defined(EIND)
+	*stackPtr = 0x0;       // initialize EIND
+    stackPtr--;
+#endif
+
 
     uint8_t i;
     // ARGUMENT_REGISTER_NUM - 2
