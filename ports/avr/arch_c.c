@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.9 2008/08/24 15:12:11 smocz Exp $
+ * CVS-ID $Id: arch_c.c,v 1.10 2008/08/30 09:33:28 smocz Exp $
  */
 
 #include <inttypes.h>
@@ -411,4 +411,4 @@ void interruptReturn(void) {
  * In the interrupt the kernel routine c_pos_timerInterrupt() will
  * be called.
  */
-PICOOS_SIGNAL(SIG_OUTPUT_COMPARE1A, c_pos_timerInterrupt)
+PICOOS_SIGNAL(TIMER_INTERRUPT_VECTOR, c_pos_timerInterrupt)

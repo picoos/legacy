@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: timerdef.h,v 1.5 2008/08/22 21:42:34 smocz Exp $
+ * CVS-ID $Id: timerdef.h,v 1.6 2008/08/24 15:10:58 smocz Exp $
  */
 
 #ifndef TIMERDEF_H
@@ -70,11 +70,13 @@
  *
  */
 
-// defined(__AVR_ATmega164P__)
+
 // defined(__AVR_ATmega328P__)
-// defined(__AVR_ATmega162__) : stack overflow, aber funktioniert
 // defined(__AVR_ATmega406__) : register name?
-#if	defined(__AVR_ATmega32__) || \
+#if	defined(__AVR_ATmega328P__) || \
+    defined(__AVR_ATmega164P__) || \
+    defined(__AVR_ATmega162__) || \
+    defined(__AVR_ATmega32__) || \
 	defined(__AVR_ATmega323__) || \
 	defined(__AVR_ATmega48__) || \
 	defined(__AVR_ATmega640__) || \
@@ -123,7 +125,9 @@
 #  define TIMER_COUNTER_REG            OCR1A
 #  define TIMER_COUNTER_VALUE          ((CRYSTAL_CLOCK / 256) / HZ)
 
-#if defined(__AVR_ATmega640__) || \
+#if defined(__AVR_ATmega328P__) || \
+    defined(__AVR_ATmega164P__) || \
+    defined(__AVR_ATmega640__) || \
 	defined(__AVR_ATmega1280__) || \
 	defined(__AVR_ATmega1281__) || \
 	defined(__AVR_ATmega2560__) || \
@@ -151,6 +155,12 @@
 #endif
 
 #  define TIMER_INTERRUPT_ENABLE_BIT   OCIE1A
+
+#if	defined(__AVR_ATmega328P__)
+#define TIMER_INTERRUPT_VECTOR TIMER1_COMPA_vect
+#else
+#define TIMER_INTERRUPT_VECTOR SIG_OUTPUT_COMPARE1A
+#endif
 
 #else
 
