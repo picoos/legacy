@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2009, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.2 2006/10/16 19:43:47 dkuschel Exp $
  */
 
 
@@ -268,14 +268,14 @@
  * inlined instead of doing subroutine calls. Note that the fastest possible
  * code is generated when also the define ::POSCFG_SMALLCODE is set to 0.
  */
-#define POSCFG_FASTCODE          0
+#define POSCFG_FASTCODE          1
 
 /** Configure code size.
  * Set this define to 1 to get a small code. This only touches some pico]OS
  * features, so expect not too much. Note that the smallest possible
  * code is generated when also the define ::POSCFG_FASTCODE is set to 0.
  */
-#define POSCFG_SMALLCODE         1
+#define POSCFG_SMALLCODE         0
 
 /** Function argument checking.
  * There are three methods of argument checking:<br>
