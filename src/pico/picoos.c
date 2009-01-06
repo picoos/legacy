@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2009, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.16 2006/10/15 08:59:43 dkuschel Exp $
+ * CVS-ID $Id: picoos.c,v 1.17 2008/08/24 16:20:19 smocz Exp $
  */
 
 
@@ -421,13 +421,16 @@ static UVAR_t posZeroMask_g[7] = {0xFE,0xFC,0xF8,0xF0,0xE0,0xC0,0x80};
 
 
 #if SYS_FEATURE_EVENTS != 0
-#if ((POSCFG_FASTCODE==0) || defined(POS_DEBUGHELP)) && (SYS_EVENTS_USED!=0)
-
+#if ((POSCFG_FASTCODE==0)||defined(POS_DEBUGHELP)||(SYS_TASKEVENTLINK!=0)) \
+    && (SYS_EVENTS_USED!=0)
 static void POSCALL pos_eventAddTask(EVENT_t ev, POSTASK_t task);
 static void POSCALL pos_eventAddTask(EVENT_t ev, POSTASK_t task)
 {
 #ifdef POS_DEBUGHELP
   task->deb.event = &ev->e.deb;
+#endif
+#if SYS_TASKEVENTLINK != 0
+  task->event = (void*)ev;
 #endif
   pos_setTableBit(&ev->e.pend, task);
 }
@@ -437,6 +440,9 @@ static void POSCALL pos_eventRemoveTask(EVENT_t ev, POSTASK_t task)
 {
 #ifdef POS_DEBUGHELP
   task->deb.event = NULL;
+#endif
+#if SYS_TASKEVENTLINK != 0
+  task->event = NULL;
 #endif
   pos_delTableBit(&ev->e.pend, task);
 }
@@ -1100,6 +1106,9 @@ POSTASK_t POSCALL posTaskCreate(POSTASKFUNC_t funcptr, void *funcarg,
 #if POSCFG_ARGCHECK > 1
   task->magic = POSMAGIC_TASK;
 #endif
+#if SYS_TASKEVENTLINK != 0
+  task->event = NULL;
+#endif
 #if SYS_TASKTABSIZE_Y > 1
   task->idx_y = p;
   task->bit_y = pos_shift1l(p);
@@ -1260,6 +1269,8 @@ VAR_t POSCALL posTaskUnused(POSTASK_t taskhandle)
 VAR_t POSCALL posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
 {
   register UVAR_t  b, p;
+  register EVENT_t  ev;
+  register int taskruns;
   POS_LOCKFLAGS;
 
   P_ASSERT("posTaskSetPriority: task handle valid", taskhandle != NULL);
@@ -1289,7 +1300,17 @@ VAR_t POSCALL posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
     return -E_FAIL;
   }
 #endif
-  pos_disableTask(taskhandle);
+  ev = (EVENT_t) taskhandle->event;
+  taskruns = pos_isTableBitSet(&posReadyTasks_g, taskhandle);
+  if (taskruns)
+  {
+    pos_disableTask(taskhandle);
+  }
+  else
+  {
+    if (ev != NULL)
+      pos_eventRemoveTask(ev, taskhandle);
+  }
   pos_delTableBit(&posAllocatedTasks_g, taskhandle);
 #if SYS_TASKTABSIZE_Y > 1
   taskhandle->idx_y = p;
@@ -1298,7 +1319,16 @@ VAR_t POSCALL posTaskSetPriority(POSTASK_t taskhandle, VAR_t priority)
   taskhandle->bit_x = pos_shift1l(b);
   posTaskTable_g[(p * SYS_TASKTABSIZE_X) + b] = taskhandle;
   pos_setTableBit(&posAllocatedTasks_g, taskhandle);
-  pos_enableTask(taskhandle);
+
+  if (taskruns)
+  {
+    pos_enableTask(taskhandle);
+  }
+  else
+  {
+    if (ev != NULL)
+      pos_eventAddTask(ev, taskhandle);
+  }
   POS_SCHED_UNLOCK;
   return E_OK;
 }

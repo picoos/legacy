@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.26 2006/10/15 09:04:58 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.27 2007/12/08 13:49:21 dkuschel Exp $
  *
  */
 
@@ -153,7 +153,7 @@
  * @n@n
  * @section license License
  *
- *  Copyright (c) 2004-2007, Dennis Kuschel. @n
+ *  Copyright (c) 2004-2009, Dennis Kuschel. @n
  *  All rights reserved. @n
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -184,14 +184,14 @@
  * @n@n
  * @section cont Contact Information
  * Dennis Kuschel @n
- * Stuttgarter Strasse 9 @n
- * 74336 Brackenheim @n
+ * Kurt-Georg-Kiesinger-Allee 14 @n
+ * 28279 Bremen @n
  * GERMANY @n
  *
  * mail: dennis_k@freenet.de @n
  * web:  http://picoos.sourceforge.net @n
  *
- * (C) 2004-2007 Dennis Kuschel
+ * (C) 2004-2009 Dennis Kuschel
  */
 
 /** @defgroup intro     Introduction */
@@ -245,9 +245,9 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0101
-#define POS_VER_S           "1.0.1"
-#define POS_COPYRIGHT       "(c) 2004-2007, D.Kuschel"
+#define POS_VER_N           0x0102
+#define POS_VER_S           "1.0.2"
+#define POS_COPYRIGHT       "(c) 2004-2009, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
 #ifndef NULL
@@ -624,6 +624,11 @@
 #endif
 #ifndef POSCALL
 #define POSCALL
+#endif
+#if POSCFG_FEATURE_SETPRIORITY != 0
+#define SYS_TASKEVENTLINK  1
+#else
+#define SYS_TASKEVENTLINK  0
 #endif
 
 #endif /* DOX!=0 */
@@ -3153,6 +3158,9 @@ struct POSTASK {
 #endif
 #ifdef POS_DEBUGHELP
     struct PICOTASK  deb;
+#endif
+#if SYS_TASKEVENTLINK != 0
+    void        *event;
 #endif
 #endif /* !DOX */
 };
