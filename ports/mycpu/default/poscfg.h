@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: poscfg.h,v 1.2 2006/10/16 19:43:47 dkuschel Exp $
+ * CVS-ID $Id: poscfg.h,v 1.3 2009/01/06 12:12:12 dkuschel Exp $
  */
 
 
@@ -86,7 +86,7 @@
  * dynamically allocate memory for additional task structures if the volume
  * of tasks defined by ::POSCFG_MAX_TASKS is exhausted.
  */
-#define POSCFG_MAX_TASKS        16
+#define POSCFG_MAX_TASKS        20
 
 /** Maximum count of events.
  * This define sets the maximum count of event data structures which can be
@@ -99,7 +99,7 @@
  * dynamically allocate memory for additional events if the volume of events
  * defined by ::POSCFG_MAX_EVENTS is exhausted.
  */
-#define POSCFG_MAX_EVENTS       16
+#define POSCFG_MAX_EVENTS       40
 
 /** Maximum count of message buffers.
  * This definition sets the maximum count of message buffers that can be
@@ -114,7 +114,7 @@
  * dynamically allocate additional message buffers if the volume of buffers
  * defined by ::POSCFG_MAX_MESSAGES is exhausted.
  */
-#define POSCFG_MAX_MESSAGES     4
+#define POSCFG_MAX_MESSAGES     6
 
 /** Maximum count of timers.
  * This define sets the maximum count of timers that can be allocated
@@ -126,7 +126,7 @@
  * dynamically allocate memory for additional timers if the volume of timers
  * defined by ::POSCFG_MAX_TIMER is exhausted.
  */
-#define POSCFG_MAX_TIMER        4
+#define POSCFG_MAX_TIMER        8
 
 /** Set scheduling scheme.
  * The pico]OS supports two types of scheduling:<br>
