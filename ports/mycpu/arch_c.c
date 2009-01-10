@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2009, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_c.c,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
+ * CVS-ID $Id: arch_c.c,v 1.2 2006/10/16 19:44:42 dkuschel Exp $
  */
 
 
@@ -55,9 +55,9 @@
  *  DEFINITIONS
  *-----------------------------------------------------------------------*/
 
-#define DSTACK_SIZE_MAX    0x600    /* 1.5 KB */
-#define DSTACK_SIZE_MIN    0x400    /* 1.0 KB */
-#define DSTACK_SIZE_IDLE   0x200    /* 0.5 KB */
+#define DSTACK_SIZE_MAX    0x400    /* 1.0  KB */
+#define DSTACK_SIZE_MIN    0x300    /* 0.75 KB */
+#define DSTACK_SIZE_IDLE   0x200    /* 0.5  KB */
 
 
 
