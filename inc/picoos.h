@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.27 2007/12/08 13:49:21 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.28 2009/01/06 12:05:48 dkuschel Exp $
  *
  */
 
@@ -153,7 +153,7 @@
  * @n@n
  * @section license License
  *
- *  Copyright (c) 2004-2009, Dennis Kuschel. @n
+ *  Copyright (c) 2004-2010, Dennis Kuschel. @n
  *  All rights reserved. @n
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -191,7 +191,7 @@
  * mail: dennis_k@freenet.de @n
  * web:  http://picoos.sourceforge.net @n
  *
- * (C) 2004-2009 Dennis Kuschel
+ * (C) 2004-2010 Dennis Kuschel
  */
 
 /** @defgroup intro     Introduction */
@@ -247,7 +247,7 @@
 
 #define POS_VER_N           0x0102
 #define POS_VER_S           "1.0.2"
-#define POS_COPYRIGHT       "(c) 2004-2009, D.Kuschel"
+#define POS_COPYRIGHT       "(c) 2004-2010, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
 #ifndef NULL
