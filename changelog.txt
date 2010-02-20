@@ -5,6 +5,7 @@ Version 1.0.2:
   o  AVR port: Save RAMPZ and EIND for MCUs with >=128 KB ROM. This is needed if ELPM/SPM 
      and EICALL/EIJMP are used.
   o  MyCPU port improved, now faster context switching and better memory management
+  o  Bug in function posTaskSetPriority() fixed
 
 
 Version 1.0.1:
