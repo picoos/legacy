@@ -1,5 +1,5 @@
 ;*
-;*  Copyright (c) 2004-2005, Dennis Kuschel.
+;*  Copyright (c) 2004-2012, Dennis Kuschel.
 ;*  All rights reserved. 
 ;*
 ;*  Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 ; This file is originally from the pico]OS realtime operating system
 ; (http://picoos.sourceforge.net).
 ;
-; CVS-ID $Id: arch_a.s,v 1.3 2004/03/21 18:32:57 dkuschel Exp $
+; CVS-ID $Id: arch_a.s,v 1.4 2005/01/03 16:32:29 dkuschel Exp $
 ;
 
 
