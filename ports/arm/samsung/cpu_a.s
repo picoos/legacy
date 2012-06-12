@@ -36,7 +36,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: cpu_a.s,v 1.5 2006/04/11 18:05:06 ari Exp $
+ * CVS-ID $Id: cpu_a.s,v 1.1 2006/04/29 15:32:44 dkuschel Exp $
  */
  
 .include "arch_a_macros.h"
@@ -57,19 +57,20 @@
  */
 	.extern c_pos_intEnter
 	.extern c_pos_intExit
-	.extern c_armCpuIrqHandler
+	.extern portCpuIrqHandler
 
-	.global	armCpuIrqHandler
+	.global	portCpuIrqHandlerWrapper
+
 
 /* 
  * Handler for IRQ exceptions. It saves the current context, checks
  * for timer interrupt and executs pico]OS calls for it.
  */
 
-armCpuIrqHandler:
+portCpuIrqHandlerWrapper:
 
 	sub 	lr, lr, #4
-	saveContext
+	portSaveContext
 
     	bl	c_pos_intEnter
 
@@ -77,7 +78,7 @@ armCpuIrqHandler:
     	ldr	r0, [r1]                    @ Get current IRQ status
     	and	r0, r0, #0xff
 
-	bl	c_armCpuIrqHandler
+	bl	portCpuIrqHandler
     	bl 	c_pos_intExit
 
-	restoreContext
+	portRestoreContext

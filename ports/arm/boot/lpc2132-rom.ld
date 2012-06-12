@@ -28,8 +28,8 @@
 
 MEMORY {
 
-  flash	: ORIGIN = 0, LENGTH = 120K
-  ram	: ORIGIN = 0x40000000, LENGTH = 16K
+  flash	: ORIGIN = 0x00000000, LENGTH = 0x00010000
+  ram		: ORIGIN = 0x40000000, LENGTH = 0x00004000
 }
 
 __ramSize	= 16K;

@@ -21,19 +21,6 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Memory layout for processor. If you change ram LENGTH remember
- * to change __ram_size also.
- */
-
-MEMORY {
-
-  flash	: ORIGIN = 0, LENGTH = 120K
-  ram	: ORIGIN = 0x40000000, LENGTH = 16K
-}
-
-__ramSize	= 16K;
-
 /* 
  * Stack sizes. Shoud normally be ok, since tasks
  * have their own stacks.

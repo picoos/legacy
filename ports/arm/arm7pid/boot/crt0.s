@@ -25,8 +25,8 @@
  * developed by others for various ARM systems.				
  */
 
-	.extern armSwiHandler
-	.extern armCpuIrqHandler
+	.extern portSwiHandler
+	.extern portCpuIrqWrapper
 
 	.global start
 
@@ -100,9 +100,9 @@ vectorTable:
 
 	b	start
 	b	endless_loop /* undefined instr */
-	b	armSwiHandler
+	b	portSwiHandler
 	b	endless_loop /* pabt */
 	b	endless_loop /* dabt */
 	nop
-	b	armCpuIrqHandler /* irq */
+	b	portCpuIrqHandlerWrapper /* irq */
 	b	endless_loop /* fiq */

@@ -32,7 +32,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  * 
- * CVS-ID $Id: arch_c.c,v 1.3 2006/04/11 09:38:13 ari Exp $
+ * CVS-ID $Id: arch_c.c,v 1.1 2006/04/30 10:41:24 dkuschel Exp $
  */
 
 #define NANOINTERNAL
@@ -79,7 +79,7 @@ VAR_t p_pos_initTask(POSTASK_t task,
                       
   unsigned int   z;
 
-  task->stackstart = nosMemAlloc(stacksize);
+  task->stackstart = NOS_MEM_ALLOC(stacksize);
   if (task->stackstart == NULL)
     return -1;
 
@@ -91,7 +91,7 @@ VAR_t p_pos_initTask(POSTASK_t task,
 
 void  p_pos_freeStack(POSTASK_t task)
 {
-  nosMemFree(task->stackstart);
+  NOS_MEM_FREE(task->stackstart);
 }
 
 

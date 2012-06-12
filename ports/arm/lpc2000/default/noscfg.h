@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: noscfg.h,v 1.1 2006/04/29 15:30:30 dkuschel Exp $
+ * CVS-ID $Id: noscfg.h,v 1.2 2006/04/29 15:37:31 dkuschel Exp $
  */
 
 #ifndef _NOSCFG_H
@@ -344,7 +344,7 @@ extern void *__heap_end;
  * defined here). This reduces overhead in the memory manager, but
  * increases the code-memory usage a bit.
  */
-#define NOS_REGKEY_PREALLOC             0
+#define NOS_REGKEY_PREALLOC             4
 
 /** @} */
 
@@ -356,6 +356,6 @@ extern void *__heap_end;
 /** Set the console speed.
  */
 
-#define CONSOLE_SPEED		     115200
+#define PORTCFG_CONSOLE_SPEED		     115200
 
 #endif /* _NOSCFG_H */

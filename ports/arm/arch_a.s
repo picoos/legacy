@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_a.s,v 1.4 2006/04/11 06:11:10 ari Exp $
+ * CVS-ID $Id: arch_a.s,v 1.1 2006/04/30 10:41:24 dkuschel Exp $
  */
  
 .include "arch_a_macros.h"
@@ -55,9 +55,9 @@
 	.global p_pos_startFirstContext
 	.global p_pos_intContextSwitch
 	.global p_pos_softContextSwitch
-	.global armEnterCritical
-	.global armExitCritical
-	.global	armSwiHandler
+	.global portEnterCritical
+	.global portExitCritical
+	.global	portSwiHandler
 
 /*
  * Called by pico]OS to start first task. Task
@@ -67,7 +67,7 @@
 p_pos_startFirstContext:
 restore:
 
-	restoreContext			@ Simply restore context from stack.
+	portRestoreContext			@ Simply restore context from stack.
 
 /*
  * Called by pico]OS at end of interrupt handler to switch task.
@@ -111,9 +111,9 @@ p_pos_softContextSwitch:
  * restore context of new task.
  */
 
-armSwiHandler:
+portSwiHandler:
 
-	saveContext
+	portSaveContext
 	
 	ldr	r0, =posCurrentTask_g
 	ldr	r1, =posNextTask_g
@@ -126,7 +126,7 @@ armSwiHandler:
  * Block all interrupts. 
  */
 
-armEnterCritical:
+portEnterCritical:
         mrs     r0, CPSR
         orr     r1, r0, #INTR_MASK
         msr     CPSR_c, r1
@@ -136,7 +136,7 @@ armEnterCritical:
  * Restore interrupts.
  */
 
-armExitCritical:
+portExitCritical:
         msr     CPSR_c, r0
         bx	lr
 

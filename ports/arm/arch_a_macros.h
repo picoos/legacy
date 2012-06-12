@@ -34,7 +34,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: arch_a_macros.h,v 1.1 2006/03/07 06:31:13 ari Exp $
+ * CVS-ID $Id: arch_a_macros.h,v 1.1 2006/04/30 10:41:24 dkuschel Exp $
  */
  
 /*
@@ -59,7 +59,7 @@
  * PC LR SP R12-R0 SPSR SP_irq
  */
 
-.macro	saveContext
+.macro	portSaveContext
 
 /*
  * We need a work register to get started. Since
@@ -111,7 +111,7 @@
  * For stack layout, see restoreContext macro.
  */
 
-.macro	restoreContext
+.macro	portRestoreContext
 
 /*
  * First, find out the task stack pointer from task

@@ -34,15 +34,15 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  * 
- * CVS-ID $Id: cpu_c.c,v 1.5 2006/03/21 07:53:29 ari Exp $
+ * CVS-ID $Id: cpu_c.c,v 1.1 2006/04/29 15:32:44 dkuschel Exp $
  */
 
 #define NANOINTERNAL
 #include <picoos.h>
 #include "samsung_reg.h"
 
-static ArmIrqHandlerFunction defaultIrqHandler;
-void c_armCpuIrqHandler(int irq);
+static PortIrqHandlerFunction defaultIrqHandler;
+void portCpuIrqHandler(int irq);
 
 /*
  * Initialize CPU pins, clock and console.
@@ -64,7 +64,7 @@ p_pos_initArch(void)
  * Route interupt to correct handler (called from assembly).
  */
 
-void c_armCpuIrqHandler(int irq)
+void portCpuIrqHandler(int irq)
 {
   switch (irq) {
   case 0x1d:
@@ -78,7 +78,7 @@ void c_armCpuIrqHandler(int irq)
   }
 }
   
-void armSetDefaultIrqHandler(ArmIrqHandlerFunction func)
+void portSetDefaultIrqHandler(PortIrqHandlerFunction func)
 {
   defaultIrqHandler = func;
 }

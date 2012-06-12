@@ -39,7 +39,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: port.h,v 1.8 2006/03/21 07:53:24 ari Exp $
+ * CVS-ID $Id: port.h,v 1.2 2006/04/29 15:37:54 dkuschel Exp $
  */
 
 
@@ -240,17 +240,17 @@
  * code that stores the processor state and disables
  * the interrupts. See ::POSCFG_LOCK_FLAGSTYPE for more details.
  */
-#define POS_SCHED_LOCK           flags = armEnterCritical()
+#define POS_SCHED_LOCK           flags = portEnterCritical()
 
 /** Scheduler unlocking.
  * This is the counterpart macro of ::POS_SCHED_LOCK. It restores
  * the saved processor flags and reenables the interrupts this way.
  */
-#define POS_SCHED_UNLOCK         armExitCritical(flags)
+#define POS_SCHED_UNLOCK         portExitCritical(flags)
 
 
-unsigned int armEnterCritical(void);
-void armExitCritical(unsigned int old_int);
+unsigned int portEnterCritical(void);
+void portExitCritical(unsigned int old_int);
 
 /** @} */
 
@@ -396,7 +396,7 @@ void armExitCritical(unsigned int old_int);
 #define NULL ((void*)0)
 #endif
 
-typedef void	(*ArmIrqHandlerFunction)(int irq);
+typedef void	(*PortIrqHandlerFunction)(int irq);
 
 /** Set default interrupt handler, which is called when IRQ
  * occurs and there is no handler within the port already.
@@ -404,6 +404,6 @@ typedef void	(*ArmIrqHandlerFunction)(int irq);
  * c_pos_intEnter called.
  */
 
-void armSetDefaultIrqHandler(ArmIrqHandlerFunction func);
+void portSetDefaultIrqHandler(PortIrqHandlerFunction func);
 
 #endif /* _PORT_H */

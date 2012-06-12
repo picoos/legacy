@@ -32,7 +32,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  * 
- * CVS-ID $Id: cpu_c.c,v 1.8 2006/04/12 09:03:53 ari Exp $
+ * CVS-ID $Id: cpu_c.c,v 1.1 2006/04/29 15:30:30 dkuschel Exp $
  */
 
 #define NANOINTERNAL
@@ -60,8 +60,8 @@ p_pos_initArch(void)
  * First, put CPU pins to known state.
  */
 
-  PCB_PINSEL0 = 0x00000000;
-  PCB_PINSEL1 = 0x00000000;
+  PCB_PINSEL0 = PCB_PINSEL0_ALL_GPIO;
+  PCB_PINSEL1 = PCB_PINSEL1_ALL_GPIO;
 
   GPIO0_IOSET = 0x00000000;
   GPIO0_IOCLR = 0x00000000;
@@ -71,37 +71,37 @@ p_pos_initArch(void)
  * Configure pins for UART 0 (used as console)
  */
 
-  PCB_PINSEL0 |= 0x1 | 0x4;		/* Enable Rs232 RX & TX */
+  PCB_PINSEL0 |= PCB_PINSEL0_P00_TXD0 | PCB_PINSEL0_P01_RXD0;	/* Enable Rs232 RX & TX */
 
 /* 
  * Configure PLL so that crystal frequency is multiplied by 4.
  */
 
-  SCB_PLLCFG = 0x3;
+  SCB_PLLCFG = SCB_PLLCFG_MUL4;
 
-  SCB_PLLCON = 0x1;
-  SCB_PLLFEED = 0xaa;
-  SCB_PLLFEED = 0x55;
+  SCB_PLLCON  = SCB_PLLCON_PLLE;
+  SCB_PLLFEED = SCB_PLLFEED_FEED1;
+  SCB_PLLFEED = SCB_PLLFEED_FEED2;
 
-  while (!(SCB_PLLSTAT & 0x0400)); /* Wait for PLL to lock */
+  while (!(SCB_PLLSTAT & SCB_PLLSTAT_PLOCK)); /* Wait for PLL to lock */
 
-  SCB_PLLCON = 0x3;
-  SCB_PLLFEED = 0xaa;
-  SCB_PLLFEED = 0x55;
+  SCB_PLLCON = SCB_PLLCON_MASK;
+  SCB_PLLFEED = SCB_PLLFEED_FEED1;
+  SCB_PLLFEED = SCB_PLLFEED_FEED2;
 
 /*
  * LPC chips don't have cache, but they have this "MAM". 
  * Enable it.
  */
 
-  MAM_MAMTIM = 0x3;
-  MAM_MAMCR = 0x2;
+  MAM_TIM = MAM_TIM_3;
+  MAM_CR  = MAM_CR_FULL;
 
 /* 
  * Make periphral bus clock run same speed as CPU clock
  */
 
-  SCB_VPBDIV = 0x1;
+  SCB_VPBDIV = SCB_VPBDIV_100;
 
 #if NOSCFG_FEATURE_CONOUT == 1 || NOSCFG_FEATURE_CONIN == 1
 
@@ -110,35 +110,35 @@ p_pos_initArch(void)
  * CPU.
  */
 
-  consoleDll = (CRYSTAL_CLOCK / (CONSOLE_SPEED * 16.0)) + 0.5;
-  UART0_LCR = 0x80;
+  consoleDll = (PORTCFG_CRYSTAL_CLOCK / (PORTCFG_CONSOLE_SPEED * 16.0)) + 0.5;
+  UART0_LCR = UART_LCR_DLAB;
   UART0_DLL = (unsigned char)(consoleDll & 0x00ff);
   UART0_DLM = (unsigned char)(consoleDll >> 8);
-  UART0_LCR = 0x00;
+  UART0_LCR = UART_LCR_NOPAR;
 
 /*
  * 8 databits, no parity, 1 stopbit.
  */
 
-  UART0_LCR = 0x03;
+  UART0_LCR = UART_LCR_8BITS;
 
 /*
  * Enable/Reset FIFO.
  */
 
-  UART0_FCR = 0x07;
+  UART0_FCR = UART_LCR_8BITS | UART_FCR_CLR;
 
 
 /*
  * Configure & enable uart interrupts.
  */
 
-  VICIntSelect &= ~(0x40);
-  VICIntEnable |= 0x40;
-  VICVectAddr1 = (unsigned long)armCpuUartIrqHandler;
-  VICVectCntl1 = 0x6 | 0x20;
+  VIC_IntSelect &= ~(VIC_IntSelect_UART0);
+  VIC_IntEnable |= VIC_IntEnable_UART0;
+  VIC_VectAddr1 = (unsigned long)armCpuUartIrqHandler;
+  VIC_VectCntl1 = VIC_Channel_UART0 | VIC_VectCntl_ENABLE;
   
-  UART0_IER = 0x03;
+  UART0_IER = UART_IER_EI;
 
 #endif
 
@@ -148,23 +148,23 @@ p_pos_initArch(void)
 
   T0_PR = 0x0;
 
-  T0_MR0 = CRYSTAL_CLOCK / HZ;
-  T0_MCR = 0x2 | 0x1;		/* Reset & interrupt on match */
+  T0_MR0 = PORTCFG_CRYSTAL_CLOCK / HZ;
+  T0_MCR = T_MCR_MR0R | T_MCR_MR0I;		/* Reset & interrupt on match */
 
 /*
  * Configure VIC to handle timer interrupts.
  */
 
-  VICIntSelect &= ~(0x10);
-  VICIntEnable |= 0x10;
-  VICVectAddr0 = (unsigned long)armCpuTimerIrqHandler;
-  VICVectCntl0 = 0x4 | 0x20;
+  VIC_IntSelect &= ~(VIC_IntSelect_Timer0);
+  VIC_IntEnable |= VIC_IntEnable_Timer0;
+  VIC_VectAddr0 = (unsigned long)armCpuTimerIrqHandler;
+  VIC_VectCntl0 = VIC_Channel_Timer0 | VIC_VectCntl_ENABLE;
 
 /* 
  * Start timer !
  */
 
-  T0_TCR = 1;
+  T0_TCR = T_TCR_CE;
 }
 
 /*
@@ -176,12 +176,21 @@ static void
 armCpuTimerIrqHandler()
 {
   c_pos_timerInterrupt();
-  T0_IR = 1;
+  T0_IR = T_IR_MR0;
 }
 
-void armSetDefaultIrqHandler(ArmIrqHandlerFunction func)
+#if 0
+void portIdleTaskHook()
 {
-  VICDefVectAddr = (unsigned long)func;
+    PCONP = 0x0000000e;   //turn off all peripherals, except timer #0 & #1 and uart #0
+                          //= 0x0000080e, if external memory controller is used
+    PCON  = 0x00000001;   //enter idle mode    
+}
+#endif
+
+void portSetDefaultIrqHandler(PortIrqHandlerFunction func)
+{
+  VIC_DefVectAddr = (unsigned long)func;
 }
 
 #if NOSCFG_FEATURE_CONOUT == 1 || NOSCFG_FEATURE_CONIN == 1

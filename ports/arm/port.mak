@@ -1,3 +1,4 @@
+#  Copyright (c) 2011, Ari Suutari
 #  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
@@ -30,7 +31,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.4 2006/04/11 09:38:13 ari Exp $
+#  $Id: port.mak,v 1.2 2006/04/29 15:37:54 dkuschel Exp $
 
 
 # Set default compiler.
@@ -71,10 +72,10 @@ EXT_OUT = .elf
 #
 
 # Define tools: compiler, assembler, archiver, linker
-CC = arm-elf-gcc
-AS = arm-elf-gcc
-AR = arm-elf-ar
-LD = arm-elf-gcc
+CC = arm-none-eabi-gcc
+AS = arm-none-eabi-gcc
+AR = arm-none-eabi-ar
+LD = arm-none-eabi-gcc
 
 # Define to 1 if CC outputs an assembly file
 CC2ASM = 0
@@ -118,6 +119,9 @@ ifeq '$(THUMB)' 'yes'
 CFLAGS  += -mthumb -mthumb-interwork
 ASFLAGS += -mthumb-interwork
 LDFLAGS += -mthumb -mthumb-interwork
+else
+CFLAGS  += -mno-thumb-interwork
+LDFLAGS += -mno-thumb-interwork
 endif
 
 # Define Compiler Flags
@@ -137,9 +141,9 @@ ASFLAGS += -x assembler-with-cpp -o
 #  -Wl   : pass arguments to the linker
 #  -Map  : create a map file
 #  --cref: add cross reference to the map file
-LDFLAGS += -L$(DIR_PORT)/boot -T$(LD_SCRIPT) -mcpu=arm7tdmi
+LDFLAGS += -L$(DIR_PORT)/boot  $(addprefix -T,$(LD_SCRIPT)) -mcpu=arm7tdmi
 LDFLAGS += -nostartfiles -Wl,-Map,$(DIR_OUT)/$(TARGET).map,--cref -o 
 
 # Define archiver flags
-ARFLAGS = r 
+ARFLAGS = cr 
 

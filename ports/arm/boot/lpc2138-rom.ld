@@ -93,7 +93,7 @@ SECTIONS {
 
   .data : { 
 	__data_beg__ = .;			/* Used by startup.	*/
-	__data_beg_src__ = __end_of_text__;	/* Used by startup.	*/
+	__data_beg_src__ = ABSOLUTE(__end_of_text__);/* Used by startup.*/
  	*(.data)
 	__data_end__ = .;			/* Used by startup.	*/
  	} >ram AT>flash
