@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2009, Dennis Kuschel.
+ *  Copyright (c) 2004-2012, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.c,v 1.17 2008/08/24 16:20:19 smocz Exp $
+ * CVS-ID $Id: picoos.c,v 1.18 2009/01/06 12:04:14 dkuschel Exp $
  */
 
 
@@ -853,6 +853,37 @@ void POSCALL c_pos_intExit(void)
   POS_SCHED_UNLOCK;
 #endif
 }
+
+/*-------------------------------------------------------------------------*/
+
+#if POSCFG_INT_EXIT_QUICK == 1
+void POSCALL c_pos_intExitQuick(void)
+{
+  POS_LOCKFLAGS;
+
+#if POSCFG_ISR_INTERRUPTABLE != 0
+  POS_SCHED_LOCK;
+#endif
+
+  if (--posInInterrupt_g == 0)
+  {
+#if POSCFG_FEATURE_INHIBITSCHED != 0
+    if (posInhibitSched_g == 0)
+    {
+#endif
+      if (posMustSchedule_g != 0)
+      {
+        p_pos_intContextSwitchPending();
+      }
+#if POSCFG_FEATURE_INHIBITSCHED != 0
+    }
+#endif
+  }
+#if POSCFG_ISR_INTERRUPTABLE != 0
+  POS_SCHED_UNLOCK;
+#endif
+}
+#endif
 
 /*-------------------------------------------------------------------------*/
 

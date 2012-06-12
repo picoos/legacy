@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2012, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_conio.c,v 1.8 2006/04/29 15:58:17 dkuschel Exp $
+ * CVS-ID $Id: n_conio.c,v 1.9 2006/10/16 19:41:27 dkuschel Exp $
  */
 
 #define _N_CONIO_C
@@ -83,7 +83,7 @@ static void POSCALL n_printf(const char *fmt, NOSARG_t *args);
 #if NOSCFG_FEATURE_SPRINTF != 0
 static UVAR_t POSCALL n_updstr(char c);
 #endif
-#if NOSCFG_FEATURE_CONIN != 0
+#if (NOSCFG_FEATURE_CONIN != 0) && (POSCFG_FEATURE_SOFTINTS != 0)
 static void n_keyinput(UVAR_t key);
 #endif
 #if (NOSCFG_FEATURE_CONOUT != 0) && (NOSCFG_CONOUT_HANDSHAKE != 0)
@@ -570,10 +570,12 @@ void POSCALL c_nos_keyinput(UVAR_t key)
     posSemaSignal(cin_sema_g);
 }
 
+#if POSCFG_FEATURE_SOFTINTS != 0
 static void n_keyinput(UVAR_t key)
 {
   c_nos_keyinput(key);
 }
+#endif
 
 /*-------------------------------------------------------------------------*/
 
@@ -640,7 +642,7 @@ void POSCALL nos_initConIO(void)
   deferedCharFlag_g = HAVEDEFCHAR_NO;
   stdoutWaiting_g = 0;
   stdoutPollsema_g = posSemaCreate(0);
-  POS_SETEVENTNAME(cin_sema_g, "conio print wait");
+  POS_SETEVENTNAME(stdoutPollsema_g, "conio print wait");
 #if NOSCFG_CONOUT_FIFOSIZE > 0
   cout_inptr_g  = 0;
   cout_outptr_g = 0;

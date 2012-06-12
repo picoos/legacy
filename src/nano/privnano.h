@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2005, Dennis Kuschel.
+ *  Copyright (c) 2004-2012, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  *
  *  This file is part of the pico]OS realtime operating system.
  *
- *  $Id: privnano.h,v 1.3 2005/01/15 21:15:56 dkuschel Exp $
+ *  $Id: privnano.h,v 1.4 2006/10/16 19:41:27 dkuschel Exp $
  *
  */
 
@@ -37,12 +37,12 @@
 #define _PRIVNANO_H
 #define NANOINTERNAL
 
+#define PICOS_PRIVINCL
+#include <pos_nano.h>
+
 #if NOSCFG_MEM_MANAGER_TYPE == 0
 #include <stdlib.h>
 #endif
-
-#define PICOS_PRIVINCL
-#include <pos_nano.h>
 
 /*-------------------------------------------------------------------------*/
 

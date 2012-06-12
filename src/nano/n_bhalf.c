@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2012, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_bhalf.c,v 1.6 2006/04/16 08:48:27 dkuschel Exp $
+ * CVS-ID $Id: n_bhalf.c,v 1.7 2006/10/16 19:41:27 dkuschel Exp $
  */
 
 #define _N_BHALF_C

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2012, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,19 +38,19 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_reg.c,v 1.4 2006/04/16 08:48:27 dkuschel Exp $
+ * CVS-ID $Id: n_reg.c,v 1.5 2006/10/16 19:41:27 dkuschel Exp $
  */
 
-
-#if NOSCFG_FEATURE_SPRINTF == 0
-#include <stdio.h>
-#endif
 
 #define _N_REG_C
 #include "../src/nano/privnano.h"
 
 
 #if NOSCFG_FEATURE_REGISTRY != 0
+
+#if NOSCFG_FEATURE_SPRINTF == 0
+#include <stdio.h>
+#endif
 
 #if POSCFG_FEATURE_SEMAPHORES == 0
 #error POSCFG_FEATURE_SEMAPHORES not enabled

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2012, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: n_core.c,v 1.8 2005/02/22 20:39:27 dkuschel Exp $
+ * CVS-ID $Id: n_core.c,v 1.9 2006/10/16 19:41:27 dkuschel Exp $
  */
 
 #define _N_CORE_C
@@ -72,7 +72,8 @@
 #if (NOSCFG_FEATURE_MEMALLOC != 0) && (NOSCFG_MEM_MANAGER_TYPE == 1)
 extern void POSCALL nos_initMem(void);
 #endif
-#if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0)
+#if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0) || \
+    (NOSCFG_FEATURE_PRINTF != 0) || (NOSCFG_FEATURE_SPRINTF != 0)
 extern void POSCALL nos_initConIO(void);
 #endif
 #if NOSCFG_FEATURE_BOTTOMHALF != 0
@@ -618,7 +619,8 @@ static void nano_init(void *arg)
 #if NOSCFG_FEATURE_REGISTRY != 0
   nos_initRegistry();
 #endif
-#if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0)
+#if (NOSCFG_FEATURE_CONIN != 0) || (NOSCFG_FEATURE_CONOUT != 0) || \
+    (NOSCFG_FEATURE_PRINTF != 0) || (NOSCFG_FEATURE_SPRINTF != 0)
   nos_initConIO();
 #endif
 #if NOSCFG_FEATURE_BOTTOMHALF != 0
