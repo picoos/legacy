@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2004-2006, Dennis Kuschel.
+ *  Copyright (c) 2004-2012, Dennis Kuschel.
  *  All rights reserved. 
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: pos_nano.h,v 1.7 2006/04/14 09:33:52 dkuschel Exp $
+ * CVS-ID $Id: pos_nano.h,v 1.8 2006/10/16 19:42:41 dkuschel Exp $
  */
 
 #ifndef _POS_NANO_H

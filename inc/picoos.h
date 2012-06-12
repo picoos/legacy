@@ -4,7 +4,7 @@
  * This file is originally from the pico]OS realtime operating system
  * (http://picoos.sourceforge.net).
  *
- * CVS-ID $Id: picoos.h,v 1.28 2009/01/06 12:05:48 dkuschel Exp $
+ * CVS-ID $Id: picoos.h,v 1.29 2010/02/20 13:18:52 dkuschel Exp $
  *
  */
 
@@ -115,7 +115,11 @@
  *    Minimum configuration (4 tasks): 4.6kb code, 4.7kb data
  *  - PowerPC: IBM PPC440  (GNU C and MetaWare compiler supported)
  *  - AVR (ATMega, GNU C compiler supported)
- *  - ARM: SAMSUNG S3C2510A CPU (ARM940T core), Philips LPC ARM chips
+ *  - ARM: SAMSUNG S3C2510A CPU (ARM940T core), Philips LPC ARM chips,
+ *         Cortex-M0 and Cortex-M3
+ *  - Texas Instruments MSP430 family
+ *  - Unix (using setcontext/getcontext), for development and testing purpose only)
+ *  - MyCPU (see http://www.mycpu.eu)
  *
  * @n@n
  * @subsection files Files
@@ -153,7 +157,7 @@
  * @n@n
  * @section license License
  *
- *  Copyright (c) 2004-2010, Dennis Kuschel. @n
+ *  Copyright (c) 2004-2012, Dennis Kuschel. @n
  *  All rights reserved. @n
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -191,7 +195,7 @@
  * mail: dennis_k@freenet.de @n
  * web:  http://picoos.sourceforge.net @n
  *
- * (C) 2004-2010 Dennis Kuschel
+ * (C) 2004-2012 Dennis Kuschel
  */
 
 /** @defgroup intro     Introduction */
@@ -245,9 +249,9 @@
 #define _PICOOS_H
 
 
-#define POS_VER_N           0x0102
-#define POS_VER_S           "1.0.2"
-#define POS_COPYRIGHT       "(c) 2004-2010, D.Kuschel"
+#define POS_VER_N           0x0104
+#define POS_VER_S           "1.0.4"
+#define POS_COPYRIGHT       "(c) 2004-2012, D.Kuschel"
 #define POS_STARTUPSTRING   "pico]OS " POS_VER_S "  " POS_COPYRIGHT
 
 #ifndef NULL
@@ -492,6 +496,9 @@
 #ifndef POSCFG_PORTMUTEX
 #define POSCFG_PORTMUTEX  0
 #endif
+#ifndef POSCFG_INT_EXIT_QUICK
+#define POSCFG_INT_EXIT_QUICK 0
+#endif
 
 /* parameter range checking */
 #if (POSCFG_DYNAMIC_MEMORY != 0) && (POSCFG_DYNAMIC_REFILL != 0)
@@ -723,10 +730,10 @@
  * Example:  Use  ::posTaskSleep(MS(1000))  to sleep 1000 ms.
  */
 #if (DOX==0) && (HZ <= 1000)
-#define MS(msec)  (((UINT_t)(msec)<(1000/HZ)) ? \
-                    ((UINT_t)1) : ((UINT_t)((1L*HZ*(UINT_t)(msec))/1000)))
+#define MS(msec)  (((msec)<(1000/HZ)) ? \
+                    ((UINT_t)1) : ((UINT_t)((1L*HZ*(msec))/1000)))
 #else
-#define MS(msec)  ((UINT_t)((1L*HZ*(UINT_t)(msec))/1000))
+#define MS(msec)  ((UINT_t)((1L*HZ*(msec))/1000))
 #endif
 
 
@@ -1387,6 +1394,24 @@ POSFROMEXT void POSCALL p_pos_softContextSwitch(void);   /* arch_c.c */
  */
 POSFROMEXT void POSCALL p_pos_intContextSwitch(void);    /* arch_c.c */
 
+#if (DOX!=0) || POSCFG_INT_EXIT_QUICK == 1
+
+/**
+ * Context switch function.
+ * Called by c_pos_intExitQuick if task scheduling is needed.
+ * This function should queue context switch somehow, 
+ * for example in Arm Cortex-M CPU:s a PendSV exception can
+ * be set pending.
+ * @note    This function is not part of the pico]OS. It must be
+ *          provided by the user, since it is architecture specific.
+ *          The processor interrupts are disabled when this function
+ *          is called.
+ * @sa      p_pos_softContextSwitch, c_pos_intExitQuick
+ */
+POSFROMEXT void POSCALL p_pos_intContextSwitchPending(void);    /* arch_c.c */
+
+#endif
+
 /**
  * Interrupt control function.
  * This function must be called from an interrupt service routine
@@ -1406,6 +1431,22 @@ POSEXTERN void POSCALL c_pos_intEnter(void);            /* picoos.c */
  * @sa      c_pos_intEnter, c_pos_timerInterrupt
  */
 POSEXTERN void POSCALL c_pos_intExit(void);             /* picoos.c */
+
+#if (DOX!=0) || POSCFG_INT_EXIT_QUICK == 1
+/**
+ * Interrupt control function. Similar to c_pos_intExit, except
+ * that context switch is not performed. Instead, a call to
+ * p_pos_intContextSwitchQueue is performed if it is necessary
+ * to perform task scheduling. p_pos_intContextSwitchQueue
+ * should "queue" context switch to occur at later time.
+ *
+ * This was needed for Arm Cortex-M cpus, which need
+ * to use PendSV exception for context switching.
+ * @sa      c_pos_intExit, p_pos_intContextSwitchQueue
+ */
+POSEXTERN void POSCALL c_pos_intExitQuick(void);      /* picoos.c */
+
+#endif
 
 /**
  * Timer interrupt control function.
