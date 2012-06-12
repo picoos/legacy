@@ -1,4 +1,4 @@
-#  Copyright (c) 2004-2005, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2012, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.5 2006/03/11 12:58:30 dkuschel Exp $
+#  $Id: port.mak,v 1.6 2006/04/14 13:43:50 dkuschel Exp $
 
 
 # Set default compiler.
@@ -192,10 +192,10 @@ GCC_LIBDIR = $(GCC_DIR)/lib/
 endif
 
 # Define tools: compiler, assembler, archiver, linker
-CC = $(GCC_BINDIR)gcc
-AS = $(GCC_BINDIR)gcc
-AR = $(GCC_BINDIR)ar
-LD = $(GCC_BINDIR)gcc
+CC = $(GCC_BINDIR)gcc$(EEXIT)
+AS = $(GCC_BINDIR)gcc$(EEXIT)
+AR = $(GCC_BINDIR)ar$(EEXIT)
+LD = $(GCC_BINDIR)gcc$(EEXIT)
 
 # Define to 1 if CC outputs an assembly file
 CC2ASM = 0

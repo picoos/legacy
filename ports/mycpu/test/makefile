@@ -1,4 +1,4 @@
-#  Copyright (c) 2004-2006, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2012, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: makefile,v 1.4 2006/03/14 18:21:30 dkuschel Exp $
+#  $Id: makefile,v 1.1 2006/10/15 09:24:42 dkuschel Exp $
 
 
 # This port is for MyCPU

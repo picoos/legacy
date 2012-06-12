@@ -1,4 +1,4 @@
-#  Copyright (c) 2006, Dennis Kuschel
+#  Copyright (c) 2004-2012, Dennis Kuschel
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.3 2006/03/11 13:04:33 dkuschel Exp $
+#  $Id: port.mak,v 1.1 2006/10/15 09:24:41 dkuschel Exp $
 
 
 # Compiler: Define target type
@@ -47,10 +47,18 @@ EXT_LIB = .lib
 EXT_OUT =
 
 # Define tools: compiler, assembler, archiver, linker
-CC = cc65
-AS = ca65
-AR = ar65
-LD = ld65
+ifeq '$(strip $(OS))' 'Windows_NT'
+ifeq '$(strip $(CC65_HOME))' ''
+$(warning CC65_HOME variable not set. Make may fail compiling the sources on Windows 7 machines)
+CC65BIN =
+else
+CC65BIN = $(CC65_HOME)/bin/
+endif
+endif
+CC = $(CC65BIN)cc65$(EEXT)
+AS = $(CC65BIN)ca65$(EEXT)
+AR = $(CC65BIN)ar65$(EEXT)
+LD = $(CC65BIN)ld65$(EEXT)
 
 # Define to 1 if CC outputs an assembly file
 CC2ASM = 1
