@@ -1,4 +1,4 @@
-#  Copyright (c) 2004, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2012, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: port.mak,v 1.2 2004/03/13 19:33:26 dkuschel Exp $
+#  $Id: port.mak,v 1.3 2006/03/11 13:06:22 dkuschel Exp $
 
 
 # Set default compiler.
