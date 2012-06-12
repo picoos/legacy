@@ -1,9 +1,20 @@
+Version 1.0.4:
+  o  bugs fixed in these ports: ARM Cortex-M, MSP430, Unix
+  o  fixed some minor compilation issues, removed some compiler warnings
+  o  fixed a problem with NOSCFG_FEATURE_SPRINTF configuration
+
+
+Version 1.0.3:
+  o  picoos: Function c_pos_intExitQuick() added (required by Cortex-M port)
+  o  new ports added: ARM Cortex-M, MSP430, Unix
+  o  Makefiles: removed some garbage characters
+
+
 Version 1.0.2:
   o  AVR port: Memory mode 1 added (POSCFG_TASKSTACKTYPE = 1) for dynamic memory access.
   o  AVR port: Support for the avr6 architecture with 3 byte PC added (for example ATmega2561,..)
   o  AVR port: Timer mapping in timerdef.h added for several AVR devices.
-  o  AVR port: Save RAMPZ and EIND for MCUs with >=128 KB ROM. This is needed if ELPM/SPM 
-     and EICALL/EIJMP are used.
+  o  AVR port: Save RAMPZ and EIND for MCUs with >=128 KB ROM. This is needed if ELPM/SPM and EICALL/EIJMP are used.
   o  MyCPU port improved, now faster context switching and better memory management
   o  Bug in function posTaskSetPriority() fixed
 
@@ -210,11 +221,11 @@ Version 0.1:
   Contact Information:
 
   Dennis Kuschel
-  Emanuel-Backhaus-Str. 20
-  28277 Bremen
+  Corintostrasse 21
+  28279 Bremen
   GERMANY
 
   email: dennis_k@freenet.de
-  web  : http://mycpu.mikrocontroller.net
+  web  : http://www.mycpu.eu
          http://picoos.sourceforge.net
 --------------------------------------------
