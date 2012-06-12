@@ -1,4 +1,4 @@
-#  Copyright (c) 2004-2006, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2012, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: out.mak,v 1.5 2006/03/23 21:36:51 dkuschel Exp $
+#  $Id: out.mak,v 1.6 2006/04/16 08:49:01 dkuschel Exp $
 
 
 # Build target: generate executable
@@ -124,7 +124,7 @@ LINKLIST+=$(addprefix $(OPT_LD_PFLIB),$(subst $(space),$(replace),$(strip $(LIBL
 LINKLIST+=$(addprefix $(OPT_LD_PFLIB),$(subst $(space),$(replace),$(strip $(PICOOS_LIB))))
 LINKLIST+=$(OPT_LD_LAST)
 
-$(TARGETOUT): $(ALL_MODULES) $(PICOOS_LIB) $(OBJLIST) $(COMMONDEP) | $(DIR_OUT)
+$(TARGETOUT): $(ALL_MODULES) $(PICOOS_LIB) $(OBJLIST) $(COMMONDEP) $(DIR_OUT)
 	$(PRELINK1)
 	$(PRELINK2)
 	$(PRELINK3)

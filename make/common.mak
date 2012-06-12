@@ -1,4 +1,4 @@
-#  Copyright (c) 2004-2006, Dennis Kuschel / Swen Moczarski
+#  Copyright (c) 2004-2012, Dennis Kuschel / Swen Moczarski
 #  All rights reserved. 
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #  This file is originally from the pico]OS realtime operating system
 #  (http://picoos.sourceforge.net).
 #
-#  $Id: common.mak,v 1.6 2006/03/14 18:45:40 dkuschel Exp $
+#  $Id: common.mak,v 1.7 2006/10/15 08:50:51 dkuschel Exp $
 
 
 # Include configuration
@@ -70,6 +70,10 @@ DOS += 3
 endif
 
 ifeq '$(strip $(DOS))' ''
+# Set executable extension
+EEXT = .exe
+# Set host
+COMPILEHOST = DOS
 # Delete path
 SHCMDPATH =
 # Generate macro for Unix style paths
@@ -77,6 +81,10 @@ adjpath = $(subst \,/,$(1))
 # Get current path
 CURRENTDIR = $(shell pwd)
 else
+# Set host
+COMPILEHOST = LINUX
+# Set executable extension
+EEXT =
 # Set path to tools
 SHCMDPATH = $(RELROOT)make/tools/
 # Generate macro for DOS style paths
@@ -95,9 +103,9 @@ endif
 endif
 
 # Define commands. DOS users will use the commands in the tools/ directory.
-MKDIR  = $(SHCMDPATH)mkdir
-REMOVE = $(SHCMDPATH)rm -f
-RMDIR  = $(SHCMDPATH)rm -f
+MKDIR  = $(SHCMDPATH)mkdir$(EEXT)
+REMOVE = $(SHCMDPATH)rm$(EEXT) -f
+RMDIR  = $(SHCMDPATH)rm$(EEXT) -f
 ifeq '$(strip $(DOS))' ''
 ECHO   = echo
 else
@@ -138,6 +146,8 @@ endif
 export BUILD
 export PORT
 export CPU
+export EEXT
+export COMPILEHOST
 
 # Define paths
 DIR_OUTB = $(RELROOT)out
